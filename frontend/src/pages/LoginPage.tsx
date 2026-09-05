@@ -1,14 +1,93 @@
 import { useState, type FormEvent } from "react";
 import axios from "axios";
-import { Navigate, useLocation } from "react-router-dom";
-import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
+import { Link, Navigate } from "react-router-dom";
+import { Alert, Button, Stack, TextField, Typography, Box } from "@mui/material";
 import { useAuth } from "../features/auth/AuthProvider";
+import { AuthFrame } from "../components/auth/AuthFrame";
+
+const inputStyles = {
+  "& .MuiOutlinedInput-root": {
+    color: "white",
+    "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.5)" },
+    "&.Mui-focused fieldset": { borderColor: "white" },
+  },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
+  "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+};
+
 export const LoginPage = () => {
-  const { user, login } = useAuth(); const location = useLocation(); const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  const { user, login } = useAuth();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+
   if (user) return <Navigate to="/" replace />;
-  const submit = (event: FormEvent) => { event.preventDefault(); login.mutate({ email, password }); };
-  const message = axios.isAxiosError(login.error)
-    ? (login.error.response?.data?.error ?? "The service is unavailable. Please try again.")
-    : login.error ? "We could not sign you in. Please try again." : undefined;
-  return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", p: 2, bgcolor: "background.default" }}><Card sx={{ width: "100%", maxWidth: 440 }}><CardContent sx={{ p: 4 }}><Stack spacing={3} component="form" onSubmit={submit}><Box><Typography variant="h4" fontWeight={800}>Welcome back</Typography><Typography color="text.secondary">Sign in to Urban Furniture Accounting.</Typography></Box>{message && <Alert severity="error">{message}</Alert>}<TextField label="Email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required fullWidth autoFocus /><TextField label="Password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required fullWidth /><Button type="submit" variant="contained" size="large" disabled={login.isPending}>{login.isPending ? "Signing in..." : "Sign in"}</Button><Typography variant="caption" color="text.secondary">Your session is stored only in an essential, secure HTTP-only cookie.</Typography></Stack></CardContent></Card></Box>;
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    login.mutate({ email: identifier, password });
+  };
+
+  const message = axios.isAxiosError(login.error) 
+    ? "Invalid Login Id or Password"
+    : login.error 
+      ? "Invalid Login Id or Password" 
+      : undefined;
+
+  return (
+    <AuthFrame title="Login Page" subtitle="">
+      <Stack spacing={3} component="form" onSubmit={submit} width="100%">
+        {message && <Alert severity="error" sx={{ backgroundColor: 'rgba(211, 47, 47, 0.2)', color: '#ffb4ab', '& .MuiAlert-icon': { color: '#ffb4ab' } }}>{message}</Alert>}
+        
+        <TextField 
+          label="Login Id -" 
+          autoComplete="username" 
+          value={identifier} 
+          onChange={(event) => setIdentifier(event.target.value)} 
+          required 
+          fullWidth 
+          autoFocus 
+          sx={inputStyles}
+        />
+        
+        <TextField 
+          label="Password -" 
+          type="password" 
+          autoComplete="current-password" 
+          value={password} 
+          onChange={(event) => setPassword(event.target.value)} 
+          required 
+          fullWidth 
+          sx={inputStyles}
+        />
+        
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button 
+            type="submit" 
+            variant="outlined" 
+            size="large" 
+            disabled={login.isPending}
+            sx={{
+              color: 'white',
+              borderColor: 'white',
+              borderRadius: 2,
+              px: 4,
+              '&:hover': {
+                borderColor: 'white',
+                backgroundColor: 'rgba(255,255,255,0.1)'
+              }
+            }}
+          >
+            {login.isPending ? "SIGNING IN..." : "SIGN IN"}
+          </Button>
+        </Box>
+        
+        <Typography variant="body2" align="center" sx={{ mt: 2, color: 'rgba(255,255,255,0.7)' }}>
+          <Link to="#" style={{ color: 'white', textDecoration: 'none' }}>Forgot Password</Link>
+          {' | '}
+          <Link to="/signup" style={{ color: 'white', textDecoration: 'none' }}>Sign Up</Link>
+        </Typography>
+      </Stack>
+    </AuthFrame>
+  );
 };

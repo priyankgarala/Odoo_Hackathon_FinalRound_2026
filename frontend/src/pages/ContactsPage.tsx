@@ -1,9 +1,9 @@
 import { useMemo, useState, type FormEvent } from "react";
 import axios from "axios";
-import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { Alert, Box, Button, Checkbox, FormControl, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as contactsApi from "../api/contacts.api";
 import { EmptyState } from "../components/feedback/EmptyState";
@@ -12,17 +12,182 @@ import { LoadingState } from "../components/feedback/LoadingState";
 import { useAuth } from "../features/auth/AuthProvider";
 
 const blank: contactsApi.ContactInput = { name: "", type: "CUSTOMER", email: null, phone: null, address: null };
-const label = (type: contactsApi.ContactType) => type === "BOTH" ? "Customer & Vendor" : type[0] + type.slice(1).toLowerCase();
 const apiError = (error: unknown) => axios.isAxiosError<{ error?: string }>(error) ? error.response?.data?.error ?? "Request failed." : "Request failed.";
+
+const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
+  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+    {title && (
+      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
+        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      </Box>
+    )}
+    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+      {children}
+    </Box>
+  </Box>
+);
+
+const CustomButton = ({ children, onClick, active, disabled }: any) => (
+  <Button 
+    variant="outlined" 
+    onClick={onClick}
+    disabled={disabled}
+    sx={{ 
+      color: active ? "black" : "white", 
+      bgcolor: active ? "white" : "transparent",
+      borderColor: "rgba(255,255,255,0.5)", 
+      borderRadius: 2, 
+      textTransform: "none",
+      minWidth: 80,
+      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+    }}
+  >
+    {children}
+  </Button>
+);
+
 export const ContactsPage = () => {
-  const queryClient = useQueryClient(); const { user } = useAuth(); const canManage = ["Admin", "Accountant", "Sales", "Purchase"].includes(user?.role ?? "");
-  const [search, setSearch] = useState(""); const [type, setType] = useState<contactsApi.ContactType | "">(""); const [active, setActive] = useState<"" | "true" | "false">(""); const [page, setPage] = useState(1); const [form, setForm] = useState<contactsApi.ContactInput>(blank); const [editing, setEditing] = useState<contactsApi.Contact | null>(null); const [details, setDetails] = useState<contactsApi.Contact | null>(null); const [statusTarget, setStatusTarget] = useState<contactsApi.Contact | null>(null); const [formOpen, setFormOpen] = useState(false);
-  const params = useMemo(() => ({ search: search || undefined, type: type || undefined, active: active || undefined, page, pageSize: 10 }), [search, type, active, page]);
+  const queryClient = useQueryClient(); const { user } = useAuth();
+  const canManage = ["Admin", "Accountant", "Sales", "Purchase"].includes(user?.role ?? "");
+  const [screen, setScreen] = useState<"list" | "form">("list"); const [view, setView] = useState<"list" | "kanban">("list");
+  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [form, setForm] = useState<contactsApi.ContactInput>(blank); const [editing, setEditing] = useState<contactsApi.Contact | null>(null);
+  const params = useMemo(() => ({ search: search || undefined, page, pageSize: 10 }), [search, page]);
   const contacts = useQuery({ queryKey: ["contacts", params], queryFn: () => contactsApi.getContacts(params) });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["contacts"] });
-  const save = useMutation({ mutationFn: () => editing ? contactsApi.updateContact({ id: editing.id, input: form }) : contactsApi.createContact(form), onSuccess: () => { setFormOpen(false); setEditing(null); setForm(blank); refresh(); } });
-  const changeStatus = useMutation({ mutationFn: (contact: contactsApi.Contact) => contactsApi.setContactStatus({ id: contact.id, active: !contact.active }), onSuccess: () => { setStatusTarget(null); refresh(); } });
+  
+  const save = useMutation({ 
+    mutationFn: () => editing ? contactsApi.updateContact({ id: editing.id, input: form }) : contactsApi.createContact(form), 
+    onSuccess: () => { setScreen("list"); setEditing(null); setForm(blank); refresh(); } 
+  });
+  
+  const openCreate = () => { setEditing(null); setForm(blank); setScreen("form"); };
+  const openRecord = (contact: contactsApi.Contact) => { 
+    setEditing(contact); 
+    setForm({ name: contact.name, type: contact.type, email: contact.email, phone: contact.phone, address: contact.address }); 
+    setScreen("form"); 
+  };
+  
   const submit = (event: FormEvent) => { event.preventDefault(); save.mutate(); };
-  const openCreate = () => { setEditing(null); setForm(blank); setFormOpen(true); }; const openEdit = (contact: contactsApi.Contact) => { setEditing(contact); setForm({ name: contact.name, type: contact.type, email: contact.email, phone: contact.phone, address: contact.address }); setFormOpen(true); };
-  return <Stack spacing={3}><Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={2}><Box><Typography variant="h4" fontWeight={750}>Contacts</Typography><Typography color="text.secondary">Manage customers and vendors in one master list.</Typography></Box>{canManage && <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Add contact</Button>}</Stack><Paper sx={{ p: 2 }}><Stack direction={{ xs: "column", md: "row" }} gap={2}><TextField label="Search contacts" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} fullWidth /><FormControl sx={{ minWidth: 190 }}><InputLabel>Contact type</InputLabel><Select label="Contact type" value={type} onChange={(event) => { setType(event.target.value as contactsApi.ContactType | ""); setPage(1); }}><MenuItem value="">All contacts</MenuItem><MenuItem value="CUSTOMER">Customers</MenuItem><MenuItem value="VENDOR">Vendors</MenuItem><MenuItem value="BOTH">Both</MenuItem></Select></FormControl><FormControl sx={{ minWidth: 150 }}><InputLabel>Status</InputLabel><Select label="Status" value={active} onChange={(event) => { setActive(event.target.value as "" | "true" | "false"); setPage(1); }}><MenuItem value="">All statuses</MenuItem><MenuItem value="true">Active</MenuItem><MenuItem value="false">Inactive</MenuItem></Select></FormControl></Stack></Paper>{contacts.isLoading ? <LoadingState label="Loading contacts..." /> : contacts.isError ? <ErrorState message={apiError(contacts.error)} onRetry={() => void contacts.refetch()} /> : contacts.data!.data.length === 0 ? <EmptyState message="No contacts match your search." /> : <><TableContainer component={Paper}><Table><TableHead><TableRow><TableCell>Name</TableCell><TableCell>Type</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead><TableBody>{contacts.data!.data.map((contact) => <TableRow key={contact.id} hover><TableCell><Typography fontWeight={700}>{contact.name}</Typography></TableCell><TableCell><Chip size="small" label={label(contact.type)} /></TableCell><TableCell>{contact.email ?? "—"}</TableCell><TableCell>{contact.phone ?? "—"}</TableCell><TableCell><Chip size="small" color={contact.active ? "success" : "default"} label={contact.active ? "Active" : "Inactive"} /></TableCell><TableCell align="right"><IconButton aria-label="View contact" onClick={() => setDetails(contact)}><VisibilityOutlinedIcon /></IconButton>{canManage && <><IconButton aria-label="Edit contact" onClick={() => openEdit(contact)}><EditOutlinedIcon /></IconButton><Button size="small" color={contact.active ? "warning" : "success"} onClick={() => setStatusTarget(contact)}>{contact.active ? "Deactivate" : "Activate"}</Button></>}</TableCell></TableRow>)}</TableBody></Table></TableContainer><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Typography variant="body2" color="text.secondary">{contacts.data!.meta.total} contact{contacts.data!.meta.total === 1 ? "" : "s"}</Typography><Pagination page={page} count={Math.max(1, contacts.data!.meta.totalPages)} onChange={(_, value) => setPage(value)} /></Box></>}<Dialog open={formOpen} onClose={() => setFormOpen(false)} fullWidth maxWidth="sm"><Box component="form" onSubmit={submit}><DialogTitle>{editing ? "Edit contact" : "Add contact"}</DialogTitle><DialogContent><Stack spacing={2} sx={{ pt: 1 }}>{save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}<TextField label="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required fullWidth /><FormControl fullWidth><InputLabel>Type</InputLabel><Select label="Type" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as contactsApi.ContactType })}><MenuItem value="CUSTOMER">Customer</MenuItem><MenuItem value="VENDOR">Vendor</MenuItem><MenuItem value="BOTH">Customer & Vendor</MenuItem></Select></FormControl><TextField label="Email" type="email" value={form.email ?? ""} onChange={(event) => setForm({ ...form, email: event.target.value || null })} fullWidth /><TextField label="Phone" value={form.phone ?? ""} onChange={(event) => setForm({ ...form, phone: event.target.value || null })} fullWidth /><TextField label="Address" value={form.address ?? ""} onChange={(event) => setForm({ ...form, address: event.target.value || null })} fullWidth multiline minRows={2} /></Stack></DialogContent><DialogActions><Button onClick={() => setFormOpen(false)}>Cancel</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? "Saving..." : "Save contact"}</Button></DialogActions></Box></Dialog><Dialog open={!!details} onClose={() => setDetails(null)} fullWidth maxWidth="sm"><DialogTitle>Contact details</DialogTitle><DialogContent>{details && <Stack spacing={1}><Typography variant="h6">{details.name}</Typography><Typography>Type: {label(details.type)}</Typography><Typography>Email: {details.email ?? "—"}</Typography><Typography>Phone: {details.phone ?? "—"}</Typography><Typography>Address: {details.address ?? "—"}</Typography><Typography>Status: {details.active ? "Active" : "Inactive"}</Typography></Stack>}</DialogContent><DialogActions><Button onClick={() => setDetails(null)}>Close</Button></DialogActions></Dialog><Dialog open={!!statusTarget} onClose={() => setStatusTarget(null)}><DialogTitle>{statusTarget?.active ? "Deactivate contact?" : "Activate contact?"}</DialogTitle><DialogContent><Typography>This will {statusTarget?.active ? "hide the contact from active workflows" : "make the contact available for workflows"}.</Typography>{changeStatus.isError && <Alert sx={{ mt: 2 }} severity="error">{apiError(changeStatus.error)}</Alert>}</DialogContent><DialogActions><Button onClick={() => setStatusTarget(null)}>Cancel</Button><Button color={statusTarget?.active ? "warning" : "success"} variant="contained" disabled={changeStatus.isPending} onClick={() => statusTarget && changeStatus.mutate(statusTarget)}>{statusTarget?.active ? "Deactivate" : "Activate"}</Button></DialogActions></Dialog></Stack>;
+
+  if (screen === "form") return (
+    <DarkContainer>
+      <Stack component="form" onSubmit={submit} spacing={4}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack direction="row" spacing={2}>
+            <CustomButton onClick={openCreate} active={!editing}>New</CustomButton>
+            <CustomButton type="submit" disabled={save.isPending}>{save.isPending ? "..." : "Confirm"}</CustomButton>
+          </Stack>
+          <CustomButton onClick={() => { setScreen("list"); setEditing(null); }}>Back</CustomButton>
+        </Stack>
+        
+        {save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}
+
+        <Stack direction={{ xs: "column", md: "row" }} spacing={6}>
+          <Stack spacing={2} flex={1}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography color="white" minWidth={120}>Contact Name</Typography>
+              <TextField variant="standard" fullWidth value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required sx={{ input: { color: "white" }, "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.5)" } }} />
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography color="white" minWidth={120}>Email</Typography>
+              <TextField variant="standard" type="email" fullWidth value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value || null })} sx={{ input: { color: "white" }, "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.5)" } }} />
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography color="white" minWidth={120}>Phone</Typography>
+              <TextField variant="standard" fullWidth value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value || null })} sx={{ input: { color: "white" }, "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.5)" } }} />
+            </Stack>
+            
+            <Typography color="white" pt={2}>Address</Typography>
+            <Stack spacing={2} pl={4}>
+              {["Street", "City", "State", "Country"].map((field) => (
+                <TextField key={field} variant="standard" placeholder={field} fullWidth value={field === "Street" ? (form.address ?? "") : ""} onChange={(e) => field === "Street" && setForm({ ...form, address: e.target.value || null })} sx={{ input: { color: "rgba(255,255,255,0.7)" }, "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" } }} />
+              ))}
+              <TextField variant="standard" placeholder="Pincode" sx={{ width: "50%", input: { color: "rgba(255,255,255,0.7)" }, "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" } }} />
+            </Stack>
+          </Stack>
+
+          <Box sx={{ width: 200, height: 200, border: "1px dashed rgba(255,255,255,0.3)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", "&:hover": { borderColor: "white" } }}>
+            <Typography color="rgba(255,255,255,0.5)">Upload Image</Typography>
+          </Box>
+        </Stack>
+      </Stack>
+    </DarkContainer>
+  );
+
+  const renderedContacts = contacts.data?.data ?? [];
+  return (
+    <DarkContainer title="Master Data">
+      <Stack spacing={3}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <CustomButton onClick={openCreate}>New</CustomButton>
+          <TextField 
+            variant="outlined" 
+            size="small"
+            placeholder="Search" 
+            value={search} 
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }} 
+            sx={{ width: 300, input: { color: "white" }, "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "rgba(255,255,255,0.3)" }, "&:hover fieldset": { borderColor: "white" } } }} 
+          />
+          <Stack direction="row" spacing={2} alignItems="center">
+            <CustomButton onClick={() => setScreen("list")}>Back</CustomButton>
+            <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, next) => next && setView(next)} sx={{ bgcolor: "white", borderRadius: 1 }}>
+              <ToggleButton value="list"><ViewListIcon sx={{ color: "black" }} /></ToggleButton>
+              <ToggleButton value="kanban"><ViewModuleIcon sx={{ color: "black" }} /></ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </Stack>
+
+        {contacts.isLoading ? <LoadingState label="Loading contacts..." /> : contacts.isError ? <ErrorState message={apiError(contacts.error)} onRetry={() => void contacts.refetch()} /> : renderedContacts.length === 0 ? <EmptyState message="No contacts found." /> : (
+          view === "list" ? (
+            <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
+                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Select</TableCell>
+                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Image</TableCell>
+                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Name</TableCell>
+                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Email</TableCell>
+                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Phone</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {renderedContacts.map((contact) => (
+                    <TableRow key={contact.id} hover onClick={() => openRecord(contact)} sx={{ cursor: "pointer", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                      <TableCell sx={{ borderBottom: "none" }}><Checkbox size="small" sx={{ color: "rgba(255,255,255,0.5)" }} onClick={(e) => e.stopPropagation()} /></TableCell>
+                      <TableCell sx={{ borderBottom: "none" }}><AccountCircleIcon sx={{ color: "rgba(255,255,255,0.3)" }} /></TableCell>
+                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.name}</TableCell>
+                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.email ?? "—"}</TableCell>
+                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.phone ?? "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 3, pt: 2 }}>
+              {renderedContacts.map((contact) => (
+                <Paper key={contact.id} variant="outlined" onClick={() => openRecord(contact)} sx={{ p: 2, cursor: "pointer", bgcolor: "transparent", borderColor: "rgba(255,255,255,0.3)", borderRadius: 3, "&:hover": { borderColor: "white" } }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Box sx={{ width: 60, height: 60, bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <AccountCircleIcon sx={{ fontSize: 40, color: "rgba(255,255,255,0.3)" }} />
+                    </Box>
+                    <Stack>
+                      <Typography color="white" fontWeight={600}>{contact.name}</Typography>
+                      <Typography color="rgba(255,255,255,0.7)" variant="body2">{contact.email ?? "No email"}</Typography>
+                      <Typography color="rgba(255,255,255,0.7)" variant="body2">{contact.phone ?? "No phone"}</Typography>
+                    </Stack>
+                  </Stack>
+                </Paper>
+              ))}
+            </Box>
+          )
+        )}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="body2" color="rgba(255,255,255,0.5)">{contacts.data?.meta.total ?? 0} records</Typography>
+          <Pagination page={page} count={Math.max(1, contacts.data?.meta.totalPages ?? 1)} onChange={(_, value) => setPage(value)} sx={{ "& .MuiPaginationItem-root": { color: "white" } }} />
+        </Box>
+      </Stack>
+    </DarkContainer>
+  );
 };

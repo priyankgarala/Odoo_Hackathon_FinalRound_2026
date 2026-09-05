@@ -18,9 +18,12 @@ import { SalesOrderDetailsPage } from "./pages/SalesOrderDetailsPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
 import { InvoiceDetailsPage } from "./pages/InvoiceDetailsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import { CreateUserPage } from "./pages/CreateUserPage";
 
 export const App = () => <Routes>
   <Route path="/login" element={<LoginPage />} />
+  <Route path="/signup" element={<SignupPage />} />
   <Route element={<ProtectedRoute />}><Route element={<AppLayout />}>
     <Route index element={<DashboardPage />} />
     <Route path="contacts" element={<ContactsPage />} />
@@ -38,6 +41,7 @@ export const App = () => <Routes>
     <Route path="sales-orders/:id" element={<SalesOrderDetailsPage />} />
     <Route path="invoices" element={<InvoicesPage />} />
     <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
+    <Route path="users/new" element={<CreateUserPage />} />
   </Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
 </Routes>;

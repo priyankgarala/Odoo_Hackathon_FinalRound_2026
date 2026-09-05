@@ -6,7 +6,7 @@ async function main() {
   for (const name of roles) await prisma.role.upsert({ where: { name }, update: {}, create: { name } });
   const role = await prisma.role.findUniqueOrThrow({ where: { name: "Admin" } });
   const passwordHash = await bcrypt.hash("Admin@123", 12);
-  await prisma.user.upsert({ where: { email: "admin@urbanfurniture.local" }, update: { name: "System Administrator", passwordHash, roleId: role.id, isActive: true }, create: { name: "System Administrator", email: "admin@urbanfurniture.local", passwordHash, roleId: role.id } });
+  await prisma.user.upsert({ where: { email: "admin@urbanfurniture.local" }, update: { name: "System Administrator", loginId: "adminuser", passwordHash, roleId: role.id, isActive: true }, create: { name: "System Administrator", loginId: "adminuser", email: "admin@urbanfurniture.local", passwordHash, roleId: role.id } });
   const accounts = [
     { code: "1000", name: "Cash", type: "ASSET" }, { code: "1010", name: "Bank", type: "ASSET" },
     { code: "1100", name: "Accounts Receivable", type: "ASSET" }, { code: "2000", name: "Accounts Payable", type: "LIABILITY" },

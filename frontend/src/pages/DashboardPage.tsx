@@ -1,10 +1,227 @@
+import { useState, useRef } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { AccountBalanceWalletOutlined, ArrowForwardOutlined, Inventory2Outlined, PeopleOutline, ReceiptLongOutlined, ShoppingCartOutlined } from "@mui/icons-material";
-import { Box, Button, Card, CardContent, Chip, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
-import { getDashboard } from "../api/dashboard.api";
-import { LoadingState } from "../components/feedback/LoadingState";
-import { ErrorState } from "../components/feedback/ErrorState";
-const money=(v:string)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Number(v));
-const Metric=({label,value,icon}:{label:string;value:string|number;icon:React.ReactNode})=><Card><CardContent><Stack direction="row" justifyContent="space-between"><Box><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="h5" fontWeight={800}>{value}</Typography></Box><Box color="primary.main">{icon}</Box></Stack></CardContent></Card>;
-export const DashboardPage=()=>{const q=useQuery({queryKey:["dashboard"],queryFn:getDashboard});if(q.isLoading)return <LoadingState label="Loading live dashboard..."/>;if(q.isError||!q.data)return <ErrorState message="Could not load live dashboard data." onRetry={()=>void q.refetch()}/>;const d=q.data;return <Stack spacing={3}><Stack direction={{xs:"column",md:"row"}} justifyContent="space-between"><Box><Typography variant="h4" fontWeight={800}>Operations dashboard</Typography><Typography color="text.secondary">Live PostgreSQL data across orders, payments, and accounting.</Typography></Box><Stack direction="row" gap={1}><Button component={RouterLink} to="/purchase-orders/new" variant="contained">New purchase order</Button><Button component={RouterLink} to="/sales-orders" variant="outlined">View sales</Button></Stack></Stack><Grid container spacing={2}><Grid size={{xs:6,md:3}}><Metric label="Customers" value={d.metrics.customers} icon={<PeopleOutline/>}/></Grid><Grid size={{xs:6,md:3}}><Metric label="Vendors" value={d.metrics.vendors} icon={<PeopleOutline/>}/></Grid><Grid size={{xs:6,md:3}}><Metric label="Products" value={d.metrics.products} icon={<Inventory2Outlined/>}/></Grid><Grid size={{xs:6,md:3}}><Metric label="Posted entries" value={d.metrics.postedEntries} icon={<ReceiptLongOutlined/>}/></Grid><Grid size={{xs:12,md:4}}><Metric label={`Purchase orders · ${d.metrics.purchaseOrderCount}`} value={money(d.metrics.purchaseTotal)} icon={<ShoppingCartOutlined/>}/></Grid><Grid size={{xs:12,md:4}}><Metric label={`Sales orders · ${d.metrics.salesOrderCount}`} value={money(d.metrics.salesTotal)} icon={<ReceiptLongOutlined/>}/></Grid><Grid size={{xs:12,md:4}}><Metric label="Vendor outstanding" value={money(d.metrics.outstanding)} icon={<AccountBalanceWalletOutlined/>}/></Grid></Grid><Paper sx={{p:3}}><Typography variant="h6" fontWeight={800}>Evaluator flow</Typography><Stack direction={{xs:"column",md:"row"}} alignItems={{md:"center"}} spacing={1} sx={{mt:1}}><Button component={RouterLink} to="/purchase-orders">1. Purchase order</Button><ArrowForwardOutlined/><Button component={RouterLink} to="/vendor-bills">2. Vendor bill</Button><ArrowForwardOutlined/><Button component={RouterLink} to="/vendor-bills">3. Completed payment</Button><ArrowForwardOutlined/><Button component={RouterLink} to="/journal-entries">4. Posted journal</Button></Stack><Typography variant="body2" color="text.secondary" sx={{mt:1}}>Open a bill to show its PO, payment history, and journal number.</Typography></Paper><Grid container spacing={3}><Grid size={{xs:12,lg:6}}><Paper sx={{p:2}}><Typography variant="h6">Recent purchase orders</Typography><Table size="small"><TableHead><TableRow><TableCell>Order</TableCell><TableCell>Vendor</TableCell><TableCell>Status</TableCell><TableCell align="right">Total</TableCell></TableRow></TableHead><TableBody>{d.recentOrders.map(o=><TableRow component={RouterLink} to={`/purchase-orders/${o.id}`} key={o.id} hover sx={{textDecoration:"none"}}><TableCell>{o.orderNumber}</TableCell><TableCell>{o.vendor.name}</TableCell><TableCell><Chip size="small" label={o.status}/></TableCell><TableCell align="right">{money(o.total)}</TableCell></TableRow>)}</TableBody></Table></Paper></Grid><Grid size={{xs:12,lg:6}}><Paper sx={{p:2}}><Typography variant="h6">Bills & payments</Typography><Table size="small"><TableHead><TableRow><TableCell>Bill</TableCell><TableCell>Vendor</TableCell><TableCell>Outstanding</TableCell><TableCell>Status</TableCell></TableRow></TableHead><TableBody>{d.recentBills.map(b=><TableRow component={RouterLink} to={`/vendor-bills/${b.id}`} key={b.id} hover sx={{textDecoration:"none"}}><TableCell>{b.billNumber}</TableCell><TableCell>{b.vendor.name}</TableCell><TableCell>{money(b.outstanding)}</TableCell><TableCell><Chip size="small" color={b.status==="PAID"?"success":"warning"} label={b.status}/></TableCell></TableRow>)}</TableBody></Table></Paper></Grid></Grid><Paper sx={{p:2}}><Typography variant="h6">Accounting audit trail</Typography><Table size="small"><TableHead><TableRow><TableCell>Entry</TableCell><TableCell>Journal</TableCell><TableCell>Description</TableCell></TableRow></TableHead><TableBody>{d.recentEntries.map(e=><TableRow component={RouterLink} to={`/journal-entries/${e.id}`} key={e.id} hover sx={{textDecoration:"none"}}><TableCell><Typography color="primary">{e.entryNumber}</Typography></TableCell><TableCell>{e.journal.code}</TableCell><TableCell>{e.description??"—"}</TableCell></TableRow>)}</TableBody></Table></Paper></Stack>};
+import { Box, Button, Stack, Typography, Popover, Grid, Paper, Fade } from "@mui/material";
+
+const menuData = {
+  Sales: [
+    { label: "Sales order", to: "/sales-orders" },
+    { label: "Sale Invoice", to: "/invoices" },
+    { label: "Receipt", to: "#" },
+  ],
+  Purchase: [
+    { label: "Purchase Order", to: "/purchase-orders" },
+    { label: "Purchase Bill", to: "/vendor-bills" },
+    { label: "Payment", to: "#" },
+  ],
+  Account: [
+    { label: "Contact", to: "/contacts" },
+    { label: "Product", to: "/products" },
+    { label: "Analyticals", to: "#" },
+    { label: "Analytical Budget", to: "#" },
+    { label: "Chart of Account", to: "/accounts" },
+    { label: "Journals", to: "/journals" },
+    { label: "Journal Entries", to: "/journal-entries" },
+  ],
+  Report: [
+    { label: "Balancesheet", to: "#" },
+    { label: "Profit and Loss", to: "#" },
+    { label: "Budget Report", to: "#" },
+  ],
+};
+
+const MetricBox = ({ label, value }: { label: string; value: string | number }) => (
+  <Box
+    sx={{
+      border: "1px solid rgba(255,255,255,0.2)",
+      borderRadius: 4,
+      px: 3,
+      py: 1,
+      minWidth: 100,
+      textAlign: "center",
+      "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.02)" }
+    }}
+  >
+    <Typography variant="body2" color="rgba(255,255,255,0.7)">{label}</Typography>
+    <Typography variant="h6" fontWeight={600} color="white">{value}</Typography>
+  </Box>
+);
+
+const SectionContainer = ({ title, buttonLabel, buttonTo, metrics }: { title: string; buttonLabel: string; buttonTo: string; metrics: { label: string; value: number | string }[] }) => (
+  <Box
+    sx={{
+      border: "1px solid rgba(255,255,255,0.15)",
+      borderRadius: 4,
+      p: 3,
+      mb: 3,
+    }}
+  >
+    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+      <Typography variant="h6" color="white" fontWeight={400}>{title}</Typography>
+      <Button 
+        component={RouterLink} 
+        to={buttonTo} 
+        variant="contained"
+        sx={{
+          bgcolor: "#2B5E74", // Blueish button from mockup
+          color: "white",
+          borderRadius: 2,
+          px: 4,
+          boxShadow: "none",
+          textTransform: "none",
+          "&:hover": { bgcolor: "#1f4759" }
+        }}
+      >
+        {buttonLabel}
+      </Button>
+    </Stack>
+    <Stack direction="row" spacing={3}>
+      {metrics.map((m, i) => <MetricBox key={i} label={m.label} value={m.value} />)}
+    </Stack>
+  </Box>
+);
+
+export const DashboardPage = () => {
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [activeMenu, setActiveMenu] = useState<keyof typeof menuData | null>(null);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, menu: keyof typeof menuData) => {
+    setAnchorEl(event.currentTarget);
+    setActiveMenu(menu);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setActiveMenu(null);
+  };
+
+  const open = Boolean(anchorEl);
+
+  return (
+    <Stack spacing={3} alignItems="center" py={2}>
+      {/* App Dashboard Label */}
+      <Box sx={{ width: "100%", maxWidth: 800, textAlign: "center", mb: -1 }}>
+        <Typography variant="h6" color="rgba(255,255,255,0.9)" fontWeight={400}>App Dashboard</Typography>
+      </Box>
+
+      {/* Main Dashboard Card */}
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 800,
+          borderRadius: 6,
+          bgcolor: "#121212",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          overflow: "hidden"
+        }}
+      >
+        {/* Top Navigation */}
+        <Box sx={{ borderBottom: "1px solid rgba(255,255,255,0.15)", p: 2 }}>
+          <Stack direction="row" justifyContent="space-around">
+            {(Object.keys(menuData) as Array<keyof typeof menuData>).map((key) => (
+              <Button
+                key={key}
+                onClick={(e) => handleMenuClick(e, key)}
+                sx={{ 
+                  color: activeMenu === key ? "white" : "rgba(255,255,255,0.7)", 
+                  textTransform: "none", 
+                  fontSize: "1.1rem",
+                  fontWeight: 400
+                }}
+              >
+                {key}
+              </Button>
+            ))}
+          </Stack>
+        </Box>
+
+        {/* Mega Menu Popover */}
+        <Popover
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+          slotProps={{
+            paper: {
+              sx: {
+                bgcolor: "#121212",
+                border: "1px solid rgba(255,255,255,0.2)",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                borderRadius: 2,
+                mt: 1,
+                minWidth: 200
+              }
+            }
+          }}
+        >
+          <Box sx={{ p: 2, display: 'flex', gap: 4 }}>
+            {/* If clicking a specific tab, we could show all columns or just the active one. The mockup shows all columns in a huge dropdown. Let's just render the huge dropdown whenever ANY tab is clicked, to match the mockup's "Open on click" visual. */}
+            {(Object.keys(menuData) as Array<keyof typeof menuData>).map((colKey) => (
+              <Stack key={colKey} spacing={1} minWidth={120}>
+                <Typography color="white" fontWeight={500} mb={1}>{colKey}</Typography>
+                {menuData[colKey].map((item, idx) => (
+                  <Button
+                    key={idx}
+                    component={RouterLink}
+                    to={item.to}
+                    onClick={handleClose}
+                    sx={{
+                      color: "rgba(255,255,255,0.7)",
+                      justifyContent: "flex-start",
+                      textTransform: "none",
+                      p: 0,
+                      "&:hover": { color: "white", bgcolor: "transparent" }
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </Stack>
+            ))}
+          </Box>
+        </Popover>
+
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
+          {/* Sales Section */}
+          <SectionContainer
+            title="Sales"
+            buttonLabel="New"
+            buttonTo="/sales-orders/new"
+            metrics={[
+              { label: "All", value: 12 },
+              { label: "Confirmed", value: 10 },
+              { label: "Draft", value: 2 },
+            ]}
+          />
+
+          {/* Purchase Section */}
+          <SectionContainer
+            title="Purchase"
+            buttonLabel="New"
+            buttonTo="/purchase-orders/new"
+            metrics={[
+              { label: "All", value: 12 },
+              { label: "Confirmed", value: 10 },
+              { label: "Draft", value: 2 },
+            ]}
+          />
+
+          {/* Budget Reports Section */}
+          <SectionContainer
+            title="Budget Reports"
+            buttonLabel="Report"
+            buttonTo="#"
+            metrics={[
+              { label: "Achieved", value: 3 },
+              { label: "Budget", value: 2 },
+              { label: "Committed", value: 4 },
+            ]}
+          />
+        </Box>
+      </Box>
+    </Stack>
+  );
+};

@@ -25,6 +25,7 @@ model Role {
 model User {
   id           Int      @id @default(autoincrement())
   name         String
+  loginId      String?  @unique
   email        String   @unique
   passwordHash String
   isActive     Boolean  @default(true)
