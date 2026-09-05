@@ -55,4 +55,148 @@ model Contact {
 
   @@index([type, active])
   @@index([name])
+  purchaseOrders PurchaseOrder[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  sku         String   @unique
+  name        String
+  description String?
+  unitPrice   Decimal  @db.Decimal(14, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([active])
+  purchaseOrderItems PurchaseOrderItem[]
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Account {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique
+  name      String
+  type      AccountType
+  parentId  Int?
+  parent    Account?    @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children  Account[]   @relation("AccountHierarchy")
+  journalEntryLines JournalEntryLine[]
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([parentId])
+  @@index([type, active])
+}
+
+enum JournalType {
+  SALES
+  PURCHASE
+  CASH
+  BANK
+  GENERAL
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+}
+
+model Journal {
+  id        Int          @id @default(autoincrement())
+  code      String       @unique
+  name      String
+  type      JournalType  @unique
+  active    Boolean      @default(true)
+  entries   JournalEntry[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model JournalEntry {
+  id            Int                @id @default(autoincrement())
+  entryNumber   String             @unique
+  entryDate     DateTime           @db.Date
+  journalId     Int
+  journal       Journal            @relation(fields: [journalId], references: [id], onDelete: Restrict)
+  referenceType String?
+  referenceId   String?
+  description   String?
+  status        JournalEntryStatus @default(DRAFT)
+  lines         JournalEntryLine[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([journalId, entryDate])
+  @@index([referenceType, referenceId])
+  @@index([status, entryDate])
+}
+
+model JournalEntryLine {
+  id             Int          @id @default(autoincrement())
+  journalEntryId Int
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      Int
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  debit          Decimal      @default(0) @db.Decimal(14, 2)
+  credit         Decimal      @default(0) @db.Decimal(14, 2)
+  description    String?
+  createdAt      DateTime     @default(now())
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id          Int                 @id @default(autoincrement())
+  orderNumber String              @unique
+  vendorId    Int
+  vendor      Contact             @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  orderDate   DateTime            @default(now()) @db.Date
+  status      PurchaseOrderStatus @default(DRAFT)
+  notes       String?
+  subtotal    Decimal             @default(0) @db.Decimal(14, 2)
+  taxTotal    Decimal             @default(0) @db.Decimal(14, 2)
+  total       Decimal             @default(0) @db.Decimal(14, 2)
+  items       PurchaseOrderItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([vendorId, status])
+  @@index([orderDate])
+}
+
+model PurchaseOrderItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       Int
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productSku      String
+  productName     String
+  quantity        Decimal       @db.Decimal(14, 2)
+  unitPrice       Decimal       @db.Decimal(14, 2)
+  taxRate         Decimal       @default(0) @db.Decimal(5, 2)
+  lineSubtotal    Decimal       @db.Decimal(14, 2)
+  taxAmount       Decimal       @db.Decimal(14, 2)
+  lineTotal       Decimal       @db.Decimal(14, 2)
+  createdAt       DateTime      @default(now())
+
+  @@index([purchaseOrderId])
+  @@index([productId])
 }

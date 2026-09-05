@@ -1,0 +1,10 @@
+import { api } from "./client";
+export type AccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
+export type Account = { id: number; code: string; name: string; type: AccountType; parentId: number | null; parent: { id: number; code: string; name: string } | null; active: boolean; _count: { children: number }; createdAt: string; updatedAt: string };
+export type AccountInput = { code: string; name: string; type: AccountType; parentId: number | null };
+export type AccountList = { data: Account[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
+export type AccountFilters = { search?: string; type?: AccountType; active?: "true" | "false"; page: number; pageSize: number };
+export const getAccounts = async (params: AccountFilters) => (await api.get<AccountList>("/accounts", { params: Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== "")) })).data;
+export const createAccount = async (input: AccountInput) => (await api.post<{ data: Account }>("/accounts", input)).data.data;
+export const updateAccount = async ({ id, input }: { id: number; input: AccountInput }) => (await api.put<{ data: Account }>(`/accounts/${id}`, input)).data.data;
+export const setAccountStatus = async ({ id, active }: { id: number; active: boolean }) => (await api.patch<{ data: Account }>(`/accounts/${id}/status`, { active })).data.data;

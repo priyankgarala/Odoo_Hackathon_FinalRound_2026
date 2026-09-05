@@ -1,0 +1,14 @@
+import { Router } from "express";
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
+import { validate } from "../../middleware/validate.js";
+import * as controller from "./product.controller.js";
+import { createProductSchema, getProductSchema, listProductsSchema, statusProductSchema, updateProductSchema } from "./product.schemas.js";
+const manageRoles = ["Admin", "Accountant", "Sales", "Purchase"];
+export const productRouter = Router();
+productRouter.use(authenticate);
+productRouter.get("/", validate(listProductsSchema), controller.list);
+productRouter.get("/:id", validate(getProductSchema), controller.get);
+productRouter.post("/", authorize(...manageRoles), validate(createProductSchema), controller.create);
+productRouter.put("/:id", authorize(...manageRoles), validate(updateProductSchema), controller.update);
+productRouter.patch("/:id/status", authorize(...manageRoles), validate(statusProductSchema), controller.status);
