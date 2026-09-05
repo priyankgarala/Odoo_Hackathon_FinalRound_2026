@@ -2,7 +2,16 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../middleware/error-handler.js";
 
-type ProductInput = { sku: string; name: string; description: string | null; unitPrice: number };
+type ProductInput = {
+  sku: string;
+  name: string;
+  description: string | null;
+  type?: "GOODS" | "SERVICE" | "COMBO";
+  unitPrice: number;
+  costPrice?: number;
+  category?: string | null;
+  image?: string | null;
+};
 const getById = async (id: number) => { const product = await prisma.product.findUnique({ where: { id } }); if (!product) throw new AppError(404, "Product not found"); return product; };
 
 // Future sales/purchase item services must call this while creating an item and save the

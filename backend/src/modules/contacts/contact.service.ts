@@ -1,7 +1,7 @@
 import type { ContactType, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../middleware/error-handler.js";
-type ContactInput = { name: string; type: ContactType; email: string | null; phone: string | null; address: string | null };
+type ContactInput = { name: string; type: ContactType; email: string | null; phone: string | null; address: string | null; profileImage?: string | null };
 const getById = async (id: number) => { const contact = await prisma.contact.findUnique({ where: { id } }); if (!contact) throw new AppError(404, "Contact not found"); return contact; };
 export const createContact = (data: ContactInput) => prisma.contact.create({ data });
 export const listContacts = async (query: { search?: string; type?: ContactType; active?: "true" | "false"; page: number; pageSize: number }) => {

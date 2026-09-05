@@ -2,10 +2,14 @@ import { z } from "zod";
 
 const id = z.coerce.number().int().positive();
 const productFields = z.object({
-  sku: z.string().trim().min(2).max(64).regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, "SKU may contain only letters, numbers, hyphens, and underscores.").transform((value) => value.toUpperCase()),
+  sku: z.string().trim().max(64).optional().transform((value) => value ? value.toUpperCase() : `PRD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`),
   name: z.string().trim().min(2).max(160),
   description: z.string().trim().max(2000).optional().transform((value) => value || null),
-  unitPrice: z.coerce.number().finite().positive().max(999999999999.99),
+  type: z.enum(["GOODS", "SERVICE", "COMBO"]).default("GOODS"),
+  unitPrice: z.coerce.number().finite().min(0).max(999999999999.99),
+  costPrice: z.coerce.number().finite().min(0).default(0),
+  category: z.string().trim().max(120).optional().transform((value) => value || null),
+  image: z.string().trim().optional().transform((value) => value || null),
 });
 export const createProductSchema = z.object({ body: productFields, params: z.object({}), query: z.object({}) });
 export const updateProductSchema = z.object({ body: productFields, params: z.object({ id }), query: z.object({}) });

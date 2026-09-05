@@ -1,6 +1,29 @@
 import { api } from "./client";
-export type Product = { id: number; sku: string; name: string; description: string | null; unitPrice: string; active: boolean; createdAt: string; updatedAt: string };
-export type ProductInput = { sku: string; name: string; description: string | null; unitPrice: number };
+export type ProductType = "GOODS" | "SERVICE" | "COMBO";
+export type Product = {
+  id: number;
+  sku: string;
+  name: string;
+  description: string | null;
+  type: ProductType;
+  unitPrice: string;
+  costPrice: string;
+  category: string | null;
+  image: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+export type ProductInput = {
+  sku?: string;
+  name: string;
+  description?: string | null;
+  type?: ProductType;
+  unitPrice: number;
+  costPrice?: number;
+  category?: string | null;
+  image?: string | null;
+};
 export type ProductList = { data: Product[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
 export type ProductFilters = { search?: string; active?: "true" | "false"; page: number; pageSize: number };
 export const getProducts = async (params: ProductFilters) => (await api.get<ProductList>("/products", { params: Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== "")) })).data;

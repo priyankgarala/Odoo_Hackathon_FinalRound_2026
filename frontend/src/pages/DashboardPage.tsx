@@ -6,26 +6,26 @@ const menuData = {
   Sales: [
     { label: "Sales order", to: "/sales-orders" },
     { label: "Sale Invoice", to: "/invoices" },
-    { label: "Receipt", to: "#" },
+    { label: "Receipt", to: "/invoices" },
   ],
   Purchase: [
     { label: "Purchase Order", to: "/purchase-orders" },
     { label: "Purchase Bill", to: "/vendor-bills" },
-    { label: "Payment", to: "#" },
+    { label: "Payment", to: "/vendor-bills" },
   ],
   Account: [
     { label: "Contact", to: "/contacts" },
     { label: "Product", to: "/products" },
-    { label: "Analyticals", to: "#" },
-    { label: "Analytical Budget", to: "#" },
+    { label: "Analyticals", to: "/analyticals" },
+    { label: "Analytical Budget", to: "/budgets" },
     { label: "Chart of Account", to: "/accounts" },
     { label: "Journals", to: "/journals" },
     { label: "Journal Entries", to: "/journal-entries" },
   ],
   Report: [
-    { label: "Balancesheet", to: "#" },
-    { label: "Profit and Loss", to: "#" },
-    { label: "Budget Report", to: "#" },
+    { label: "Balancesheet", to: "/reports/balance-sheet" },
+    { label: "Profit and Loss", to: "/reports/profit-and-loss" },
+    { label: "Budget Report", to: "/reports/budget" },
   ],
 };
 
@@ -213,7 +213,7 @@ export const DashboardPage = () => {
           <SectionContainer
             title="Budget Reports"
             buttonLabel="Report"
-            buttonTo="#"
+            buttonTo="/reports/budget"
             metrics={[
               { label: "Achieved", value: 3 },
               { label: "Budget", value: 2 },

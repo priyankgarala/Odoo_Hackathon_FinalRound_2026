@@ -1,14 +1,299 @@
 import { useMemo, useState, type FormEvent } from "react";
 import axios from "axios";
-import AddIcon from "@mui/icons-material/Add"; import EditOutlinedIcon from "@mui/icons-material/EditOutlined"; import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  MenuItem,
+  Pagination,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography
+} from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as accountsApi from "../api/accounts.api"; import { EmptyState } from "../components/feedback/EmptyState"; import { ErrorState } from "../components/feedback/ErrorState"; import { LoadingState } from "../components/feedback/LoadingState"; import { useAuth } from "../features/auth/AuthProvider";
-const types: accountsApi.AccountType[] = ["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]; const blank: accountsApi.AccountInput = { code: "", name: "", type: "ASSET", parentId: null }; const message = (e: unknown) => axios.isAxiosError<{ error?: string }>(e) ? e.response?.data?.error ?? "Request failed." : "Request failed."; const label = (v: string) => v[0] + v.slice(1).toLowerCase();
+import * as accountsApi from "../api/accounts.api";
+import { EmptyState } from "../components/feedback/EmptyState";
+import { ErrorState } from "../components/feedback/ErrorState";
+import { LoadingState } from "../components/feedback/LoadingState";
+import { useAuth } from "../features/auth/AuthProvider";
+
+const blank: accountsApi.AccountInput = {
+  code: "",
+  name: "",
+  type: "ASSET",
+  parentId: null
+};
+
+const apiError = (error: unknown) =>
+  axios.isAxiosError<{ error?: string }>(error)
+    ? error.response?.data?.error ?? "Request failed."
+    : "Request failed.";
+
+const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
+  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+    {title && (
+      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
+        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      </Box>
+    )}
+    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+      {children}
+    </Box>
+  </Box>
+);
+
+const darkTextFieldSx = {
+  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
+  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
+  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+};
+
+const darkSelectProps = {
+  MenuProps: {
+    PaperProps: {
+      sx: {
+        bgcolor: "#1e1e1e",
+        color: "rgba(255,255,255,0.9)",
+        maxHeight: 300,
+        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
+      }
+    }
+  }
+};
+
+const CustomButton = ({ children, active, ...props }: any) => (
+  <Button
+    variant="outlined"
+    sx={{
+      color: active ? "black" : "white",
+      bgcolor: active ? "white" : "transparent",
+      borderColor: "rgba(255,255,255,0.5)",
+      borderRadius: 2,
+      textTransform: "none",
+      minWidth: 80,
+      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+    }}
+    {...props}
+  >
+    {children}
+  </Button>
+);
+
+const displayType = (type: string) => {
+  if (type === "REVENUE" || type === "INCOME") return "Income";
+  if (type === "EXPENSE") return "Expenses";
+  if (type === "EQUITY" || type === "CAPITAL") return "Capital";
+  if (type === "LIABILITY") return "Liability";
+  return "Asset";
+};
+
 export const AccountsPage = () => {
- const cache = useQueryClient(); const { user } = useAuth(); const manage = ["Admin", "Accountant"].includes(user?.role ?? ""); const [search, setSearch] = useState(""); const [type, setType] = useState<accountsApi.AccountType | "">(""); const [active, setActive] = useState<"" | "true" | "false">(""); const [page, setPage] = useState(1); const [form, setForm] = useState<accountsApi.AccountInput>(blank); const [editing, setEditing] = useState<accountsApi.Account | null>(null); const [details, setDetails] = useState<accountsApi.Account | null>(null); const [target, setTarget] = useState<accountsApi.Account | null>(null); const [open, setOpen] = useState(false);
- const params = useMemo(() => ({ search: search || undefined, type: type || undefined, active: active || undefined, page, pageSize: 50 }), [search, type, active, page]); const accounts = useQuery({ queryKey: ["accounts", params], queryFn: () => accountsApi.getAccounts(params) }); const refresh = () => cache.invalidateQueries({ queryKey: ["accounts"] }); const all = accounts.data?.data ?? [];
- const save = useMutation({ mutationFn: () => editing ? accountsApi.updateAccount({ id: editing.id, input: form }) : accountsApi.createAccount(form), onSuccess: () => { setOpen(false); setEditing(null); setForm(blank); refresh(); } }); const status = useMutation({ mutationFn: (a: accountsApi.Account) => accountsApi.setAccountStatus({ id: a.id, active: !a.active }), onSuccess: () => { setTarget(null); refresh(); } });
- const edit = (a: accountsApi.Account) => { setEditing(a); setForm({ code: a.code, name: a.name, type: a.type, parentId: a.parentId }); setOpen(true); }; const parents = all.filter((a) => a.id !== editing?.id && a.active && a.type === form.type);
- return <Stack spacing={3}><Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={2}><Box><Typography variant="h4" fontWeight={750}>Chart of Accounts</Typography><Typography color="text.secondary">A code-based, hierarchical foundation for financial reporting.</Typography></Box>{manage && <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm(blank); setOpen(true); }}>Add account</Button>}</Stack><Paper sx={{ p: 2 }}><Stack direction={{ xs: "column", md: "row" }} gap={2}><TextField label="Search code or name" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} fullWidth /><FormControl sx={{ minWidth: 180 }}><InputLabel>Account type</InputLabel><Select label="Account type" value={type} onChange={(e) => { setType(e.target.value as accountsApi.AccountType | ""); setPage(1); }}><MenuItem value="">All types</MenuItem>{types.map((v) => <MenuItem key={v} value={v}>{label(v)}</MenuItem>)}</Select></FormControl><FormControl sx={{ minWidth: 150 }}><InputLabel>Status</InputLabel><Select label="Status" value={active} onChange={(e) => { setActive(e.target.value as "" | "true" | "false"); setPage(1); }}><MenuItem value="">All statuses</MenuItem><MenuItem value="true">Active</MenuItem><MenuItem value="false">Inactive</MenuItem></Select></FormControl></Stack></Paper>{accounts.isLoading ? <LoadingState label="Loading chart of accounts..." /> : accounts.isError ? <ErrorState message={message(accounts.error)} onRetry={() => void accounts.refetch()} /> : all.length === 0 ? <EmptyState message="No accounts match your filters." /> : <><TableContainer component={Paper}><Table><TableHead><TableRow><TableCell>Code</TableCell><TableCell>Account name</TableCell><TableCell>Type</TableCell><TableCell>Parent</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead><TableBody>{all.map((a) => <TableRow key={a.id} hover><TableCell><Typography fontWeight={700}>{a.code}</Typography></TableCell><TableCell sx={{ pl: a.parentId ? 5 : 2 }}>{a.parentId ? "↳ " : ""}{a.name}</TableCell><TableCell><Chip size="small" label={label(a.type)} /></TableCell><TableCell>{a.parent ? `${a.parent.code} · ${a.parent.name}` : "—"}</TableCell><TableCell><Chip size="small" color={a.active ? "success" : "default"} label={a.active ? "Active" : "Inactive"} /></TableCell><TableCell align="right"><IconButton onClick={() => setDetails(a)}><VisibilityOutlinedIcon /></IconButton>{manage && <><IconButton onClick={() => edit(a)}><EditOutlinedIcon /></IconButton><Button size="small" color={a.active ? "warning" : "success"} onClick={() => setTarget(a)}>{a.active ? "Deactivate" : "Activate"}</Button></>}</TableCell></TableRow>)}</TableBody></Table></TableContainer><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Typography variant="body2" color="text.secondary">{accounts.data!.meta.total} account{accounts.data!.meta.total === 1 ? "" : "s"}</Typography><Pagination page={page} count={Math.max(1, accounts.data!.meta.totalPages)} onChange={(_, v) => setPage(v)} /></Box></>}<Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm"><Box component="form" onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }}><DialogTitle>{editing ? "Edit account" : "Add account"}</DialogTitle><DialogContent><Stack spacing={2} sx={{ pt: 1 }}>{save.isError && <Alert severity="error">{message(save.error)}</Alert>}<TextField label="Account code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required fullWidth /><TextField label="Account name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required fullWidth /><FormControl fullWidth><InputLabel>Account type</InputLabel><Select label="Account type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as accountsApi.AccountType, parentId: null })}>{types.map((v) => <MenuItem key={v} value={v}>{label(v)}</MenuItem>)}</Select></FormControl><FormControl fullWidth><InputLabel>Parent account</InputLabel><Select label="Parent account" value={form.parentId ?? ""} onChange={(e) => setForm({ ...form, parentId: String(e.target.value) === "" ? null : Number(e.target.value) })}><MenuItem value="">No parent (top level)</MenuItem>{parents.map((a) => <MenuItem key={a.id} value={a.id}>{a.code} · {a.name}</MenuItem>)}</Select></FormControl></Stack></DialogContent><DialogActions><Button onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? "Saving..." : "Save account"}</Button></DialogActions></Box></Dialog><Dialog open={!!details} onClose={() => setDetails(null)}><DialogTitle>Account details</DialogTitle><DialogContent>{details && <Stack spacing={1}><Typography variant="h6">{details.code} · {details.name}</Typography><Typography>Type: {label(details.type)}</Typography><Typography>Parent: {details.parent ? `${details.parent.code} · ${details.parent.name}` : "Top level"}</Typography><Typography>Child accounts: {details._count.children}</Typography><Typography>Status: {details.active ? "Active" : "Inactive"}</Typography></Stack>}</DialogContent><DialogActions><Button onClick={() => setDetails(null)}>Close</Button></DialogActions></Dialog><Dialog open={!!target} onClose={() => setTarget(null)}><DialogTitle>{target?.active ? "Deactivate account?" : "Activate account?"}</DialogTitle><DialogContent><Typography>{target?.active ? "Accounts with child accounts or accounting history cannot be deactivated." : "This account will be available for future accounting entries."}</Typography>{status.isError && <Alert sx={{ mt: 2 }} severity="error">{message(status.error)}</Alert>}</DialogContent><DialogActions><Button onClick={() => setTarget(null)}>Cancel</Button><Button color={target?.active ? "warning" : "success"} variant="contained" disabled={status.isPending} onClick={() => target && status.mutate(target)}>{target?.active ? "Deactivate" : "Activate"}</Button></DialogActions></Dialog></Stack>;
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const canManage = ["Admin", "Accountant"].includes(user?.role ?? "");
+
+  const [screen, setScreen] = useState<"list" | "form">("list");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [form, setForm] = useState<accountsApi.AccountInput>(blank);
+  const [editing, setEditing] = useState<accountsApi.Account | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const params = useMemo(() => ({ search: search || undefined, page, pageSize: 25 }), [search, page]);
+  const accounts = useQuery({ queryKey: ["accounts", params], queryFn: () => accountsApi.getAccounts(params) });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["accounts"] });
+
+  const save = useMutation({
+    mutationFn: (payload: accountsApi.AccountInput) =>
+      editing ? accountsApi.updateAccount({ id: editing.id, input: payload }) : accountsApi.createAccount(payload),
+    onSuccess: () => {
+      setScreen("list");
+      setEditing(null);
+      setForm(blank);
+      refresh();
+    }
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ ...blank, code: `ACC-${Math.floor(1000 + Math.random() * 9000)}` });
+    setValidationError(null);
+    setScreen("form");
+  };
+
+  const openRecord = (acc: accountsApi.Account) => {
+    setEditing(acc);
+    setForm({
+      code: acc.code,
+      name: acc.name,
+      type: acc.type,
+      parentId: acc.parentId
+    });
+    setValidationError(null);
+    setScreen("form");
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!form.name || form.name.trim().length < 2) {
+      setValidationError("Account Name must be at least 2 characters long.");
+      return;
+    }
+    setValidationError(null);
+    save.mutate(form);
+  };
+
+  if (screen === "form") {
+    return (
+      <DarkContainer title="Chart of Accounts">
+        <Stack component="form" onSubmit={submit} spacing={4}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack direction="row" spacing={2}>
+              <CustomButton type="submit" disabled={save.isPending}>
+                {save.isPending ? "..." : "Confirm"}
+              </CustomButton>
+            </Stack>
+            <CustomButton onClick={() => { setScreen("list"); setEditing(null); }}>
+              Back
+            </CustomButton>
+          </Stack>
+
+          {validationError && <Alert severity="warning">{validationError}</Alert>}
+          {save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}
+
+          <Stack spacing={3} maxWidth={600}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography color="white" minWidth={140}>Account Name</Typography>
+              <TextField
+                variant="standard"
+                fullWidth
+                placeholder="e.g. Bank A/c, Debtors A/c"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                sx={darkTextFieldSx}
+              />
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography color="white" minWidth={140}>Type</Typography>
+              <TextField
+                select
+                SelectProps={darkSelectProps}
+                variant="standard"
+                fullWidth
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value as accountsApi.AccountType })}
+                sx={darkTextFieldSx}
+              >
+                <MenuItem value="ASSET">Asset</MenuItem>
+                <MenuItem value="LIABILITY">Liability</MenuItem>
+                <MenuItem value="REVENUE">Income</MenuItem>
+                <MenuItem value="EXPENSE">Expenses</MenuItem>
+                <MenuItem value="EQUITY">Capital</MenuItem>
+              </TextField>
+            </Stack>
+
+            <Typography variant="body2" color="rgba(255,255,255,0.4)">
+              Each account is assigned an Account Type, which is used for financial reporting (Balance Sheet and Profit & Loss).
+            </Typography>
+          </Stack>
+        </Stack>
+      </DarkContainer>
+    );
+  }
+
+  const renderedAccounts = accounts.data?.data ?? [];
+
+  return (
+    <DarkContainer title="Chart of Accounts">
+      <Stack spacing={3}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <CustomButton onClick={openCreate}>New</CustomButton>
+          <TextField
+            variant="outlined"
+            size="small"
+            placeholder="Search account..."
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+            sx={{
+              width: 300,
+              input: { color: "white" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
+                "&:hover fieldset": { borderColor: "white" }
+              }
+            }}
+          />
+          <CustomButton onClick={() => window.history.back()}>Back</CustomButton>
+        </Stack>
+
+        {accounts.isLoading ? (
+          <LoadingState label="Loading chart of accounts..." />
+        ) : accounts.isError ? (
+          <ErrorState message={apiError(accounts.error)} onRetry={() => void accounts.refetch()} />
+        ) : renderedAccounts.length === 0 ? (
+          <EmptyState message="No accounts found." />
+        ) : (
+          <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
+                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Account Name</TableCell>
+                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Code</TableCell>
+                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Type</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {renderedAccounts.map((acc) => (
+                  <TableRow
+                    key={acc.id}
+                    hover
+                    onClick={() => openRecord(acc)}
+                    sx={{ cursor: "pointer", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    <TableCell sx={{ color: "white", borderBottom: "none", fontWeight: 600 }}>
+                      {acc.name}
+                    </TableCell>
+                    <TableCell sx={{ color: "rgba(255,255,255,0.6)", borderBottom: "none" }}>
+                      {acc.code}
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: "none" }}>
+                      <Chip
+                        size="small"
+                        label={displayType(acc.type)}
+                        sx={{ bgcolor: "rgba(255,255,255,0.12)", color: "white" }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="body2" color="rgba(255,255,255,0.5)">
+            {accounts.data?.meta.total ?? 0} accounts
+          </Typography>
+          <Pagination
+            page={page}
+            count={Math.max(1, accounts.data?.meta.totalPages ?? 1)}
+            onChange={(_, value) => setPage(value)}
+            sx={{ "& .MuiPaginationItem-root": { color: "white" } }}
+          />
+        </Box>
+      </Stack>
+    </DarkContainer>
+  );
 };

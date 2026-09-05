@@ -20,6 +20,10 @@ import { InvoiceDetailsPage } from "./pages/InvoiceDetailsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { CreateUserPage } from "./pages/CreateUserPage";
+import { CreateSalesOrderPage } from "./pages/CreateSalesOrderPage";
+import { AnalyticAccountsPage } from "./pages/AnalyticAccountsPage";
+import { BudgetsPage } from "./pages/BudgetsPage";
+import { ReportsPage } from "./pages/ReportsPage";
 
 export const App = () => <Routes>
   <Route path="/login" element={<LoginPage />} />
@@ -38,10 +42,18 @@ export const App = () => <Routes>
     <Route path="vendor-bills" element={<VendorBillsPage />} />
     <Route path="vendor-bills/:id" element={<VendorBillDetailsPage />} />
     <Route path="sales-orders" element={<SalesOrdersPage />} />
+    <Route path="sales-orders/new" element={<CreateSalesOrderPage />} />
     <Route path="sales-orders/:id" element={<SalesOrderDetailsPage />} />
     <Route path="invoices" element={<InvoicesPage />} />
     <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
     <Route path="users/new" element={<CreateUserPage />} />
+    <Route path="analyticals" element={<AnalyticAccountsPage />} />
+    <Route path="budgets" element={<BudgetsPage />} />
+    <Route path="reports" element={<ReportsPage />} />
+    <Route path="reports/balance-sheet" element={<ReportsPage initialTab={0} />} />
+    <Route path="reports/profit-and-loss" element={<ReportsPage initialTab={1} />} />
+    <Route path="reports/budget" element={<ReportsPage initialTab={2} />} />
   </Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
 </Routes>;
+

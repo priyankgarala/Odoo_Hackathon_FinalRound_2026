@@ -9,6 +9,9 @@ import { vendorBillRouter } from "../modules/vendor-bills/vendor-bill.routes.js"
 import { salesOrderRouter } from "../modules/sales-orders/sales-order.routes.js";
 import { invoiceRouter } from "../modules/invoices/invoice.routes.js";
 import { dashboardRouter } from "../modules/dashboard/dashboard.routes.js";
+import { analyticRouter } from "../modules/analyticals/analytic.routes.js";
+import { budgetRouter } from "../modules/budgets/budget.routes.js";
+import { reportRouter } from "../modules/reports/report.routes.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
@@ -22,3 +25,7 @@ apiRouter.use("/vendor-bills", vendorBillRouter);
 apiRouter.use("/sales-orders", salesOrderRouter);
 apiRouter.use("/invoices", invoiceRouter);
 apiRouter.use("/dashboard", dashboardRouter);
+apiRouter.use("/analyticals", analyticRouter);
+apiRouter.use("/budgets", budgetRouter);
+apiRouter.use("/reports", reportRouter);
+

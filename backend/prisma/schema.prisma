@@ -50,6 +50,7 @@ model Contact {
   email     String?     @unique
   phone     String?
   address   String?
+  profileImage String?  @db.Text
   active    Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -60,17 +61,28 @@ model Contact {
   vendorBills VendorBill[]
   salesOrders SalesOrder[]
   invoices    Invoice[]
+  journalEntryLines JournalEntryLine[] @relation("JournalLinePartner")
+}
+
+enum ProductType {
+  GOODS
+  SERVICE
+  COMBO
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  sku         String   @unique
+  id          Int         @id @default(autoincrement())
+  sku         String      @unique
   name        String
   description String?
-  unitPrice   Decimal  @db.Decimal(14, 2)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  type        ProductType @default(GOODS)
+  unitPrice   Decimal     @db.Decimal(14, 2)
+  costPrice   Decimal     @default(0) @db.Decimal(14, 2)
+  category    String?
+  image       String?     @db.Text
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@index([name])
   @@index([active])
@@ -84,7 +96,9 @@ enum AccountType {
   ASSET
   LIABILITY
   EQUITY
+  CAPITAL
   REVENUE
+  INCOME
   EXPENSE
 }
 
@@ -97,6 +111,7 @@ model Account {
   parent    Account?    @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children  Account[]   @relation("AccountHierarchy")
   journalEntryLines JournalEntryLine[]
+  defaultForJournals Journal[] @relation("JournalDefaultAccount")
   active    Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -119,14 +134,16 @@ enum JournalEntryStatus {
 }
 
 model Journal {
-  id        Int          @id @default(autoincrement())
-  code      String       @unique
-  name      String
-  type      JournalType  @unique
-  active    Boolean      @default(true)
-  entries   JournalEntry[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id               Int            @id @default(autoincrement())
+  code             String         @unique
+  name             String
+  type             JournalType    @unique
+  defaultAccountId Int?
+  defaultAccount   Account?       @relation("JournalDefaultAccount", fields: [defaultAccountId], references: [id], onDelete: SetNull)
+  active           Boolean        @default(true)
+  entries          JournalEntry[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model JournalEntry {
@@ -157,6 +174,8 @@ model JournalEntryLine {
   journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
   accountId      Int
   account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  partnerId      Int?
+  partner        Contact?     @relation("JournalLinePartner", fields: [partnerId], references: [id], onDelete: SetNull)
   debit          Decimal      @default(0) @db.Decimal(14, 2)
   credit         Decimal      @default(0) @db.Decimal(14, 2)
   description    String?
@@ -164,6 +183,7 @@ model JournalEntryLine {
 
   @@index([journalEntryId])
   @@index([accountId])
+  @@index([partnerId])
 }
 
 enum PurchaseOrderStatus {
@@ -368,4 +388,35 @@ model InvoiceItem {
   lineTotal Decimal @db.Decimal(14,2)
   createdAt DateTime @default(now())
   @@index([invoiceId])
+}
+
+enum AnalyticType {
+  INCOME
+  EXPENSE
+}
+
+model AnalyticAccount {
+  id        Int          @id @default(autoincrement())
+  name      String
+  type      AnalyticType
+  active    Boolean      @default(true)
+  budgets   Budget[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([type, active])
+}
+
+model Budget {
+  id                Int             @id @default(autoincrement())
+  name              String
+  period            String
+  plannedAmount     Decimal         @db.Decimal(14, 2)
+  responsiblePerson String
+  analyticAccountId Int
+  analyticAccount   AnalyticAccount @relation(fields: [analyticAccountId], references: [id], onDelete: Restrict)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([analyticAccountId])
 }

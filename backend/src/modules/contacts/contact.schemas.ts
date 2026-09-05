@@ -1,10 +1,11 @@
 import { z } from "zod";
 const contactType = z.enum(["CUSTOMER", "VENDOR", "BOTH"]);
 const nullableText = z.string().trim().max(500).optional().transform((value) => value || null);
+const nullableBase64 = z.string().trim().optional().transform((value) => value || null);
 const contactFields = z.object({
   name: z.string().trim().min(2).max(120), type: contactType,
   email: z.string().trim().email().max(254).optional().transform((value) => value?.toLowerCase() || null),
-  phone: nullableText, address: nullableText,
+  phone: nullableText, address: nullableText, profileImage: nullableBase64,
 });
 const id = z.coerce.number().int().positive();
 export const createContactSchema = z.object({ body: contactFields, params: z.object({}), query: z.object({}) });

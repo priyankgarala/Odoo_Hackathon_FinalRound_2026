@@ -1,6 +1,6 @@
 import { api } from "./client";
 export type ContactType = "CUSTOMER" | "VENDOR" | "BOTH";
-export type Contact = { id: number; name: string; type: ContactType; email: string | null; phone: string | null; address: string | null; active: boolean; createdAt: string; updatedAt: string };
+export type Contact = { id: number; name: string; type: ContactType; email: string | null; phone: string | null; address: string | null; profileImage: string | null; active: boolean; createdAt: string; updatedAt: string };
 export type ContactInput = Omit<Contact, "id" | "active" | "createdAt" | "updatedAt">;
 export type ContactList = { data: Contact[]; meta: { page: number; pageSize: number; total: number; totalPages: number } };
 export type ContactFilters = { search?: string; type?: ContactType; active?: "true" | "false"; page: number; pageSize: number };
