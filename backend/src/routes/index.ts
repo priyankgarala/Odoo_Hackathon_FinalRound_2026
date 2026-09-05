@@ -13,11 +13,22 @@ import { analyticRouter } from "../modules/analyticals/analytic.routes.js";
 import { budgetRouter } from "../modules/budgets/budget.routes.js";
 import { reportRouter } from "../modules/reports/report.routes.js";
 import { taxRouter } from "../modules/taxes/tax.routes.js";
+import { categoryRouter } from "../modules/categories/category.routes.js";
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
+import { ROLES } from "../config/roles.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
+// Viewers are deliberately limited to the management dashboard and reports.
+// All operational/master-data endpoints require a System Administrator.
+apiRouter.use((req, res, next) => {
+  if (req.path.startsWith("/dashboard") || req.path.startsWith("/reports")) return next();
+  return authenticate(req, res, (error) => error ? next(error) : authorize(ROLES.SYSTEM_ADMINISTRATOR)(req, res, next));
+});
 apiRouter.use("/contacts", contactRouter);
 apiRouter.use("/products", productRouter);
+apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/taxes", taxRouter);
 apiRouter.use("/accounts", accountRouter);
 apiRouter.use("/journals", journalRouter);

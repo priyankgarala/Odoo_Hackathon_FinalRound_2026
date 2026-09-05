@@ -21,6 +21,7 @@ const productFields = z.object({
   costPrice: z.coerce.number().finite().min(0).default(0),
   defaultTaxId: z.union([id, z.literal(""), z.null(), z.undefined()]).transform((val) => (val && typeof val === "number" ? val : null)),
   category: nullableText,
+  categoryId: z.union([id, z.literal(""), z.null(), z.undefined()]).transform((val) => (val && typeof val === "number" ? val : null)),
   image: nullableImage,
 });
 

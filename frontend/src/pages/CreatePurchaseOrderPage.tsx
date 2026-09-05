@@ -196,9 +196,7 @@ export const CreatePurchaseOrderPage = () => {
         {/* Header toolbar */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack direction="row" spacing={2}>
-            <CustomButton active onClick={handleResetNew}>
-              New
-            </CustomButton>
+            
             <CustomButton
               disabled={save.isPending}
               onClick={handleConfirm}
@@ -305,8 +303,9 @@ export const CreatePurchaseOrderPage = () => {
                         onChange={(e) => {
                           const p = products.data?.data.find((x) => x.id === Number(e.target.value));
                           const autoPrice = p ? String(p.costPrice || p.unitPrice || 0) : "";
-                          const autoTaxId = p?.defaultTaxId ? String(p.defaultTaxId) : "";
-                          const autoTaxRate = p?.defaultTax ? Number(p.defaultTax.rate) : 0;
+                          const autoTax = p?.defaultTax ?? p?.productCategory?.tax ?? null;
+                          const autoTaxId = autoTax ? String(autoTax.id) : p?.defaultTaxId ? String(p.defaultTaxId) : "";
+                          const autoTaxRate = autoTax ? Number(autoTax.rate) : 0;
                           update(i, {
                             productId: e.target.value,
                             unitPrice: autoPrice,
@@ -410,7 +409,7 @@ export const CreatePurchaseOrderPage = () => {
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Button
             startIcon={<AddIcon />}
-            onClick={() => setRows([...rows, { productId: "", analyticId: "", quantity: 1, unitPrice: "", taxRate: 0 }])}
+            onClick={() => setRows([...rows, { productId: "", analyticId: "", quantity: 1, unitPrice: "", taxId: "", taxRate: 0 }])}
             sx={{ color: "rgba(255,255,255,0.8)", borderColor: "rgba(255,255,255,0.3)", textTransform: "none" }}
             variant="outlined"
           >

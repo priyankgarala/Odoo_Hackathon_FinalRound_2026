@@ -5,8 +5,9 @@ import { Alert, Button, Stack, TextField, Typography, Box, RadioGroup, FormContr
 import { useMutation } from "@tanstack/react-query";
 import * as authApi from "../api/auth.api";
 import { useAuth } from "../features/auth/AuthProvider";
+import { SYSTEM_ADMINISTRATOR, VIEWER } from "../features/auth/roles";
 
-const roles = ["Admin", "Accountant", "Sales", "Purchase", "Viewer"] as const;
+const roles = [SYSTEM_ADMINISTRATOR, VIEWER] as const;
 
 const standardInputStyles = {
   "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.5)" },
@@ -33,13 +34,13 @@ export const CreateUserPage = () => {
   const [name, setName] = useState(""); 
   const [loginId, setLoginId] = useState(""); 
   const [email, setEmail] = useState(""); 
-  const [roleName, setRoleName] = useState<(typeof roles)[number]>("Viewer"); 
+  const [roleName, setRoleName] = useState<(typeof roles)[number]>(VIEWER); 
   const [password, setPassword] = useState(""); 
   const [confirmPassword, setConfirmPassword] = useState("");
   
   const create = useMutation({ mutationFn: authApi.createUser, onSuccess: () => navigate("/", { replace: true }) });
   
-  if (user?.role !== "Admin") return <Navigate to="/" replace />;
+  if (user?.role !== SYSTEM_ADMINISTRATOR) return <Navigate to="/" replace />;
   
   const validatePassword = (pass: string) => {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{9,}$/.test(pass);
@@ -115,8 +116,8 @@ export const CreateUserPage = () => {
                 value={roleName} 
                 onChange={(event) => setRoleName(event.target.value as (typeof roles)[number])}
               >
-                <FormControlLabel value="Viewer" control={<Radio sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-checked': { color: 'white' } }} />} label={<Typography color="white">User</Typography>} sx={{ mr: 4 }} />
-                <FormControlLabel value="Admin" control={<Radio sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-checked': { color: 'white' } }} />} label={<Typography color="white">Administrator</Typography>} />
+                <FormControlLabel value={VIEWER} control={<Radio sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-checked': { color: 'white' } }} />} label={<Typography color="white">Viewer</Typography>} sx={{ mr: 4 }} />
+                <FormControlLabel value={SYSTEM_ADMINISTRATOR} control={<Radio sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-checked': { color: 'white' } }} />} label={<Typography color="white">System Administrator</Typography>} />
               </RadioGroup>
             </FormControl>
           </FormRow>

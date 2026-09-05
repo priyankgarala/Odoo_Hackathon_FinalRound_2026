@@ -16,7 +16,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import * as invoicesApi from "../api/invoices.api";
@@ -24,19 +24,89 @@ import { LoadingState } from "../components/feedback/LoadingState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { EmptyState } from "../components/feedback/EmptyState";
 
-const money = (value: string | number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(Number(value) || 0);
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4, pb: 6 }}>
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
+
+const money = (value: string | number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 5,
+      pb: 5,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          px: 2.5,
+          py: 1.25,
+          mb: 3.5,
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.borderStrong}`,
+          borderRadius: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.accent,
+            fontWeight: 600,
+            letterSpacing: 0.2,
+          }}
+        >
           {title}
         </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 3,
+        p: { xs: 2, sm: 3.5 },
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
@@ -49,19 +119,48 @@ export const InvoicesPage = () => {
 
   const invoices = useQuery({
     queryKey: ["invoices", search, status, page],
-    queryFn: () => invoicesApi.getInvoices({ search: search || undefined, status: status || undefined, page, pageSize: 20 })
+    queryFn: () =>
+      invoicesApi.getInvoices({
+        search: search || undefined,
+        status: status || undefined,
+        page,
+        pageSize: 20,
+      }),
   });
 
   return (
     <DarkContainer title="Customer Invoices & Receipts">
-      <Stack spacing={3}>
-        <Typography variant="body1" color="rgba(255,255,255,0.7)">
-          Sales order → Customer invoice → Receive payment → Automated journal entry
-        </Typography>
+      <Stack spacing={4}>
+        {/* Page Description */}
+        <Box>
+          <Typography
+            variant="body1"
+            sx={{
+              color: COLORS.muted,
+              lineHeight: 1.7,
+            }}
+          >
+            Sales order → Customer invoice → Receive payment
+            → Automated journal entry
+          </Typography>
+        </Box>
 
         {/* Search & Filter */}
-        <Box sx={{ bgcolor: "#161616", p: 2, borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)" }}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <Box
+          sx={{
+            bgcolor: COLORS.cardHover,
+            p: 2.5,
+            borderRadius: 2.5,
+            border: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <Stack
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
+            spacing={2}
+          >
             <TextField
               size="small"
               placeholder="Search invoice number or customer name..."
@@ -72,11 +171,73 @@ export const InvoicesPage = () => {
               }}
               fullWidth
               sx={{
-                "& .MuiOutlinedInput-root": { color: "white" }
+                "& .MuiOutlinedInput-root": {
+                  color: COLORS.text,
+
+                  "& fieldset": {
+                    borderColor:
+                      COLORS.borderStrong,
+                  },
+
+                  "&:hover fieldset": {
+                    borderColor:
+                      COLORS.accent,
+                  },
+
+                  "&.Mui-focused fieldset": {
+                    borderColor:
+                      COLORS.accent,
+                  },
+                },
+
+                "& .MuiInputBase-input::placeholder": {
+                  color: COLORS.muted,
+                  opacity: 1,
+                },
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Status</InputLabel>
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 170,
+
+                "& .MuiInputLabel-root": {
+                  color: COLORS.muted,
+                },
+
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: COLORS.accent,
+                },
+
+                "& .MuiOutlinedInput-root": {
+                  color: COLORS.text,
+
+                  "& fieldset": {
+                    borderColor:
+                      COLORS.borderStrong,
+                  },
+
+                  "&:hover fieldset": {
+                    borderColor:
+                      COLORS.accent,
+                  },
+
+                  "&.Mui-focused fieldset": {
+                    borderColor:
+                      COLORS.accent,
+                  },
+                },
+
+                "& .MuiSvgIcon-root": {
+                  color: COLORS.muted,
+                },
+              }}
+            >
+              <InputLabel>
+                Status
+              </InputLabel>
+
               <Select
                 label="Status"
                 value={status}
@@ -84,11 +245,41 @@ export const InvoicesPage = () => {
                   setStatus(e.target.value);
                   setPage(1);
                 }}
-                sx={{ color: "white" }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: COLORS.card,
+                      color: COLORS.text,
+                      border: `1px solid ${COLORS.border}`,
+
+                      "& .MuiMenuItem-root": {
+                        py: 1.2,
+                      },
+
+                      "& .MuiMenuItem-root:hover": {
+                        bgcolor:
+                          COLORS.cardHover,
+                      },
+
+                      "& .Mui-selected": {
+                        bgcolor: `${COLORS.accentSoft} !important`,
+                        color: COLORS.accent,
+                      },
+                    },
+                  },
+                }}
               >
-                <MenuItem value="">All statuses</MenuItem>
-                <MenuItem value="POSTED">Outstanding</MenuItem>
-                <MenuItem value="PAID">Paid</MenuItem>
+                <MenuItem value="">
+                  All statuses
+                </MenuItem>
+
+                <MenuItem value="POSTED">
+                  Outstanding
+                </MenuItem>
+
+                <MenuItem value="PAID">
+                  Paid
+                </MenuItem>
               </Select>
             </FormControl>
           </Stack>
@@ -98,92 +289,288 @@ export const InvoicesPage = () => {
         {invoices.isLoading ? (
           <LoadingState label="Loading invoices..." />
         ) : invoices.isError ? (
-          <ErrorState message="Could not load invoices." onRetry={() => void invoices.refetch()} />
+          <ErrorState
+            message="Could not load invoices."
+            onRetry={() =>
+              void invoices.refetch()
+            }
+          />
         ) : invoices.data!.data.length === 0 ? (
           <EmptyState message="No invoices yet. Generate one from a confirmed sales order." />
         ) : (
           <>
-            <TableContainer sx={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", bgcolor: "#121212" }}>
-              <Table>
-                <TableHead sx={{ bgcolor: "#181818" }}>
-                  <TableRow>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Invoice #</TableCell>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Customer</TableCell>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Sales Order</TableCell>
-                    <TableCell align="right" sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Total</TableCell>
-                    <TableCell align="right" sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Outstanding</TableCell>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {invoices.data!.data.map((inv) => (
-                    <TableRow
-                      component={RouterLink}
-                      to={`/invoices/${inv.id}`}
-                      key={inv.id}
-                      hover
+            {/* Invoice Table */}
+            <TableContainer
+              sx={{
+                borderRadius: 2.5,
+                border: `1px solid ${COLORS.border}`,
+                bgcolor: COLORS.card,
+                overflow: "hidden",
+              }}
+            >
+              <Table
+                sx={{
+                  "& .MuiTableCell-root": {
+                    px: 2,
+                    py: 1.8,
+                  },
+                }}
+              >
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      bgcolor: COLORS.cardHover,
+                    }}
+                  >
+                    <TableCell
                       sx={{
-                        textDecoration: "none",
-                        cursor: "pointer",
-                        "&:hover": { bgcolor: "rgba(255,255,255,0.04)" }
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
                       }}
                     >
-                      <TableCell>
-                        <Typography color="#90EE90" fontWeight={600}>
-                          {inv.invoiceNumber}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ color: "rgba(255,255,255,0.85)" }}>
-                        {inv.customer.name}
-                      </TableCell>
-                      <TableCell sx={{ color: "rgba(255,255,255,0.85)" }}>
-                        {inv.salesOrder.orderNumber}
-                      </TableCell>
-                      <TableCell align="right" sx={{ color: "#ffffff", fontWeight: 600 }}>
-                        {money(inv.total)}
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          color: Number(inv.outstanding) > 0 ? "#ff8a80" : "#90EE90",
-                          fontWeight: 600
-                        }}
-                      >
-                        {money(inv.outstanding)}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={inv.status}
+                      Invoice #
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      Customer
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      Sales Order
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      Total
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      Outstanding
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      Status
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {invoices.data!.data.map(
+                    (inv) => {
+                      const isPaid =
+                        inv.status ===
+                        "PAID";
+
+                      const hasOutstanding =
+                        Number(
+                          inv.outstanding
+                        ) > 0;
+
+                      return (
+                        <TableRow
+                          component={
+                            RouterLink
+                          }
+                          to={`/invoices/${inv.id}`}
+                          key={inv.id}
+                          hover
                           sx={{
+                            textDecoration:
+                              "none",
+                            cursor: "pointer",
                             bgcolor:
-                              inv.status === "PAID"
-                                ? "rgba(46, 125, 50, 0.2)"
-                                : "rgba(237, 108, 2, 0.2)",
-                            color: inv.status === "PAID" ? "#90EE90" : "#ffb74d",
-                            border: "1px solid rgba(255,255,255,0.1)"
+                              COLORS.card,
+
+                            "&:hover": {
+                              bgcolor:
+                                COLORS.cardHover,
+                            },
+
+                            "& .MuiTableCell-root":
+                              {
+                                borderBottom: `1px solid ${COLORS.border}`,
+                              },
                           }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        >
+                          <TableCell>
+                            <Typography
+                              sx={{
+                                color:
+                                  COLORS.accent,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {
+                                inv.invoiceNumber
+                              }
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell
+                            sx={{
+                              color:
+                                COLORS.text,
+                            }}
+                          >
+                            {inv.customer.name}
+                          </TableCell>
+
+                          <TableCell
+                            sx={{
+                              color:
+                                COLORS.text,
+                            }}
+                          >
+                            {
+                              inv.salesOrder
+                                .orderNumber
+                            }
+                          </TableCell>
+
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color:
+                                COLORS.text,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {money(inv.total)}
+                          </TableCell>
+
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color:
+                                hasOutstanding
+                                  ? COLORS.danger
+                                  : COLORS.success,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {money(
+                              inv.outstanding
+                            )}
+                          </TableCell>
+
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              label={
+                                inv.status
+                              }
+                              sx={{
+                                bgcolor:
+                                  isPaid
+                                    ? COLORS.successSoft
+                                    : COLORS.warningSoft,
+                                color:
+                                  isPaid
+                                    ? COLORS.success
+                                    : COLORS.warning,
+                                border: `1px solid ${
+                                  isPaid
+                                    ? COLORS.success
+                                    : COLORS.warning
+                                }`,
+                                borderRadius: 1.5,
+                                fontWeight: 600,
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
 
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            {/* Pagination */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent:
+                  "center",
+                pt: 1,
+              }}
+            >
               <Pagination
                 page={page}
-                count={Math.max(1, invoices.data!.meta.totalPages)}
-                onChange={(_, value) => setPage(value)}
+                count={Math.max(
+                  1,
+                  invoices.data!.meta
+                    .totalPages
+                )}
+                onChange={(_, value) =>
+                  setPage(value)
+                }
                 sx={{
-                  "& .MuiPaginationItem-root": {
-                    color: "white",
-                    borderColor: "rgba(255,255,255,0.2)"
-                  },
+                  "& .MuiPaginationItem-root":
+                    {
+                      color:
+                        COLORS.muted,
+                      borderColor:
+                        COLORS.borderStrong,
+                    },
+
+                  "& .MuiPaginationItem-root:hover":
+                    {
+                      bgcolor:
+                        COLORS.accentSoft,
+                      color:
+                        COLORS.accent,
+                    },
+
                   "& .Mui-selected": {
-                    bgcolor: "rgba(255,255,255,0.15) !important"
-                  }
+                    bgcolor: `${COLORS.accent} !important`,
+                    color:
+                      COLORS.page,
+                    fontWeight: 700,
+                  },
+
+                  "& .Mui-selected:hover":
+                    {
+                      bgcolor: `${COLORS.accentHover} !important`,
+                    },
+
+                  "& .MuiPaginationItem-ellipsis":
+                    {
+                      color:
+                        COLORS.muted,
+                    },
                 }}
               />
             </Box>

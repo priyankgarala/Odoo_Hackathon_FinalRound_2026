@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const roles = ["Admin", "Accountant", "Sales", "Purchase", "Viewer"];
+const roles = ["System Administrator", "Viewer"];
 
 async function main() {
   console.log("Seeding database with comprehensive 2025 & 2026 accounting data...");
@@ -11,8 +11,8 @@ async function main() {
   for (const name of roles) {
     await prisma.role.upsert({ where: { name }, update: {}, create: { name } });
   }
-  const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: "Admin" } });
-  const accountantRole = await prisma.role.findUniqueOrThrow({ where: { name: "Accountant" } });
+  const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: "System Administrator" } });
+  const viewerRole = await prisma.role.findUniqueOrThrow({ where: { name: "Viewer" } });
   const passwordHash = await bcrypt.hash("Admin@123", 12);
 
   await prisma.user.upsert({
@@ -22,9 +22,9 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "accountant@urbanfurniture.local" },
-    update: { name: "Priya Sharma (CFO)", loginId: "priyacfo", passwordHash, roleId: accountantRole.id, isActive: true },
-    create: { name: "Priya Sharma (CFO)", loginId: "priyacfo", email: "accountant@urbanfurniture.local", passwordHash, roleId: accountantRole.id, isActive: true }
+    where: { email: "viewer@urbanfurniture.local" },
+    update: { name: "Viewer", loginId: "vieweruser", passwordHash, roleId: viewerRole.id, isActive: true },
+    create: { name: "Viewer", loginId: "vieweruser", email: "viewer@urbanfurniture.local", passwordHash, roleId: viewerRole.id, isActive: true }
   });
 
   // 2. Chart of Accounts (COA)

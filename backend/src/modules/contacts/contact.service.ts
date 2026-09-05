@@ -12,3 +12,8 @@ export const listContacts = async (query: { search?: string; type?: ContactType;
 export const getContact = getById;
 export const updateContact = async (id: number, data: ContactInput) => { await getById(id); return prisma.contact.update({ where: { id }, data }); };
 export const updateStatus = async (id: number, active: boolean) => { await getById(id); return prisma.contact.update({ where: { id }, data: { active } }); };
+export const deleteContact = async (id: number) => { await getById(id); return prisma.contact.delete({ where: { id } }); };
+export const deleteManyContacts = async (ids: number[]) => {
+  if (!ids.length) throw new AppError(400, "Select at least one contact to delete");
+  return prisma.$transaction(ids.map((id) => prisma.contact.delete({ where: { id } })));
+};

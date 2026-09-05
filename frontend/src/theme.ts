@@ -4,19 +4,19 @@ export const theme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#2B5E74",
-      dark: "#1c4253",
-      light: "#3a7a96",
+      main: "#2563eb",
+      dark: "#1e3a8a",
+      light: "#60a5fa",
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#3c3800",
-      light: "#7a7300",
-      contrastText: "#90EE90",
+      main: "#0f766e",
+      light: "#14b8a6",
+      contrastText: "#ecfeff",
     },
     background: {
-      default: "#0a0a0a",
-      paper: "#121212",
+      default: "#0b1220",
+      paper: "#111c31",
     },
     text: {
       primary: "#ffffff",
@@ -35,16 +35,16 @@ export const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: "#0a0a0a",
+          backgroundColor: "#0b1220",
           color: "#ffffff",
-          scrollbarColor: "#333 #121212",
+          scrollbarColor: "#334155 #0b1220",
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: "#121212",
+          backgroundColor: "#111c31",
           backgroundImage: "none",
           borderColor: "rgba(255, 255, 255, 0.15)",
         },
@@ -53,7 +53,7 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: "#121212",
+          backgroundColor: "#111c31",
           border: "1px solid rgba(255, 255, 255, 0.15)",
           backgroundImage: "none",
         },
@@ -68,7 +68,7 @@ export const theme = createTheme({
         head: {
           color: "rgba(255, 255, 255, 0.6)",
           fontWeight: 600,
-          backgroundColor: "#161616",
+          backgroundColor: "#172642",
         },
       },
     },

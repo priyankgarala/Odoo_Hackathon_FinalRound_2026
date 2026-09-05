@@ -70,6 +70,19 @@ enum ProductType {
   COMBO
 }
 
+model ProductCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  taxId       Int?
+  tax         Tax?      @relation(fields: [taxId], references: [id], onDelete: SetNull)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([name])
+}
+
 model Product {
   id          Int         @id @default(autoincrement())
   sku         String      @unique
@@ -79,6 +92,8 @@ model Product {
   unitPrice   Decimal     @db.Decimal(14, 2)
   costPrice   Decimal     @default(0) @db.Decimal(14, 2)
   category    String?
+  categoryId  Int?
+  productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   image       String?     @db.Text
   active      Boolean     @default(true)
   createdAt   DateTime    @default(now())
@@ -206,6 +221,7 @@ model Tax {
   purchaseAccount    Account              @relation("TaxPurchaseAccount", fields: [purchaseAccountId], references: [id], onDelete: Restrict)
   isActive           Boolean              @default(true)
   products           Product[]
+  productCategories  ProductCategory[]
   salesOrderItems    SalesOrderItem[]
   purchaseOrderItems PurchaseOrderItem[]
   invoiceTaxLines    InvoiceTaxLine[]

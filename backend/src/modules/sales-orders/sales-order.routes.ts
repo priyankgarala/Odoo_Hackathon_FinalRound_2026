@@ -14,9 +14,7 @@ const value = z.coerce.number().positive();
 const itemSchema = z.object({
   productId: id,
   quantity: value,
-  unitPrice: value.optional(),
-  taxId: z.union([id, z.literal(""), z.null(), z.undefined()]).transform((v) => (v && typeof v === "number" ? v : null)),
-  taxRate: z.coerce.number().min(0).max(100).default(0)
+  unitPrice: value.optional()
 });
 
 const bodySchema = z.object({
@@ -65,25 +63,24 @@ const prepare = async (tx: Prisma.TransactionClient, input: Input) => {
   const productIds = input.items.map((i) => i.productId);
   const products = await tx.product.findMany({
     where: { id: { in: productIds }, active: true },
-    include: { defaultTax: true }
+    include: {
+      defaultTax: true,
+      productCategory: { include: { tax: true } }
+    }
   });
 
   if (products.length !== new Set(productIds).size) {
     throw new AppError(400, "All items require valid active products");
   }
 
-  const taxIds = input.items.map((i) => i.taxId).filter((t): t is number => t !== null);
-  const taxes = taxIds.length > 0 ? await tx.tax.findMany({ where: { id: { in: taxIds } } }) : [];
-
   const rows = input.items.map((i) => {
     const product = products.find((x) => x.id === i.productId)!;
-    const resolvedTax = i.taxId
-      ? taxes.find((t) => t.id === i.taxId)
-      : product.defaultTax;
+    const categoryTax = product.productCategory?.tax ?? null;
+    const resolvedTax = product.defaultTax ?? categoryTax;
 
     const quantity = new Prisma.Decimal(i.quantity);
     const unitPrice = new Prisma.Decimal(i.unitPrice ?? product.unitPrice);
-    const rate = resolvedTax ? new Prisma.Decimal(resolvedTax.rate) : new Prisma.Decimal(i.taxRate);
+    const rate = resolvedTax ? new Prisma.Decimal(resolvedTax.rate) : new Prisma.Decimal(0);
 
     const lineSubtotal = quantity.mul(unitPrice);
     const taxAmount = lineSubtotal.mul(rate).div(100);

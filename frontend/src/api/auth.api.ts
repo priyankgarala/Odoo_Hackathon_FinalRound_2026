@@ -5,4 +5,4 @@ export const getMe = async () => (await api.get<{ user: AuthUser }>("/auth/me"))
 export const logout = async () => { await api.post("/auth/logout"); };
 export type Registration = { name: string; loginId: string; email: string; password: string };
 export const signup = async (input: Registration) => (await api.post<{ user: AuthUser }>("/auth/signup", input)).data.user;
-export const createUser = async (input: Registration & { roleName: "Admin" | "Accountant" | "Sales" | "Purchase" | "Viewer" }) => (await api.post<{ user: AuthUser }>("/auth/users", input)).data.user;
+export const createUser = async (input: Registration & { roleName: "System Administrator" | "Viewer" }) => (await api.post<{ user: AuthUser }>("/auth/users", input)).data.user;

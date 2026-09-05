@@ -31,6 +31,7 @@ import { EmptyState } from "../components/feedback/EmptyState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
 import { useAuth } from "../features/auth/AuthProvider";
+import { isSystemAdministrator } from "../features/auth/roles";
 
 const blank: productsApi.ProductInput = {
   name: "",
@@ -50,11 +51,11 @@ const apiError = (error: unknown) =>
 const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
   <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box sx={{ bgcolor: "#172642", border: "1px solid #2563eb", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
+        <Typography variant="h6" color="#7dd3fc" fontWeight={600}>{title}</Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+    <Box sx={{ border: "1px solid #263550", borderRadius: 6, p: 3, bgcolor: "#111c31" }}>
       {children}
     </Box>
   </Box>
@@ -106,7 +107,7 @@ const formatMoney = (amount: number | string) =>
 export const ProductsPage = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const canManage = ["Admin", "Accountant", "Sales", "Purchase"].includes(user?.role ?? "");
+  const canManage = isSystemAdministrator(user?.role);
 
   const [screen, setScreen] = useState<"list" | "form">("list");
   const [view, setView] = useState<"list" | "kanban">("list");
@@ -115,11 +116,43 @@ export const ProductsPage = () => {
   const [form, setForm] = useState<productsApi.ProductInput>(blank);
   const [editing, setEditing] = useState<productsApi.Product | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const params = useMemo(() => ({ search: search || undefined, page, pageSize: 12 }), [search, page]);
   const products = useQuery({ queryKey: ["products", params], queryFn: () => productsApi.getProducts(params) });
   const taxesQuery = useQuery({ queryKey: ["taxes"], queryFn: () => taxesApi.getTaxes({ pageSize: 100 }) });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["products"] });
+
+  const deleteMutation = useMutation({
+    mutationFn: (ids: number[]) => (ids.length === 1 ? productsApi.deleteProduct(ids[0]) : productsApi.deleteProductsBulk(ids)),
+    onSuccess: () => {
+      setSelectedIds([]);
+      refresh();
+    }
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected product(s)?`)) {
+      deleteMutation.mutate(selectedIds);
+    }
+  };
+
+  const renderedProducts = products.data?.data ?? [];
+  const isAllSelected = renderedProducts.length > 0 && selectedIds.length === renderedProducts.length;
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < renderedProducts.length;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(renderedProducts.map((p) => p.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleSelectRow = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
 
   const save = useMutation({
     mutationFn: (payload: productsApi.ProductInput) =>
@@ -320,13 +353,32 @@ export const ProductsPage = () => {
     );
   }
 
-  const renderedProducts = products.data?.data ?? [];
-
   return (
     <DarkContainer title="Master Data">
       <Stack spacing={3}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <CustomButton onClick={openCreate}>New</CustomButton>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <CustomButton onClick={openCreate}>New</CustomButton>
+            {selectedIds.length > 0 && (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={handleDeleteSelected}
+                disabled={deleteMutation.isPending}
+                sx={{
+                  color: "#ff6b6b",
+                  borderColor: "#ff6b6b",
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: "rgba(255,107,107,0.15)", borderColor: "#ff6b6b" }
+                }}
+              >
+                Delete ({selectedIds.length})
+              </Button>
+            )}
+          </Stack>
           <TextField
             variant="outlined"
             size="small"
@@ -351,6 +403,8 @@ export const ProductsPage = () => {
           </Stack>
         </Stack>
 
+        {deleteMutation.isError && <Alert severity="error">{apiError(deleteMutation.error)}</Alert>}
+
         {products.isLoading ? (
           <LoadingState label="Loading products..." />
         ) : products.isError ? (
@@ -362,12 +416,21 @@ export const ProductsPage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Select</TableCell>
+                  <TableCell sx={{ color: "white", borderBottom: "none" }}>
+                    <Checkbox
+                      size="small"
+                      checked={isAllSelected}
+                      indeterminate={isSomeSelected}
+                      onChange={(e) => toggleSelectAll(e.target.checked)}
+                      sx={{ color: "rgba(255,255,255,0.5)", "&.Mui-checked": { color: "#90EE90" }, "&.MuiCheckbox-indeterminate": { color: "#90EE90" } }}
+                    />
+                  </TableCell>
                   <TableCell sx={{ color: "white", borderBottom: "none" }}>Product</TableCell>
                   <TableCell sx={{ color: "white", borderBottom: "none" }}>Category</TableCell>
                   <TableCell sx={{ color: "white", borderBottom: "none" }}>Type</TableCell>
                   <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Sales Price</TableCell>
                   <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Cost</TableCell>
+                  <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -378,8 +441,13 @@ export const ProductsPage = () => {
                     onClick={() => openRecord(prod)}
                     sx={{ cursor: "pointer", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}
                   >
-                    <TableCell sx={{ borderBottom: "none" }}>
-                      <Checkbox size="small" sx={{ color: "rgba(255,255,255,0.5)" }} onClick={(e) => e.stopPropagation()} />
+                    <TableCell sx={{ borderBottom: "none" }} onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        size="small"
+                        checked={selectedIds.includes(prod.id)}
+                        onChange={() => toggleSelectRow(prod.id)}
+                        sx={{ color: "rgba(255,255,255,0.5)", "&.Mui-checked": { color: "#90EE90" } }}
+                      />
                     </TableCell>
                     <TableCell sx={{ color: "white", borderBottom: "none" }}>
                       <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -400,6 +468,21 @@ export const ProductsPage = () => {
                     </TableCell>
                     <TableCell align="right" sx={{ color: "rgba(255,255,255,0.7)", borderBottom: "none" }}>
                       {formatMoney(prod.costPrice)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ borderBottom: "none" }}>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete ${prod.name}?`)) {
+                            deleteMutation.mutate([prod.id]);
+                          }
+                        }}
+                        sx={{ color: "#ff6b6b", textTransform: "none", fontSize: "0.8rem" }}
+                      >
+                        Delete
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -422,28 +505,46 @@ export const ProductsPage = () => {
                   "&:hover": { borderColor: "white" }
                 }}
               >
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Box sx={{ width: 64, height: 64, bgcolor: "rgba(255,255,255,0.08)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                    {prod.image ? (
-                      <Box component="img" src={prod.image} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <Inventory2OutlinedIcon sx={{ fontSize: 36, color: "rgba(255,255,255,0.4)" }} />
-                    )}
-                  </Box>
-                  <Stack spacing={0.5} overflow="hidden">
-                    <Typography color="white" fontWeight={700} noWrap>{prod.name}</Typography>
-                    <Typography color="rgba(255,255,255,0.75)" variant="body2">
-                      Sales Price: {formatMoney(prod.unitPrice)}
-                    </Typography>
-                    <Typography color="rgba(255,255,255,0.5)" variant="body2">
-                      Cost: {formatMoney(prod.costPrice)}
-                    </Typography>
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Box sx={{ width: 64, height: 64, bgcolor: "rgba(255,255,255,0.08)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                      {prod.image ? (
+                        <Box component="img" src={prod.image} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <Inventory2OutlinedIcon sx={{ fontSize: 36, color: "rgba(255,255,255,0.4)" }} />
+                      )}
+                    </Box>
+                    <Stack spacing={0.5} overflow="hidden">
+                      <Typography color="white" fontWeight={700} noWrap>{prod.name}</Typography>
+                      <Typography color="rgba(255,255,255,0.75)" variant="body2">
+                        Sales Price: {formatMoney(prod.unitPrice)}
+                      </Typography>
+                      <Typography color="rgba(255,255,255,0.5)" variant="body2">
+                        Cost: {formatMoney(prod.costPrice)}
+                      </Typography>
+                    </Stack>
                   </Stack>
+                  {canManage && (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Delete ${prod.name}?`)) {
+                          deleteMutation.mutate([prod.id]);
+                        }
+                      }}
+                      sx={{ color: "#ff6b6b", textTransform: "none", minWidth: "auto" }}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Stack>
               </Paper>
             ))}
           </Box>
         )}
+
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="body2" color="rgba(255,255,255,0.5)">

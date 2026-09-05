@@ -12,3 +12,6 @@ productRouter.get("/:id", validate(getProductSchema), controller.get);
 productRouter.post("/", authorize(...manageRoles), validate(createProductSchema), controller.create);
 productRouter.put("/:id", authorize(...manageRoles), validate(updateProductSchema), controller.update);
 productRouter.patch("/:id/status", authorize(...manageRoles), validate(statusProductSchema), controller.status);
+productRouter.delete("/bulk", authorize(...manageRoles), controller.removeMany);
+productRouter.delete("/:id", authorize(...manageRoles), controller.remove);
+

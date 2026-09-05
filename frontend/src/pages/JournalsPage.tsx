@@ -14,7 +14,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as journalsApi from "../api/journals.api";
@@ -23,57 +23,174 @@ import { EmptyState } from "../components/feedback/EmptyState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
 
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
+
 const apiError = (error: unknown) =>
   axios.isAxiosError<{ error?: string }>(error)
     ? error.response?.data?.error ?? "Request failed."
     : "Request failed.";
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1000,
+      mx: "auto",
+      pt: 4,
+      pb: 6,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box
+        sx={{
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.borderStrong}`,
+          borderRadius: 2,
+          py: 1,
+          px: 3,
+          mb: 3,
+          display: "inline-block",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.accent,
+            fontWeight: 600,
+          }}
+        >
+          {title}
+        </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 4,
+        p: 3,
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": {
+    color: COLORS.text,
+  },
+
+  "& .MuiInput-underline:before": {
+    borderBottomColor: COLORS.borderStrong,
+  },
+
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+    borderBottomColor: COLORS.muted,
+  },
+
+  "& .MuiInput-underline:after": {
+    borderBottomColor: COLORS.accent,
+  },
+
+  "& .MuiInputLabel-root": {
+    color: COLORS.muted,
+  },
+
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: COLORS.accent,
+  },
+
+  "& .MuiSvgIcon-root": {
+    color: COLORS.muted,
+  },
 };
 
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#1e1e1e",
-        color: "rgba(255,255,255,0.9)",
+        bgcolor: COLORS.card,
+        color: COLORS.text,
         maxHeight: 300,
-        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
-      }
-    }
-  }
+        border: `1px solid ${COLORS.border}`,
+
+        "& .MuiMenuItem-root:hover": {
+          bgcolor: COLORS.cardHover,
+        },
+
+        "& .Mui-selected": {
+          bgcolor: `${COLORS.accentSoft} !important`,
+          color: COLORS.accent,
+        },
+      },
+    },
+  },
 };
 
-const CustomButton = ({ children, active, ...props }: any) => (
+const CustomButton = ({
+  children,
+  active,
+  ...props
+}: any) => (
   <Button
     variant="outlined"
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? "#071313" : COLORS.text,
+      bgcolor: active ? COLORS.accent : "transparent",
+      borderColor: active
+        ? COLORS.accent
+        : COLORS.borderStrong,
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      fontWeight: 600,
+
+      "&:hover": {
+        bgcolor: active
+          ? COLORS.accentHover
+          : COLORS.accentSoft,
+        borderColor: active
+          ? COLORS.accentHover
+          : COLORS.accent,
+      },
+
+      "&.Mui-disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -83,16 +200,32 @@ const CustomButton = ({ children, active, ...props }: any) => (
 
 export const JournalsPage = () => {
   const queryClient = useQueryClient();
-  const [screen, setScreen] = useState<"list" | "form">("list");
-  const [name, setName] = useState("");
-  const [type, setType] = useState<journalsApi.Journal["type"]>("SALES");
-  const [defaultAccountId, setDefaultAccountId] = useState<number | "">("");
-  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const journals = useQuery({ queryKey: ["journals"], queryFn: journalsApi.getJournals });
+  const [screen, setScreen] =
+    useState<"list" | "form">("list");
+
+  const [name, setName] = useState("");
+  const [type, setType] =
+    useState<journalsApi.Journal["type"]>("SALES");
+
+  const [defaultAccountId, setDefaultAccountId] =
+    useState<number | "">("");
+
+  const [validationError, setValidationError] =
+    useState<string | null>(null);
+
+  const journals = useQuery({
+    queryKey: ["journals"],
+    queryFn: journalsApi.getJournals,
+  });
+
   const accounts = useQuery({
     queryKey: ["accounts-for-journals"],
-    queryFn: () => getAccounts({ page: 1, pageSize: 100 })
+    queryFn: () =>
+      getAccounts({
+        page: 1,
+        pageSize: 100,
+      }),
   });
 
   const save = useMutation({
@@ -100,14 +233,20 @@ export const JournalsPage = () => {
       journalsApi.createJournal({
         name,
         type,
-        defaultAccountId: defaultAccountId ? Number(defaultAccountId) : null
+        defaultAccountId: defaultAccountId
+          ? Number(defaultAccountId)
+          : null,
       }),
+
     onSuccess: () => {
       setScreen("list");
       setName("");
       setDefaultAccountId("");
-      queryClient.invalidateQueries({ queryKey: ["journals"] });
-    }
+
+      queryClient.invalidateQueries({
+        queryKey: ["journals"],
+      });
+    },
   });
 
   const openCreate = () => {
@@ -120,10 +259,14 @@ export const JournalsPage = () => {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+
     if (!name || name.trim().length < 2) {
-      setValidationError("Journal Name must be at least 2 characters long.");
+      setValidationError(
+        "Journal Name must be at least 2 characters long."
+      );
       return;
     }
+
     setValidationError(null);
     save.mutate();
   };
@@ -131,66 +274,179 @@ export const JournalsPage = () => {
   if (screen === "form") {
     return (
       <DarkContainer title="Journals">
-        <Stack component="form" onSubmit={submit} spacing={4}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Stack direction="row" spacing={2}>
-              <CustomButton type="submit" disabled={save.isPending}>
-                {save.isPending ? "..." : "Confirm"}
-              </CustomButton>
-            </Stack>
-            <CustomButton onClick={() => setScreen("list")}>Back</CustomButton>
+        <Stack
+          component="form"
+          onSubmit={submit}
+          spacing={4}
+        >
+          {/* Form Actions */}
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <CustomButton
+              type="submit"
+              active
+              disabled={save.isPending}
+            >
+              {save.isPending ? "..." : "Confirm"}
+            </CustomButton>
+
+            <CustomButton
+              type="button"
+              onClick={() => setScreen("list")}
+            >
+              Back
+            </CustomButton>
           </Stack>
 
-          {validationError && <Alert severity="warning">{validationError}</Alert>}
-          {save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}
+          {/* Alerts */}
+          {validationError && (
+            <Alert
+              severity="warning"
+              sx={{
+                bgcolor: COLORS.warningSoft,
+                color: COLORS.warning,
+                border: `1px solid ${COLORS.border}`,
+              }}
+            >
+              {validationError}
+            </Alert>
+          )}
 
+          {save.isError && (
+            <Alert
+              severity="error"
+              sx={{
+                bgcolor: COLORS.dangerSoft,
+                color: COLORS.danger,
+                border: `1px solid ${COLORS.border}`,
+              }}
+            >
+              {apiError(save.error)}
+            </Alert>
+          )}
+
+          {/* Form */}
           <Stack spacing={3} maxWidth={600}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Journal Name</Typography>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography
+                minWidth={140}
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 500,
+                }}
+              >
+                Journal Name
+              </Typography>
+
               <TextField
                 variant="standard"
                 fullWidth
                 placeholder="e.g. Sales, Purchase, Bank"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>
+                  setName(e.target.value)
+                }
                 required
                 sx={darkTextFieldSx}
               />
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Journal Type</Typography>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography
+                minWidth={140}
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 500,
+                }}
+              >
+                Journal Type
+              </Typography>
+
               <TextField
                 select
                 SelectProps={darkSelectProps}
                 variant="standard"
                 fullWidth
                 value={type}
-                onChange={(e) => setType(e.target.value as journalsApi.Journal["type"])}
+                onChange={(e) =>
+                  setType(
+                    e.target.value as journalsApi.Journal["type"]
+                  )
+                }
                 sx={darkTextFieldSx}
               >
-                <MenuItem value="SALES">Sales</MenuItem>
-                <MenuItem value="PURCHASE">Purchase</MenuItem>
-                <MenuItem value="BANK">Bank</MenuItem>
-                <MenuItem value="CASH">Cash</MenuItem>
-                <MenuItem value="GENERAL">General</MenuItem>
+                <MenuItem value="SALES">
+                  Sales
+                </MenuItem>
+
+                <MenuItem value="PURCHASE">
+                  Purchase
+                </MenuItem>
+
+                <MenuItem value="BANK">
+                  Bank
+                </MenuItem>
+
+                <MenuItem value="CASH">
+                  Cash
+                </MenuItem>
+
+                <MenuItem value="GENERAL">
+                  General
+                </MenuItem>
               </TextField>
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Default Account</Typography>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography
+                minWidth={140}
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 500,
+                }}
+              >
+                Default Account
+              </Typography>
+
               <TextField
                 select
                 SelectProps={darkSelectProps}
                 variant="standard"
                 fullWidth
                 value={defaultAccountId}
-                onChange={(e) => setDefaultAccountId(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setDefaultAccountId(
+                    e.target.value
+                      ? Number(e.target.value)
+                      : ""
+                  )
+                }
                 sx={darkTextFieldSx}
               >
-                <MenuItem value="">None</MenuItem>
+                <MenuItem value="">
+                  None
+                </MenuItem>
+
                 {accounts.data?.data.map((acc) => (
-                  <MenuItem key={acc.id} value={acc.id}>
+                  <MenuItem
+                    key={acc.id}
+                    value={acc.id}
+                  >
                     {acc.name} ({acc.code})
                   </MenuItem>
                 ))}
@@ -207,46 +463,132 @@ export const JournalsPage = () => {
   return (
     <DarkContainer title="Journals">
       <Stack spacing={3}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <CustomButton onClick={openCreate}>New</CustomButton>
-          <CustomButton onClick={() => window.history.back()}>Back</CustomButton>
+        {/* Header */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <CustomButton
+            onClick={openCreate}
+            active
+          >
+            New
+          </CustomButton>
+
+          <CustomButton
+            onClick={() => window.history.back()}
+          >
+            Back
+          </CustomButton>
         </Stack>
 
+        {/* Content */}
         {journals.isLoading ? (
           <LoadingState label="Loading journals..." />
         ) : journals.isError ? (
-          <ErrorState message={apiError(journals.error)} onRetry={() => void journals.refetch()} />
+          <ErrorState
+            message={apiError(journals.error)}
+            onRetry={() =>
+              void journals.refetch()
+            }
+          />
         ) : renderedJournals.length === 0 ? (
           <EmptyState message="No journals found." />
         ) : (
-          <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+          <TableContainer
+            sx={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 3,
+              bgcolor: COLORS.card,
+              overflow: "hidden",
+            }}
+          >
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Journal Name</TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Type</TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Default Account</TableCell>
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.page,
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Journal Name
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Type
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Default Account
+                  </TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {renderedJournals.map((j) => (
                   <TableRow
                     key={j.id}
                     hover
-                    sx={{ "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                    sx={{
+                      "& td": {
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      },
+
+                      "&:hover": {
+                        bgcolor: COLORS.cardHover,
+                      },
+                    }}
                   >
-                    <TableCell sx={{ color: "white", borderBottom: "none", fontWeight: 600 }}>
+                    <TableCell
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                      }}
+                    >
                       {j.name}
                     </TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>
+
+                    <TableCell>
                       <Chip
                         size="small"
                         label={j.type}
-                        sx={{ bgcolor: "rgba(255,255,255,0.12)", color: "white" }}
+                        sx={{
+                          bgcolor: COLORS.accentSoft,
+                          color: COLORS.accent,
+                          border: `1px solid ${COLORS.border}`,
+                          fontWeight: 600,
+                          borderRadius: 1.5,
+                        }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.8)", borderBottom: "none" }}>
-                      {j.defaultAccount ? `${j.defaultAccount.name} (${j.defaultAccount.code})` : "—"}
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.muted,
+                      }}
+                    >
+                      {j.defaultAccount
+                        ? `${j.defaultAccount.name} (${j.defaultAccount.code})`
+                        : "—"}
                     </TableCell>
                   </TableRow>
                 ))}

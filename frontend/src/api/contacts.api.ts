@@ -8,3 +8,6 @@ export const getContacts = async (params: ContactFilters) => (await api.get<Cont
 export const createContact = async (input: ContactInput) => (await api.post<{ data: Contact }>("/contacts", input)).data.data;
 export const updateContact = async ({ id, input }: { id: number; input: ContactInput }) => (await api.put<{ data: Contact }>(`/contacts/${id}`, input)).data.data;
 export const setContactStatus = async ({ id, active }: { id: number; active: boolean }) => (await api.patch<{ data: Contact }>(`/contacts/${id}/status`, { active })).data.data;
+export const deleteContact = async (id: number) => (await api.delete(`/contacts/${id}`)).data;
+export const deleteContactsBulk = async (ids: number[]) => (await api.delete("/contacts/bulk", { data: { ids } })).data;
+

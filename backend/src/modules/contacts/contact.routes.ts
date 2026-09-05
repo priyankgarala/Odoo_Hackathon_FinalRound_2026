@@ -12,3 +12,5 @@ contactRouter.get("/:id", validate(getContactSchema), controller.get);
 contactRouter.post("/", authorize(...manageRoles), validate(createContactSchema), controller.create);
 contactRouter.put("/:id", authorize(...manageRoles), validate(updateContactSchema), controller.update);
 contactRouter.patch("/:id/status", authorize(...manageRoles), validate(statusContactSchema), controller.status);
+contactRouter.delete("/bulk", authorize(...manageRoles), controller.removeMany);
+contactRouter.delete("/:id", authorize(...manageRoles), controller.remove);

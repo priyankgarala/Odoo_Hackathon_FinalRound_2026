@@ -25,48 +25,188 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "../api/vendor-bills.api";
 import { LoadingState } from "../components/feedback/LoadingState";
 import { ErrorState } from "../components/feedback/ErrorState";
 
-const formatMoney = (value: string | number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value) || 0);
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1050, mx: "auto", pt: 4 }}>
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
+
+const formatMoney = (value: string | number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 5,
+      pb: 5,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          px: 2.5,
+          py: 1.25,
+          mb: 3.5,
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.borderStrong}`,
+          borderRadius: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.accent,
+            fontWeight: 600,
+            letterSpacing: 0.2,
+          }}
+        >
+          {title}
+        </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 3,
+        p: { xs: 2, sm: 3.5 },
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": {
+    color: COLORS.text,
+  },
+
+  "& .MuiInput-underline:before": {
+    borderBottomColor: COLORS.borderStrong,
+  },
+
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+    borderBottomColor: COLORS.accent,
+  },
+
+  "& .MuiInput-underline:after": {
+    borderBottomColor: COLORS.accent,
+  },
+
+  "& .MuiInputLabel-root": {
+    color: COLORS.muted,
+  },
+
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: COLORS.accent,
+  },
+
+  "& .MuiSvgIcon-root": {
+    color: COLORS.muted,
+  },
 };
 
-const CustomButton = ({ children, active, ...props }: any) => (
+const darkSelectProps = {
+  MenuProps: {
+    PaperProps: {
+      sx: {
+        bgcolor: COLORS.card,
+        color: COLORS.text,
+        maxHeight: 320,
+        border: `1px solid ${COLORS.border}`,
+
+        "& .MuiMenuItem-root": {
+          py: 1.2,
+        },
+
+        "& .MuiMenuItem-root:hover": {
+          bgcolor: COLORS.cardHover,
+        },
+
+        "& .Mui-selected": {
+          bgcolor: `${COLORS.accentSoft} !important`,
+          color: COLORS.accent,
+        },
+      },
+    },
+  },
+};
+
+const CustomButton = ({
+  children,
+  active,
+  ...props
+}: any) => (
   <Button
     variant="outlined"
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? COLORS.page : COLORS.text,
+      bgcolor: active ? COLORS.accent : "transparent",
+      borderColor: active
+        ? COLORS.accent
+        : COLORS.borderStrong,
       borderRadius: 2,
       textTransform: "none",
-      minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      minWidth: 90,
+      px: 2,
+      py: 0.9,
+      fontWeight: 500,
+
+      "&:hover": {
+        bgcolor: active
+          ? COLORS.accentHover
+          : COLORS.accentSoft,
+        borderColor: COLORS.accent,
+      },
+
+      "&.Mui-disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -84,13 +224,15 @@ export const VendorBillDetailsPage = () => {
   const [payType, setPayType] = useState("SEND");
   const [amount, setAmount] = useState("");
   const [paymentVia, setPaymentVia] = useState("Bank");
-  const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10));
+  const [payDate, setPayDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
   const [memo, setMemo] = useState("");
 
   const bill = useQuery({
     queryKey: ["vendor-bill", id],
     queryFn: () => api.getBill(Number(id)),
-    enabled: Boolean(id)
+    enabled: Boolean(id),
   });
 
   const payment = useMutation({
@@ -99,26 +241,49 @@ export const VendorBillDetailsPage = () => {
         id: Number(id),
         amount: Number(amount),
         paymentMethod: paymentVia,
-        reference: memo || undefined
+        reference: memo || undefined,
       }),
+
     onSuccess: () => {
-      setSuccess(`Payment of ${formatMoney(amount)} completed and posted to ${paymentVia} Journal.`);
+      setSuccess(
+        `Payment of ${formatMoney(
+          amount
+        )} completed and posted to ${paymentVia} Journal.`
+      );
+
       setPaymentOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["vendor-bill", id] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-bills"] });
-    }
+
+      queryClient.invalidateQueries({
+        queryKey: ["vendor-bill", id],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["vendor-bills"],
+      });
+    },
   });
 
-  if (bill.isLoading) return <LoadingState label="Loading vendor bill..." />;
-  if (bill.isError || !bill.data)
-    return <ErrorState message="Vendor bill could not be loaded." onRetry={() => void bill.refetch()} />;
+  if (bill.isLoading) {
+    return <LoadingState label="Loading vendor bill..." />;
+  }
+
+  if (bill.isError || !bill.data) {
+    return (
+      <ErrorState
+        message="Vendor bill could not be loaded."
+        onRetry={() => void bill.refetch()}
+      />
+    );
+  }
 
   const current = bill.data;
-  const totalNum = Number(current.total) || 0;
-  const outstandingNum = Number(current.outstanding) || 0;
-  const paidNum = Number(current.paidAmount) || 0;
 
-  // Status badge logic per wireframe
+  const totalNum = Number(current.total) || 0;
+  const outstandingNum =
+    Number(current.outstanding) || 0;
+  const paidNum =
+    Number(current.paidAmount) || 0;
+
   const statusLabel =
     outstandingNum === 0
       ? "Paid"
@@ -127,17 +292,45 @@ export const VendorBillDetailsPage = () => {
       : "Not Paid";
 
   const statusColor =
-    statusLabel === "Paid" ? "#81c784" : statusLabel === "Part Paid" ? "#ffb74d" : "#ff8a80";
+    statusLabel === "Paid"
+      ? COLORS.success
+      : statusLabel === "Part Paid"
+      ? COLORS.warning
+      : COLORS.danger;
 
-  // Cash vs Bank paid breakdown
-  const paidViaBank = current.payments?.filter((p) => p.paymentMethod?.toLowerCase().includes("bank")).reduce((s, p) => s + Number(p.amount), 0) || 0;
-  const paidViaCash = current.payments?.filter((p) => p.paymentMethod?.toLowerCase().includes("cash")).reduce((s, p) => s + Number(p.amount), 0) || 0;
+  const paidViaBank =
+    current.payments
+      ?.filter((p) =>
+        p.paymentMethod
+          ?.toLowerCase()
+          .includes("bank")
+      )
+      .reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      ) || 0;
+
+  const paidViaCash =
+    current.payments
+      ?.filter((p) =>
+        p.paymentMethod
+          ?.toLowerCase()
+          .includes("cash")
+      )
+      .reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      ) || 0;
 
   const openPaymentModal = () => {
     setAmount(String(current.outstanding));
     setPaymentVia("Bank");
-    setPayDate(new Date().toISOString().slice(0, 10));
-    setMemo(`Bill payment for ${current.billNumber}`);
+    setPayDate(
+      new Date().toISOString().slice(0, 10)
+    );
+    setMemo(
+      `Bill payment for ${current.billNumber}`
+    );
     setPaymentOpen(true);
   };
 
@@ -145,262 +338,1068 @@ export const VendorBillDetailsPage = () => {
     <DarkContainer title="Vendor Bill">
       <Stack spacing={4}>
         {/* Header Toolbar */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={2}>
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          justifyContent="space-between"
+          alignItems={{
+            xs: "stretch",
+            sm: "center",
+          }}
+          gap={2.5}
+        >
+          <Stack
+            direction="row"
+            spacing={1.5}
+          >
             {outstandingNum > 0 && (
-              <CustomButton active onClick={openPaymentModal}>
+              <CustomButton
+                active
+                onClick={openPaymentModal}
+              >
                 Pay
               </CustomButton>
             )}
           </Stack>
 
-          {/* Smart buttons on the right */}
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
+            spacing={1.5}
+            alignItems={{
+              xs: "stretch",
+              sm: "center",
+            }}
+          >
             {current.purchaseOrder && (
               <CustomButton
                 component={RouterLink}
                 to={`/purchase-orders/${current.purchaseOrder.id}`}
-                sx={{ borderColor: "#90caf9", color: "#90caf9" }}
               >
                 PO
               </CustomButton>
             )}
+
             <CustomButton
               component={RouterLink}
               to="/reports/budget"
-              sx={{ borderColor: "#81c784", color: "#81c784" }}
             >
               Budget
             </CustomButton>
-            <CustomButton onClick={() => window.print()}>Print</CustomButton>
-            <CustomButton onClick={() => navigate("/vendor-bills")}>Back</CustomButton>
+
+            <CustomButton
+              onClick={() => window.print()}
+            >
+              Print
+            </CustomButton>
+
+            <CustomButton
+              onClick={() =>
+                navigate("/vendor-bills")
+              }
+            >
+              Back
+            </CustomButton>
           </Stack>
         </Stack>
 
-        {success && <Alert severity="success">{success}</Alert>}
+        {success && (
+          <Alert
+            severity="success"
+            sx={{
+              bgcolor: COLORS.successSoft,
+              color: COLORS.success,
+              border: `1px solid ${COLORS.success}`,
+              borderRadius: 2,
+            }}
+          >
+            {success}
+          </Alert>
+        )}
 
-        {/* Bill Header Info */}
-        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={4}>
-          <Stack spacing={2} flex={1}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Vendor Bill No.</Typography>
-              <Typography color="#90caf9" fontWeight={700} variant="h6">{current.billNumber}</Typography>
+        {/* Bill Information */}
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2.5,
+            bgcolor: COLORS.cardHover,
+            border: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            sx={{
+              color: COLORS.text,
+              fontWeight: 600,
+              mb: 3,
+            }}
+          >
+            Bill Information
+          </Typography>
+
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            spacing={{
+              xs: 3,
+              md: 6,
+            }}
+          >
+            <Stack spacing={2.5} flex={1}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Vendor Bill No.
+                </Typography>
+
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: COLORS.accent,
+                    fontWeight: 700,
+                  }}
+                >
+                  {current.billNumber}
+                </Typography>
+              </Stack>
+
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Vendor Name
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    fontWeight: 600,
+                  }}
+                >
+                  {current.vendor.name}
+                </Typography>
+              </Stack>
+
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Status
+                </Typography>
+
+                <Chip
+                  label={statusLabel}
+                  sx={{
+                    bgcolor:
+                      statusLabel === "Paid"
+                        ? COLORS.successSoft
+                        : statusLabel === "Part Paid"
+                        ? COLORS.warningSoft
+                        : COLORS.dangerSoft,
+                    color: statusColor,
+                    fontWeight: 600,
+                    border: `1px solid ${statusColor}`,
+                    borderRadius: 1.5,
+                  }}
+                />
+              </Stack>
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Vendor Name</Typography>
-              <Typography color="white" fontWeight={600}>{current.vendor.name}</Typography>
-            </Stack>
+            <Stack spacing={2.5} flex={1}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Bill Reference
+                </Typography>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Status</Typography>
-              <Chip
-                label={statusLabel}
-                sx={{
-                  bgcolor: `${statusColor}22`,
-                  color: statusColor,
-                  fontWeight: 700,
-                  border: `1px solid ${statusColor}`
-                }}
-              />
-            </Stack>
-          </Stack>
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                  }}
+                >
+                  {current.referenceId ||
+                    current.billNumber}
+                </Typography>
+              </Stack>
 
-          <Stack spacing={2} flex={1}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Bill Reference</Typography>
-              <Typography color="rgba(255,255,255,0.8)">{current.referenceId || current.billNumber}</Typography>
-            </Stack>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Bill Date
+                </Typography>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Bill Date</Typography>
-              <Typography color="white">
-                {current.billDate ? new Date(current.billDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-              </Typography>
-            </Stack>
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                  }}
+                >
+                  {current.billDate
+                    ? new Date(
+                        current.billDate
+                      ).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )
+                    : new Date().toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                </Typography>
+              </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={140}>Due Date</Typography>
-              <Typography color="white">
-                {current.dueDate ? new Date(current.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : new Date(Date.now() + 15 * 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-              </Typography>
-            </Stack>
-          </Stack>
-        </Stack>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 140,
+                  }}
+                >
+                  Due Date
+                </Typography>
 
-        {/* Items Table */}
-        <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                <TableCell sx={{ color: "white", width: 40 }}>Sr.</TableCell>
-                <TableCell sx={{ color: "white" }}>Product</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 70 }}>Qty</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 110 }}>Unit Price</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 110 }}>Subtotal</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 100 }}>Tax Amount</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 120 }}>Total</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {current.items?.map((item, idx) => (
-                <TableRow key={item.id} sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                  <TableCell sx={{ color: "rgba(255,255,255,0.6)" }}>{idx + 1}.</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 600 }}>
-                    {item.productName}
-                    {item.taxLines && item.taxLines.length > 0 && (
-                      <Box sx={{ mt: 0.5, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                        {item.taxLines.map((tl) => (
-                          <Chip
-                            key={tl.id}
-                            label={`${tl.taxName}: ${formatMoney(tl.taxAmount)}`}
-                            size="small"
-                            sx={{ bgcolor: "rgba(59, 130, 246, 0.2)", color: "#93c5fd", fontSize: "0.7rem", height: 20 }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: "white" }}>{item.quantity}</TableCell>
-                  <TableCell align="right" sx={{ color: "white" }}>{formatMoney(item.unitPrice)}</TableCell>
-                  <TableCell align="right" sx={{ color: "white" }}>{formatMoney(item.lineSubtotal || Number(item.unitPrice) * Number(item.quantity))}</TableCell>
-                  <TableCell align="right" sx={{ color: "#d97706", fontWeight: 600 }}>{formatMoney(item.taxAmount)}</TableCell>
-                  <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>{formatMoney(item.lineTotal)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* Bottom Breakdown per wireframe */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Stack spacing={1} sx={{ minWidth: 280, borderTop: "1px solid rgba(255,255,255,0.2)", pt: 2 }}>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography color="rgba(255,255,255,0.7)">Subtotal:</Typography>
-              <Typography color="white">{formatMoney(current.subtotal || totalNum)}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography color="#d97706" fontWeight={600}>Total Tax (GST):</Typography>
-              <Typography color="#d97706" fontWeight={600}>{formatMoney(current.taxTotal || 0)}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between" sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", pt: 0.5 }}>
-              <Typography color="white" fontWeight={700}>Grand Total:</Typography>
-              <Typography color="white" fontWeight={700}>{formatMoney(totalNum)}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography color="rgba(255,255,255,0.6)">Paid Amount:</Typography>
-              <Typography color="rgba(255,255,255,0.8)">{formatMoney(paidNum)}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between" sx={{ borderTop: "1px dashed rgba(255,255,255,0.2)", pt: 1 }}>
-              <Typography color="#ff8a80" fontWeight={700}>Amount Due:</Typography>
-              <Typography color="#ff8a80" fontWeight={700}>{formatMoney(outstandingNum)}</Typography>
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                  }}
+                >
+                  {current.dueDate
+                    ? new Date(
+                        current.dueDate
+                      ).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )
+                    : new Date(
+                        Date.now() +
+                          15 * 86400000
+                      ).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                </Typography>
+              </Stack>
             </Stack>
           </Stack>
         </Box>
 
-        {/* Note from wireframe */}
-        <Typography variant="body2" color="rgba(255,255,255,0.4)">
-          As soon as the vendor bill is confirmed a journal entry is created in the Journal Entries section (Purchase Journal debits Purchase Expense, credits Creditor).
-        </Typography>
+        {/* Items */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              color: COLORS.text,
+              fontWeight: 600,
+              mb: 2,
+            }}
+          >
+            Bill Items
+          </Typography>
 
-        {/* Bill Payment Modal (matching wireframe) */}
+          <TableContainer
+            sx={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 2.5,
+              bgcolor: COLORS.card,
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              size="small"
+              sx={{
+                "& .MuiTableCell-root": {
+                  px: 2,
+                  py: 1.8,
+                },
+              }}
+            >
+              <TableHead>
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.cardHover,
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      width: 50,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Sr.
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Product
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      width: 70,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Qty
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      width: 110,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Unit Price
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      width: 120,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Subtotal
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      width: 110,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Tax Amount
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      width: 120,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Total
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {current.items?.map(
+                  (item, idx) => (
+                    <TableRow
+                      key={item.id}
+                      sx={{
+                        bgcolor: COLORS.card,
+
+                        "&:hover": {
+                          bgcolor:
+                            COLORS.cardHover,
+                        },
+
+                        "& .MuiTableCell-root": {
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        },
+                      }}
+                    >
+                      <TableCell
+                        sx={{
+                          color: COLORS.muted,
+                        }}
+                      >
+                        {idx + 1}.
+                      </TableCell>
+
+                      <TableCell
+                        sx={{
+                          color: COLORS.text,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.productName}
+
+                        {item.taxLines &&
+                          item.taxLines.length >
+                            0 && (
+                            <Box
+                              sx={{
+                                mt: 1,
+                                display: "flex",
+                                gap: 0.75,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {item.taxLines.map(
+                                (tl) => (
+                                  <Chip
+                                    key={tl.id}
+                                    label={`${tl.taxName}: ${formatMoney(
+                                      tl.taxAmount
+                                    )}`}
+                                    size="small"
+                                    sx={{
+                                      bgcolor:
+                                        COLORS.infoSoft,
+                                      color:
+                                        COLORS.info,
+                                      fontSize:
+                                        "0.7rem",
+                                      height: 22,
+                                      borderRadius: 1,
+                                    }}
+                                  />
+                                )
+                              )}
+                            </Box>
+                          )}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.text,
+                        }}
+                      >
+                        {item.quantity}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.text,
+                        }}
+                      >
+                        {formatMoney(
+                          item.unitPrice
+                        )}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.text,
+                        }}
+                      >
+                        {formatMoney(
+                          item.lineSubtotal ||
+                            Number(
+                              item.unitPrice
+                            ) *
+                              Number(
+                                item.quantity
+                              )
+                        )}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.warning,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {formatMoney(
+                          item.taxAmount
+                        )}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.text,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {formatMoney(
+                          item.lineTotal
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+
+        {/* Financial Breakdown */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Stack
+            spacing={1.5}
+            sx={{
+              minWidth: {
+                xs: "100%",
+                sm: 320,
+              },
+              p: 2.5,
+              borderRadius: 2.5,
+              bgcolor: COLORS.cardHover,
+              border: `1px solid ${COLORS.border}`,
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+            >
+              <Typography
+                sx={{ color: COLORS.muted }}
+              >
+                Subtotal:
+              </Typography>
+
+              <Typography
+                sx={{ color: COLORS.text }}
+              >
+                {formatMoney(
+                  current.subtotal ||
+                    totalNum
+                )}
+              </Typography>
+            </Stack>
+
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+            >
+              <Typography
+                sx={{
+                  color: COLORS.warning,
+                  fontWeight: 600,
+                }}
+              >
+                Total Tax (GST):
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: COLORS.warning,
+                  fontWeight: 600,
+                }}
+              >
+                {formatMoney(
+                  current.taxTotal || 0
+                )}
+              </Typography>
+            </Stack>
+
+            <Box
+              sx={{
+                borderTop: `1px solid ${COLORS.border}`,
+                pt: 1.5,
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    fontWeight: 700,
+                  }}
+                >
+                  Grand Total:
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatMoney(totalNum)}
+                </Typography>
+              </Stack>
+            </Box>
+
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+            >
+              <Typography
+                sx={{ color: COLORS.muted }}
+              >
+                Paid Amount:
+              </Typography>
+
+              <Typography
+                sx={{ color: COLORS.text }}
+              >
+                {formatMoney(paidNum)}
+              </Typography>
+            </Stack>
+
+            <Box
+              sx={{
+                borderTop: `1px dashed ${COLORS.borderStrong}`,
+                pt: 1.5,
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.danger,
+                    fontWeight: 700,
+                  }}
+                >
+                  Amount Due:
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: COLORS.danger,
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatMoney(
+                    outstandingNum
+                  )}
+                </Typography>
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
+
+        {/* Accounting Note */}
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderRadius: 2,
+            bgcolor: COLORS.infoSoft,
+            border: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: COLORS.muted,
+              lineHeight: 1.7,
+            }}
+          >
+            As soon as the vendor bill is
+            confirmed, a journal entry is
+            created in the Journal Entries
+            section. The Purchase Journal
+            debits Purchase Expense and
+            credits Creditor.
+          </Typography>
+        </Box>
+
+        {/* Payment Dialog */}
         <Dialog
           open={paymentOpen}
-          onClose={() => setPaymentOpen(false)}
+          onClose={() =>
+            setPaymentOpen(false)
+          }
           fullWidth
           maxWidth="sm"
           PaperProps={{
-            sx: { bgcolor: "#181818", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 4, color: "white" }
+            sx: {
+              bgcolor: COLORS.card,
+              border: `1px solid ${COLORS.borderStrong}`,
+              borderRadius: 3,
+              color: COLORS.text,
+            },
           }}
         >
-          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography variant="h6" fontWeight={700}>Bill Payment</Typography>
-            <IconButton onClick={() => window.print()} sx={{ color: "rgba(255,255,255,0.7)" }}>
-              <PrintIcon />
-            </IconButton>
+          <DialogTitle
+            sx={{
+              px: 3,
+              pt: 3,
+              pb: 2,
+              borderBottom: `1px solid ${COLORS.border}`,
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 700,
+                }}
+              >
+                Bill Payment
+              </Typography>
+
+              <IconButton
+                onClick={() =>
+                  window.print()
+                }
+                sx={{
+                  color: COLORS.muted,
+
+                  "&:hover": {
+                    color: COLORS.accent,
+                    bgcolor:
+                      COLORS.accentSoft,
+                  },
+                }}
+              >
+                <PrintIcon />
+              </IconButton>
+            </Stack>
           </DialogTitle>
 
-          <DialogContent>
-            <Stack spacing={3} sx={{ pt: 1 }}>
-              {payment.isError && <Alert severity="error">Payment failed. Check the entered amount.</Alert>}
+          <DialogContent sx={{ px: 3, py: 3 }}>
+            <Stack spacing={3}>
+              {payment.isError && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    bgcolor: COLORS.dangerSoft,
+                    color: COLORS.danger,
+                    border: `1px solid ${COLORS.danger}`,
+                    borderRadius: 2,
+                  }}
+                >
+                  Payment failed. Check the
+                  entered amount.
+                </Alert>
+              )}
 
               <FormControl component="fieldset">
-                <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Payment Type</FormLabel>
-                <RadioGroup row value={payType} onChange={(e) => setPayType(e.target.value)}>
-                  <FormControlLabel value="SEND" control={<Radio sx={{ color: "white" }} />} label="Send" />
-                  <FormControlLabel value="RECEIVE" control={<Radio sx={{ color: "white" }} />} label="Receive" disabled />
+                <FormLabel
+                  sx={{
+                    color: COLORS.muted,
+                    mb: 1,
+                  }}
+                >
+                  Payment Type
+                </FormLabel>
+
+                <RadioGroup
+                  row
+                  value={payType}
+                  onChange={(e) =>
+                    setPayType(
+                      e.target.value
+                    )
+                  }
+                >
+                  <FormControlLabel
+                    value="SEND"
+                    control={
+                      <Radio
+                        sx={{
+                          color: COLORS.muted,
+                          "&.Mui-checked": {
+                            color: COLORS.accent,
+                          },
+                        }}
+                      />
+                    }
+                    label="Send"
+                    sx={{
+                      color: COLORS.text,
+                    }}
+                  />
+
+                  <FormControlLabel
+                    value="RECEIVE"
+                    control={
+                      <Radio
+                        sx={{
+                          "&.Mui-checked": {
+                            color: COLORS.accent,
+                          },
+                        }}
+                      />
+                    }
+                    label="Receive"
+                    disabled
+                    sx={{
+                      color: COLORS.muted,
+                    }}
+                  />
                 </RadioGroup>
               </FormControl>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="rgba(255,255,255,0.7)" minWidth={120}>Partner</Typography>
-                <Typography color="white" fontWeight={600}>{current.vendor.name}</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 120,
+                  }}
+                >
+                  Partner
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    fontWeight: 600,
+                  }}
+                >
+                  {current.vendor.name}
+                </Typography>
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="rgba(255,255,255,0.7)" minWidth={120}>Amount</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 120,
+                  }}
+                >
+                  Amount
+                </Typography>
+
                 <TextField
                   type="number"
                   variant="standard"
                   fullWidth
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) =>
+                    setAmount(
+                      e.target.value
+                    )
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="rgba(255,255,255,0.7)" minWidth={120}>Date</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 120,
+                  }}
+                >
+                  Date
+                </Typography>
+
                 <TextField
                   type="date"
                   variant="standard"
                   fullWidth
                   value={payDate}
-                  onChange={(e) => setPayDate(e.target.value)}
+                  onChange={(e) =>
+                    setPayDate(
+                      e.target.value
+                    )
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="rgba(255,255,255,0.7)" minWidth={120}>Payment Via</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 120,
+                  }}
+                >
+                  Payment Via
+                </Typography>
+
                 <TextField
                   select
                   variant="standard"
                   fullWidth
                   value={paymentVia}
-                  onChange={(e) => setPaymentVia(e.target.value)}
+                  onChange={(e) =>
+                    setPaymentVia(
+                      e.target.value
+                    )
+                  }
                   sx={darkTextFieldSx}
-                  SelectProps={{
-                    MenuProps: { PaperProps: { sx: { bgcolor: "#1e1e1e", color: "white" } } }
-                  }}
+                  SelectProps={
+                    darkSelectProps
+                  }
                 >
-                  <MenuItem value="Bank">Bank</MenuItem>
-                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Bank">
+                    Bank
+                  </MenuItem>
+
+                  <MenuItem value="Cash">
+                    Cash
+                  </MenuItem>
                 </TextField>
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="rgba(255,255,255,0.7)" minWidth={120}>Memo</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.muted,
+                    minWidth: 120,
+                  }}
+                >
+                  Memo
+                </Typography>
+
                 <TextField
                   variant="standard"
                   fullWidth
                   placeholder="Alpha Numeric (Text)"
                   value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
+                  onChange={(e) =>
+                    setMemo(
+                      e.target.value
+                    )
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
             </Stack>
           </DialogContent>
 
-          <DialogActions sx={{ p: 3 }}>
-            <Button onClick={() => setPaymentOpen(false)} sx={{ color: "white" }}>Cancel</Button>
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2.5,
+              gap: 1.5,
+              borderTop: `1px solid ${COLORS.border}`,
+            }}
+          >
+            <Button
+              onClick={() =>
+                setPaymentOpen(false)
+              }
+              sx={{
+                color: COLORS.muted,
+                textTransform: "none",
+                borderRadius: 2,
+
+                "&:hover": {
+                  color: COLORS.text,
+                  bgcolor:
+                    COLORS.cardHover,
+                },
+              }}
+            >
+              Cancel
+            </Button>
+
             <CustomButton
               active
-              disabled={!amount || Number(amount) <= 0 || Number(amount) > outstandingNum || payment.isPending}
-              onClick={() => payment.mutate()}
+              disabled={
+                !amount ||
+                Number(amount) <= 0 ||
+                Number(amount) >
+                  outstandingNum ||
+                payment.isPending
+              }
+              onClick={() =>
+                payment.mutate()
+              }
             >
-              {payment.isPending ? "Confirming..." : "Confirm"}
+              {payment.isPending
+                ? "Confirming..."
+                : "Confirm"}
             </CustomButton>
           </DialogActions>
         </Dialog>

@@ -75,7 +75,7 @@ export default function TaxesPage() {
           type: typeFilter !== "ALL" ? (typeFilter as TaxType) : undefined,
           pageSize: 100
         }),
-        getAccounts()
+        getAccounts({ page: 1, pageSize: 100 })
       ]);
       setTaxes(taxRes.data);
       setAccounts(accRes.data || []);
@@ -258,16 +258,11 @@ export default function TaxesPage() {
 
       {/* Main Content */}
       {loading ? (
-        <LoadingState message="Loading tax configuration..." />
+        <LoadingState label="Loading tax configuration..." />
       ) : error ? (
         <ErrorState message={error} onRetry={fetchData} />
       ) : taxes.length === 0 ? (
-        <EmptyState
-          title="No Tax Rates Found"
-          description="Create your first tax master entry to configure sales & purchase taxes."
-          actionLabel="Create Tax Rate"
-          onAction={() => handleOpenModal()}
-        />
+        <EmptyState message="No tax rates found. Create your first tax master entry." />
       ) : (
         <TableContainer component={Paper} sx={{ bgcolor: cardBg, borderColor: subtleBorder, borderWidth: 1, borderStyle: "solid", borderRadius: 2 }}>
           <Table>

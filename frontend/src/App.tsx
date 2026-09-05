@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
+import { SystemAdministratorRoute } from "./features/auth/SystemAdministratorRoute";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ContactsPage } from "./pages/ContactsPage";
 import { ProductsPage } from "./pages/ProductsPage";
@@ -31,6 +32,7 @@ export const App = () => <Routes>
   <Route path="/signup" element={<SignupPage />} />
   <Route element={<ProtectedRoute />}><Route element={<AppLayout />}>
     <Route index element={<DashboardPage />} />
+    <Route element={<SystemAdministratorRoute />}>
     <Route path="contacts" element={<ContactsPage />} />
     <Route path="products" element={<ProductsPage />} />
     <Route path="taxes" element={<TaxesPage />} />
@@ -51,6 +53,7 @@ export const App = () => <Routes>
     <Route path="users/new" element={<CreateUserPage />} />
     <Route path="analyticals" element={<AnalyticAccountsPage />} />
     <Route path="budgets" element={<BudgetsPage />} />
+    </Route>
     <Route path="reports" element={<ReportsPage />} />
     <Route path="reports/balance-sheet" element={<ReportsPage initialTab={0} />} />
     <Route path="reports/profit-and-loss" element={<ReportsPage initialTab={1} />} />
@@ -58,4 +61,3 @@ export const App = () => <Routes>
   </Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
 </Routes>;
-

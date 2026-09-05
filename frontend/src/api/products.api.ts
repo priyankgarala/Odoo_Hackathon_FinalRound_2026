@@ -10,6 +10,7 @@ export type Product = {
   costPrice: string;
   defaultTaxId: number | null;
   defaultTax?: { id: number; name: string; rate: string; type: string } | null;
+  productCategory?: { id: number; name: string; taxId: number; tax?: { id: number; name: string; rate: string; type: string } } | null;
   category: string | null;
   image: string | null;
   active: boolean;
@@ -33,3 +34,6 @@ export const getProducts = async (params: ProductFilters) => (await api.get<Prod
 export const createProduct = async (input: ProductInput) => (await api.post<{ data: Product }>("/products", input)).data.data;
 export const updateProduct = async ({ id, input }: { id: number; input: ProductInput }) => (await api.put<{ data: Product }>(`/products/${id}`, input)).data.data;
 export const setProductStatus = async ({ id, active }: { id: number; active: boolean }) => (await api.patch<{ data: Product }>(`/products/${id}/status`, { active })).data.data;
+export const deleteProduct = async (id: number) => (await api.delete(`/products/${id}`)).data;
+export const deleteProductsBulk = async (ids: number[]) => (await api.delete("/products/bulk", { data: { ids } })).data;
+

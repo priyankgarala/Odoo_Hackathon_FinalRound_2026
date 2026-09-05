@@ -11,7 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -20,20 +20,84 @@ import * as api from "../api/journals.api";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
 import { useAuth } from "../features/auth/AuthProvider";
+import { isSystemAdministrator } from "../features/auth/roles";
+
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
 
 const money = (value: string | number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(Number(value) || 0);
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(Number(value) || 0);
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4, pb: 6 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 4,
+      pb: 6,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>
+      <Box
+        sx={{
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.borderStrong}`,
+          borderRadius: 2,
+          py: 1.25,
+          px: 3,
+          mb: 3,
+          display: "inline-block",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.accent,
+            fontWeight: 700,
+            letterSpacing: 0.2,
+          }}
+        >
           {title}
         </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 3,
+        p: { xs: 2, sm: 3 },
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
@@ -48,7 +112,7 @@ export const JournalEntryDetailsPage = () => {
   const entry = useQuery({
     queryKey: ["journal-entry", id],
     queryFn: () => api.getEntry(Number(id)),
-    enabled: Boolean(id)
+    enabled: Boolean(id),
   });
 
   const post = useMutation({
@@ -56,39 +120,81 @@ export const JournalEntryDetailsPage = () => {
     onSuccess: () => {
       cache.invalidateQueries({ queryKey: ["journal-entry", id] });
       cache.invalidateQueries({ queryKey: ["journal-entries"] });
-    }
+    },
   });
 
-  if (entry.isLoading) return <LoadingState label="Loading journal entry..." />;
-  if (entry.isError || !entry.data)
-    return <ErrorState message="Journal entry could not be loaded." onRetry={() => void entry.refetch()} />;
+  if (entry.isLoading) {
+    return <LoadingState label="Loading journal entry..." />;
+  }
+
+  if (entry.isError || !entry.data) {
+    return (
+      <ErrorState
+        message="Journal entry could not be loaded."
+        onRetry={() => void entry.refetch()}
+      />
+    );
+  }
 
   const e = entry.data;
-  const totalDebit = e.lines!.reduce((sum, line) => sum + Number(line.debit), 0);
-  const totalCredit = e.lines!.reduce((sum, line) => sum + Number(line.credit), 0);
+
+  const totalDebit =
+    e.lines?.reduce((sum, line) => sum + Number(line.debit), 0) ?? 0;
+
+  const totalCredit =
+    e.lines?.reduce((sum, line) => sum + Number(line.credit), 0) ?? 0;
+
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
-  const canPost = ["Admin", "Accountant"].includes(user?.role ?? "") && e.status === "DRAFT";
+
+  const canPost =
+    isSystemAdministrator(user?.role) && e.status === "DRAFT";
+
+  const isPosted = e.status === "POSTED";
 
   return (
     <DarkContainer title={`Journal Entry: ${e.entryNumber}`}>
-      <Stack spacing={3}>
+      <Stack spacing={4}>
         {/* Header Actions */}
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems="center" gap={2}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", md: "center" }}
+          gap={2}
+        >
           <Box>
-            <Typography variant="body2" color="rgba(255,255,255,0.7)">
-              {e.journal.name} · {new Date(e.entryDate).toLocaleDateString()}
+            <Typography
+              variant="body2"
+              sx={{
+                color: COLORS.muted,
+                fontSize: "0.9rem",
+              }}
+            >
+              {e.journal.name} ·{" "}
+              {new Date(e.entryDate).toLocaleDateString()}
             </Typography>
           </Box>
-          <Stack direction="row" gap={1.5}>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            gap={1.5}
+            alignItems={{ xs: "stretch", sm: "center" }}
+          >
             <Chip
               label={e.status}
               sx={{
-                bgcolor: e.status === "POSTED" ? "rgba(46, 125, 50, 0.2)" : "rgba(237, 108, 2, 0.2)",
-                color: e.status === "POSTED" ? "#90EE90" : "#ffb74d",
-                fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.1)"
+                bgcolor: isPosted
+                  ? COLORS.successSoft
+                  : COLORS.warningSoft,
+                color: isPosted ? COLORS.success : COLORS.warning,
+                fontWeight: 700,
+                border: `1px solid ${
+                  isPosted
+                    ? "rgba(111, 207, 151, 0.25)"
+                    : "rgba(217, 184, 108, 0.25)"
+                }`,
               }}
             />
+
             {canPost && (
               <Button
                 variant="contained"
@@ -96,27 +202,42 @@ export const JournalEntryDetailsPage = () => {
                 onClick={() => post.mutate()}
                 startIcon={<CheckCircleOutlineIcon />}
                 sx={{
-                  bgcolor: "#2B5E74",
-                  color: "white",
+                  bgcolor: COLORS.accent,
+                  color: "#081312",
                   borderRadius: 2,
                   textTransform: "none",
-                  fontWeight: 600,
-                  "&:hover": { bgcolor: "#1f4759" }
+                  fontWeight: 700,
+                  px: 2,
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor: COLORS.accentHover,
+                    boxShadow: "none",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: "rgba(77, 182, 172, 0.25)",
+                    color: COLORS.muted,
+                  },
                 }}
               >
                 {post.isPending ? "Posting..." : "Post Entry"}
               </Button>
             )}
+
             <Button
               variant="outlined"
               onClick={() => nav("/journal-entries")}
               startIcon={<ArrowBackIcon />}
               sx={{
-                color: "white",
-                borderColor: "rgba(255,255,255,0.3)",
+                color: COLORS.text,
+                borderColor: COLORS.borderStrong,
                 borderRadius: 2,
                 textTransform: "none",
-                "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.05)" }
+                fontWeight: 600,
+                px: 2,
+                "&:hover": {
+                  borderColor: COLORS.accent,
+                  bgcolor: COLORS.accentSoft,
+                },
               }}
             >
               Back
@@ -124,86 +245,267 @@ export const JournalEntryDetailsPage = () => {
           </Stack>
         </Stack>
 
+        {/* Post Error */}
         {post.isError && (
-          <Alert severity="error" sx={{ bgcolor: "rgba(211,47,47,0.2)", color: "#ffb4ab" }}>
+          <Alert
+            severity="error"
+            sx={{
+              bgcolor: COLORS.dangerSoft,
+              color: COLORS.danger,
+              border: `1px solid rgba(233, 139, 139, 0.2)`,
+              "& .MuiAlert-icon": {
+                color: COLORS.danger,
+              },
+            }}
+          >
             Could not post this entry. Check active accounts and balance.
           </Alert>
         )}
 
-        {/* Info Card */}
-        <Box sx={{ bgcolor: "#161616", p: 2.5, borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)" }}>
-          <Stack spacing={1}>
-            <Typography variant="body2" color="rgba(255,255,255,0.7)">
-              <strong style={{ color: "white" }}>Reference:</strong>{" "}
-              {e.referenceType && e.referenceId ? `${e.referenceType} · ${e.referenceId}` : "Manual General Journal entry"}
+        {/* Entry Information */}
+        <Box
+          sx={{
+            bgcolor: COLORS.cardHover,
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2.5,
+            border: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <Stack spacing={1.5}>
+            <Typography
+              variant="body2"
+              sx={{ color: COLORS.muted }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 700,
+                }}
+              >
+                Reference:
+              </Box>{" "}
+              {e.referenceType && e.referenceId
+                ? `${e.referenceType} · ${e.referenceId}`
+                : "Manual General Journal entry"}
             </Typography>
-            <Typography variant="body2" color="rgba(255,255,255,0.7)">
-              <strong style={{ color: "white" }}>Description:</strong> {e.description ?? "—"}
+
+            <Typography
+              variant="body2"
+              sx={{ color: COLORS.muted }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  color: COLORS.text,
+                  fontWeight: 700,
+                }}
+              >
+                Description:
+              </Box>{" "}
+              {e.description ?? "—"}
             </Typography>
           </Stack>
         </Box>
 
-        {/* Line Items Table */}
-        <TableContainer sx={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", bgcolor: "#121212" }}>
-          <Table>
-            <TableHead sx={{ bgcolor: "#181818" }}>
-              <TableRow>
-                <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Account</TableCell>
-                <TableCell sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Description</TableCell>
-                <TableCell align="right" sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Debit (₹)</TableCell>
-                <TableCell align="right" sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>Credit (₹)</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {e.lines!.map((line) => (
-                <TableRow key={line.id}>
-                  <TableCell>
-                    <Typography fontWeight={600} color="#90EE90">
-                      {line.account.code} - {line.account.name}
-                    </Typography>
+        {/* Journal Lines */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              color: COLORS.text,
+              fontWeight: 700,
+              mb: 1.5,
+            }}
+          >
+            Journal Lines
+          </Typography>
+
+          <TableContainer
+            sx={{
+              borderRadius: 2.5,
+              border: `1px solid ${COLORS.border}`,
+              bgcolor: COLORS.page,
+              overflowX: "auto",
+            }}
+          >
+            <Table sx={{ minWidth: 700 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.cardHover,
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                    }}
+                  >
+                    Account
                   </TableCell>
-                  <TableCell sx={{ color: "rgba(255,255,255,0.85)" }}>
-                    {line.description ?? "—"}
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                    }}
+                  >
+                    Description
                   </TableCell>
-                  <TableCell align="right" sx={{ color: "#ffffff", fontWeight: 500 }}>
-                    {Number(line.debit) ? money(line.debit) : "—"}
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Debit (₹)
                   </TableCell>
-                  <TableCell align="right" sx={{ color: "#ffffff", fontWeight: 500 }}>
-                    {Number(line.credit) ? money(line.credit) : "—"}
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Credit (₹)
                   </TableCell>
                 </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: "rgba(255,255,255,0.05)" }}>
-                <TableCell colSpan={2}>
-                  <Typography fontWeight={800} color="white">
-                    Totals
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography fontWeight={800} color="#90EE90">
-                    {money(totalDebit)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography fontWeight={800} color="#90EE90">
-                    {money(totalCredit)}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
 
+              <TableBody>
+                {e.lines?.map((line) => (
+                  <TableRow
+                    key={line.id}
+                    sx={{
+                      "&:hover": {
+                        bgcolor: COLORS.cardHover,
+                      },
+                      "& td": {
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ py: 2 }}>
+                      <Typography
+                        fontWeight={600}
+                        sx={{ color: COLORS.accent }}
+                      >
+                        {line.account.code} - {line.account.name}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.muted,
+                        py: 2,
+                      }}
+                    >
+                      {line.description ?? "—"}
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                        py: 2,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {Number(line.debit) ? money(line.debit) : "—"}
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                        py: 2,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {Number(line.credit) ? money(line.credit) : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+                {/* Totals */}
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.accentSoft,
+                    "& td": {
+                      borderBottom: "none",
+                    },
+                  }}
+                >
+                  <TableCell colSpan={2} sx={{ py: 2 }}>
+                    <Typography
+                      fontWeight={800}
+                      sx={{ color: COLORS.text }}
+                    >
+                      Totals
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="right" sx={{ py: 2 }}>
+                    <Typography
+                      fontWeight={800}
+                      sx={{ color: COLORS.accent }}
+                    >
+                      {money(totalDebit)}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="right" sx={{ py: 2 }}>
+                    <Typography
+                      fontWeight={800}
+                      sx={{ color: COLORS.accent }}
+                    >
+                      {money(totalCredit)}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+
+        {/* Double Entry Validation */}
         <Alert
           severity={isBalanced ? "success" : "error"}
           sx={{
-            bgcolor: isBalanced ? "rgba(46, 125, 50, 0.15)" : "rgba(211, 47, 47, 0.15)",
-            color: isBalanced ? "#90EE90" : "#ffb4ab",
-            border: "1px solid rgba(255,255,255,0.1)",
-            "& .MuiAlert-icon": { color: isBalanced ? "#90EE90" : "#ffb4ab" }
+            bgcolor: isBalanced
+              ? COLORS.successSoft
+              : COLORS.dangerSoft,
+            color: isBalanced ? COLORS.success : COLORS.danger,
+            border: `1px solid ${
+              isBalanced
+                ? "rgba(111, 207, 151, 0.2)"
+                : "rgba(233, 139, 139, 0.2)"
+            }`,
+            "& .MuiAlert-icon": {
+              color: isBalanced ? COLORS.success : COLORS.danger,
+            },
           }}
         >
-          Double-entry validation: Total Debit ({money(totalDebit)}) {isBalanced ? "EQUALS" : "DOES NOT EQUAL"} Total Credit ({money(totalCredit)}).
+          Double-entry validation: Total Debit (
+          {money(totalDebit)}){" "}
+          {isBalanced ? "EQUALS" : "DOES NOT EQUAL"} Total Credit (
+          {money(totalCredit)}).
         </Alert>
       </Stack>
     </DarkContainer>

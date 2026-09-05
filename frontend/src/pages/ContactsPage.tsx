@@ -10,6 +10,7 @@ import { EmptyState } from "../components/feedback/EmptyState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
 import { useAuth } from "../features/auth/AuthProvider";
+import { isSystemAdministrator } from "../features/auth/roles";
 import { Country, State, City } from "country-state-city";
 
 const blank: contactsApi.ContactInput = { name: "", type: "CUSTOMER", email: null, phone: null, address: null, profileImage: null };
@@ -18,11 +19,11 @@ const apiError = (error: unknown) => axios.isAxiosError<{ error?: string }>(erro
 const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
   <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box sx={{ bgcolor: "#172642", border: "1px solid #2563eb", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
+        <Typography variant="h6" color="#7dd3fc" fontWeight={600}>{title}</Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+    <Box sx={{ border: "1px solid #263550", borderRadius: 6, p: 3, bgcolor: "#111c31" }}>
       {children}
     </Box>
   </Box>
@@ -74,7 +75,7 @@ const CustomButton = ({ children, active, ...props }: any) => (
 
 export const ContactsPage = () => {
   const queryClient = useQueryClient(); const { user } = useAuth();
-  const canManage = ["Admin", "Accountant", "Sales", "Purchase"].includes(user?.role ?? "");
+  const canManage = isSystemAdministrator(user?.role);
   const [screen, setScreen] = useState<"list" | "form">("list"); const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
   const [form, setForm] = useState<contactsApi.ContactInput>(blank); const [editing, setEditing] = useState<contactsApi.Contact | null>(null);
@@ -91,7 +92,23 @@ export const ContactsPage = () => {
   
   const [validationError, setValidationError] = useState<string | null>(null);
   const [addressParts, setAddressParts] = useState({ street: "", city: "", stateCode: "", countryCode: "", pincode: "" });
-  
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const deleteMutation = useMutation({
+    mutationFn: (ids: number[]) => (ids.length === 1 ? contactsApi.deleteContact(ids[0]) : contactsApi.deleteContactsBulk(ids)),
+    onSuccess: () => {
+      setSelectedIds([]);
+      refresh();
+    }
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected contact(s)?`)) {
+      deleteMutation.mutate(selectedIds);
+    }
+  };
+
   const openCreate = () => { setEditing(null); setForm(blank); setValidationError(null); setAddressParts({ street: "", city: "", stateCode: "", countryCode: "", pincode: "" }); setScreen("form"); };
   const openRecord = (contact: contactsApi.Contact) => { 
     setEditing(contact); 
@@ -145,6 +162,22 @@ export const ContactsPage = () => {
     const combinedAddress = isAddressEmpty ? null : JSON.stringify(addressParts);
     
     save.mutate({ ...form, address: combinedAddress }); 
+  };
+
+  const renderedContacts = contacts.data?.data ?? [];
+  const isAllSelected = renderedContacts.length > 0 && selectedIds.length === renderedContacts.length;
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < renderedContacts.length;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(renderedContacts.map(c => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleSelectRow = (id: number) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
 
   if (screen === "form") return (
@@ -217,79 +250,574 @@ export const ContactsPage = () => {
     </DarkContainer>
   );
 
-  const renderedContacts = contacts.data?.data ?? [];
   return (
     <DarkContainer title="Master Data">
-      <Stack spacing={3}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <CustomButton onClick={openCreate}>New</CustomButton>
-          <TextField 
-            variant="outlined" 
-            size="small"
-            placeholder="Search" 
-            value={search} 
-            onChange={(event) => { setSearch(event.target.value); setPage(1); }} 
-            sx={{ width: 300, input: { color: "white" }, "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "rgba(255,255,255,0.3)" }, "&:hover fieldset": { borderColor: "white" } } }} 
-          />
-          <Stack direction="row" spacing={2} alignItems="center">
-            <CustomButton onClick={() => setScreen("list")}>Back</CustomButton>
-            <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, next) => next && setView(next)} sx={{ bgcolor: "white", borderRadius: 1 }}>
-              <ToggleButton value="list"><ViewListIcon sx={{ color: "black" }} /></ToggleButton>
-              <ToggleButton value="kanban"><ViewModuleIcon sx={{ color: "black" }} /></ToggleButton>
-            </ToggleButtonGroup>
-          </Stack>
-        </Stack>
+  <Stack spacing={3}>
+    {/* Top Actions */}
+    <Stack
+      direction="row"
+      justifyContent="space-between"
+      alignItems="center"
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        {/* New Button */}
+        <CustomButton onClick={openCreate}>
+          New
+        </CustomButton>
 
-        {contacts.isLoading ? <LoadingState label="Loading contacts..." /> : contacts.isError ? <ErrorState message={apiError(contacts.error)} onRetry={() => void contacts.refetch()} /> : renderedContacts.length === 0 ? <EmptyState message="No contacts found." /> : (
-          view === "list" ? (
-            <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Select</TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Image</TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Name</TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Email</TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>Phone</TableCell>
+        {/* Bulk Delete */}
+        {selectedIds.length > 0 && (
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={handleDeleteSelected}
+            disabled={deleteMutation.isPending}
+            sx={{
+              px: 1.5,
+              py: 0.65,
+              borderRadius: 1.5,
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.8rem",
+              color: "#ff6b6b",
+              borderColor: "rgba(255,107,107,0.5)",
+              backgroundColor: "rgba(255,107,107,0.04)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "rgba(255,107,107,0.12)",
+                borderColor: "#ff6b6b",
+              },
+              "&.Mui-disabled": {
+                color: "rgba(255,107,107,0.4)",
+                borderColor: "rgba(255,107,107,0.2)",
+              },
+            }}
+          >
+            Delete ({selectedIds.length})
+          </Button>
+        )}
+      </Stack>
+
+      {/* Search */}
+      <TextField
+        variant="outlined"
+        size="small"
+        placeholder="Search"
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setPage(1);
+        }}
+        sx={{
+          width: 300,
+          input: {
+            color: "white",
+          },
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": {
+              borderColor: "rgba(255,255,255,0.3)",
+            },
+            "&:hover fieldset": {
+              borderColor: "white",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "rgba(255,255,255,0.7)",
+            },
+          },
+        }}
+      />
+
+      {/* Back + View Toggle */}
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CustomButton onClick={() => setScreen("list")}>
+          Back
+        </CustomButton>
+
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={view}
+          onChange={(_, next) => next && setView(next)}
+          sx={{
+            bgcolor: "white",
+            borderRadius: 1.5,
+            overflow: "hidden",
+          }}
+        >
+          <ToggleButton value="list">
+            <ViewListIcon sx={{ color: "black" }} />
+          </ToggleButton>
+
+          <ToggleButton value="kanban">
+            <ViewModuleIcon sx={{ color: "black" }} />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
+    </Stack>
+
+    {/* Delete Error */}
+    {deleteMutation.isError && (
+      <Alert severity="error">
+        {apiError(deleteMutation.error)}
+      </Alert>
+    )}
+
+    {/* Content */}
+    {contacts.isLoading ? (
+      <LoadingState label="Loading contacts..." />
+    ) : contacts.isError ? (
+      <ErrorState
+        message={apiError(contacts.error)}
+        onRetry={() => void contacts.refetch()}
+      />
+    ) : renderedContacts.length === 0 ? (
+      <EmptyState message="No contacts found." />
+    ) : (
+      <>
+        {/* LIST VIEW */}
+        {view === "list" ? (
+          <TableContainer
+            sx={{
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            <Table size="small">
+              <TableHead>
+                <TableRow
+                  sx={{
+                    borderBottom:
+                      "1px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  {/* Select All */}
+                  <TableCell
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    <Checkbox
+                      size="small"
+                      checked={isAllSelected}
+                      indeterminate={isSomeSelected}
+                      onChange={(e) =>
+                        toggleSelectAll(e.target.checked)
+                      }
+                      sx={{
+                        color: "rgba(255,255,255,0.5)",
+                        "&.Mui-checked": {
+                          color: "#90EE90",
+                        },
+                        "&.MuiCheckbox-indeterminate": {
+                          color: "#90EE90",
+                        },
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    Image
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    Name
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    Email
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    Phone
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: "white",
+                      borderBottom: "none",
+                    }}
+                  >
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {renderedContacts.map((contact) => (
+                  <TableRow
+                    key={contact.id}
+                    hover
+                    onClick={() => openRecord(contact)}
+                    sx={{
+                      cursor: "pointer",
+                      borderBottom:
+                        "1px solid rgba(255,255,255,0.1)",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.05)",
+                      },
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <TableCell
+                      sx={{ borderBottom: "none" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        size="small"
+                        checked={selectedIds.includes(contact.id)}
+                        onChange={() =>
+                          toggleSelectRow(contact.id)
+                        }
+                        sx={{
+                          color: "rgba(255,255,255,0.5)",
+                          "&.Mui-checked": {
+                            color: "#90EE90",
+                          },
+                        }}
+                      />
+                    </TableCell>
+
+                    {/* Image */}
+                    <TableCell
+                      sx={{
+                        borderBottom: "none",
+                      }}
+                    >
+                      {contact.profileImage ? (
+                        <Box
+                          component="img"
+                          src={contact.profileImage}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <AccountCircleIcon
+                          sx={{
+                            color: "rgba(255,255,255,0.3)",
+                          }}
+                        />
+                      )}
+                    </TableCell>
+
+                    {/* Name */}
+                    <TableCell
+                      sx={{
+                        color: "white",
+                        borderBottom: "none",
+                      }}
+                    >
+                      {contact.name}
+                    </TableCell>
+
+                    {/* Email */}
+                    <TableCell
+                      sx={{
+                        color: "white",
+                        borderBottom: "none",
+                      }}
+                    >
+                      {contact.email ?? "—"}
+                    </TableCell>
+
+                    {/* Phone */}
+                    <TableCell
+                      sx={{
+                        color: "white",
+                        borderBottom: "none",
+                      }}
+                    >
+                      {contact.phone ?? "—"}
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell
+                      align="right"
+                      sx={{
+                        borderBottom: "none",
+                      }}
+                    >
+                      {canManage && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            if (
+                              window.confirm(
+                                `Delete ${contact.name}?`
+                              )
+                            ) {
+                              deleteMutation.mutate([
+                                contact.id,
+                              ]);
+                            }
+                          }}
+                          sx={{
+                            minWidth: 72,
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1.5,
+                            textTransform: "none",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            color: "#ff6b6b",
+                            borderColor:
+                              "rgba(255,107,107,0.5)",
+                            backgroundColor:
+                              "rgba(255,107,107,0.04)",
+                            transition: "all 0.2s ease",
+
+                            "&:hover": {
+                              backgroundColor:
+                                "rgba(255,107,107,0.12)",
+                              borderColor: "#ff6b6b",
+                            },
+
+                            "&.Mui-disabled": {
+                              color:
+                                "rgba(255,107,107,0.4)",
+                              borderColor:
+                                "rgba(255,107,107,0.2)",
+                            },
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {renderedContacts.map((contact) => (
-                    <TableRow key={contact.id} hover onClick={() => openRecord(contact)} sx={{ cursor: "pointer", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                      <TableCell sx={{ borderBottom: "none" }}><Checkbox size="small" sx={{ color: "rgba(255,255,255,0.5)" }} onClick={(e) => e.stopPropagation()} /></TableCell>
-                      <TableCell sx={{ borderBottom: "none" }}>{contact.profileImage ? <Box component="img" src={contact.profileImage} sx={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} /> : <AccountCircleIcon sx={{ color: "rgba(255,255,255,0.3)" }} />}</TableCell>
-                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.name}</TableCell>
-                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.email ?? "—"}</TableCell>
-                      <TableCell sx={{ color: "white", borderBottom: "none" }}>{contact.phone ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 3, pt: 2 }}>
-              {renderedContacts.map((contact) => (
-                <Paper key={contact.id} variant="outlined" onClick={() => openRecord(contact)} sx={{ p: 2, cursor: "pointer", bgcolor: "transparent", borderColor: "rgba(255,255,255,0.3)", borderRadius: 3, "&:hover": { borderColor: "white" } }}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box sx={{ width: 60, height: 60, bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                      {contact.profileImage ? <Box component="img" src={contact.profileImage} sx={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <AccountCircleIcon sx={{ fontSize: 40, color: "rgba(255,255,255,0.3)" }} />}
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          /* KANBAN VIEW */
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 3,
+              pt: 2,
+            }}
+          >
+            {renderedContacts.map((contact) => (
+              <Paper
+                key={contact.id}
+                variant="outlined"
+                onClick={() => openRecord(contact)}
+                sx={{
+                  p: 2,
+                  cursor: "pointer",
+                  bgcolor: "transparent",
+                  borderColor:
+                    "rgba(255,255,255,0.3)",
+                  borderRadius: 3,
+                  transition: "all 0.2s ease",
+
+                  "&:hover": {
+                    borderColor: "rgba(255,255,255,0.7)",
+                    bgcolor: "rgba(255,255,255,0.03)",
+                  },
+                }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  {/* Contact Info */}
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ minWidth: 0 }}
+                  >
+                    {/* Profile Image */}
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        flexShrink: 0,
+                        bgcolor:
+                          "rgba(255,255,255,0.1)",
+                        borderRadius: 1.5,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {contact.profileImage ? (
+                        <Box
+                          component="img"
+                          src={contact.profileImage}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <AccountCircleIcon
+                          sx={{
+                            fontSize: 40,
+                            color:
+                              "rgba(255,255,255,0.3)",
+                          }}
+                        />
+                      )}
                     </Box>
-                    <Stack>
-                      <Typography color="white" fontWeight={600}>{contact.name}</Typography>
-                      <Typography color="rgba(255,255,255,0.7)" variant="body2">{contact.email ?? "No email"}</Typography>
-                      <Typography color="rgba(255,255,255,0.7)" variant="body2">{contact.phone ?? "No phone"}</Typography>
+
+                    {/* Details */}
+                    <Stack sx={{ minWidth: 0 }}>
+                      <Typography
+                        color="white"
+                        fontWeight={600}
+                        noWrap
+                      >
+                        {contact.name}
+                      </Typography>
+
+                      <Typography
+                        color="rgba(255,255,255,0.7)"
+                        variant="body2"
+                        noWrap
+                      >
+                        {contact.email ?? "No email"}
+                      </Typography>
+
+                      <Typography
+                        color="rgba(255,255,255,0.7)"
+                        variant="body2"
+                        noWrap
+                      >
+                        {contact.phone ?? "No phone"}
+                      </Typography>
                     </Stack>
                   </Stack>
-                </Paper>
-              ))}
-            </Box>
-          )
+
+                  {/* Delete Button */}
+                  {canManage && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+
+                        if (
+                          window.confirm(
+                            `Delete ${contact.name}?`
+                          )
+                        ) {
+                          deleteMutation.mutate([
+                            contact.id,
+                          ]);
+                        }
+                      }}
+                      sx={{
+                        minWidth: 72,
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1.5,
+                        textTransform: "none",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        color: "#ff6b6b",
+                        borderColor:
+                          "rgba(255,107,107,0.5)",
+                        backgroundColor:
+                          "rgba(255,107,107,0.04)",
+                        transition: "all 0.2s ease",
+
+                        "&:hover": {
+                          backgroundColor:
+                            "rgba(255,107,107,0.12)",
+                          borderColor: "#ff6b6b",
+                        },
+
+                        "&.Mui-disabled": {
+                          color:
+                            "rgba(255,107,107,0.4)",
+                          borderColor:
+                            "rgba(255,107,107,0.2)",
+                        },
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Stack>
+              </Paper>
+            ))}
+          </Box>
         )}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="body2" color="rgba(255,255,255,0.5)">{contacts.data?.meta.total ?? 0} records</Typography>
-          <Pagination page={page} count={Math.max(1, contacts.data?.meta.totalPages ?? 1)} onChange={(_, value) => setPage(value)} sx={{ "& .MuiPaginationItem-root": { color: "white" } }} />
-        </Box>
-      </Stack>
-    </DarkContainer>
+      </>
+    )}
+
+    {/* Pagination */}
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography
+        variant="body2"
+        color="rgba(255,255,255,0.5)"
+      >
+        {contacts.data?.meta.total ?? 0} records
+      </Typography>
+
+      <Pagination
+        page={page}
+        count={Math.max(
+          1,
+          contacts.data?.meta.totalPages ?? 1
+        )}
+        onChange={(_, value) => setPage(value)}
+        sx={{
+          "& .MuiPaginationItem-root": {
+            color: "white",
+          },
+        }}
+      />
+    </Box>
+  </Stack>
+</DarkContainer>
   );
 };

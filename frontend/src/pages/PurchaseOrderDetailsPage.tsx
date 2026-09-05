@@ -1,4 +1,4 @@
-import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -11,26 +11,93 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as purchaseOrdersApi from "../api/purchase-orders.api";
 import { generateBill } from "../api/vendor-bills.api";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
-import { useAuth } from "../features/auth/AuthProvider";
+
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+};
 
 const formatMoney = (value: string | number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value) || 0);
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 4,
+      pb: 4,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box
+        sx={{
+          bgcolor: COLORS.card,
+          border: `1px solid ${COLORS.borderStrong}`,
+          borderRadius: 2,
+          py: 1.25,
+          px: 3,
+          mb: 3,
+          display: "inline-block",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.text,
+            fontWeight: 700,
+            letterSpacing: 0.2,
+          }}
+        >
+          {title}
+        </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 4,
+        p: { xs: 2, md: 3.5 },
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
@@ -40,13 +107,23 @@ const CustomButton = ({ children, active, ...props }: any) => (
   <Button
     variant="outlined"
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? COLORS.page : COLORS.text,
+      bgcolor: active ? COLORS.accent : "transparent",
+      borderColor: active ? COLORS.accent : COLORS.borderStrong,
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      fontWeight: 600,
+
+      "&:hover": {
+        bgcolor: active ? COLORS.accentHover : COLORS.accentSoft,
+        borderColor: COLORS.accent,
+      },
+
+      "&.Mui-disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -58,51 +135,94 @@ export const PurchaseOrderDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   const purchaseOrder = useQuery({
     queryKey: ["purchase-order", id],
     queryFn: () => purchaseOrdersApi.getPurchaseOrder(Number(id)),
-    enabled: Boolean(id)
+    enabled: Boolean(id),
   });
 
   const transition = useMutation({
     mutationFn: (status: "CONFIRMED" | "CANCELLED") =>
-      purchaseOrdersApi.setPurchaseOrderStatus({ id: Number(id), status }),
+      purchaseOrdersApi.setPurchaseOrderStatus({
+        id: Number(id),
+        status,
+      }),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["purchase-order", id] });
-      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-    }
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-order", id],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-orders"],
+      });
+    },
   });
 
   const createBill = useMutation({
     mutationFn: () => generateBill(Number(id)),
-    onSuccess: (bill) => navigate(`/vendor-bills/${bill.id}`)
+    onSuccess: (bill) => navigate(`/vendor-bills/${bill.id}`),
   });
 
-  if (purchaseOrder.isLoading) return <LoadingState label="Loading purchase order..." />;
-  if (purchaseOrder.isError || !purchaseOrder.data)
-    return <ErrorState message="Purchase order could not be loaded." onRetry={() => void purchaseOrder.refetch()} />;
+  if (purchaseOrder.isLoading) {
+    return <LoadingState label="Loading purchase order..." />;
+  }
+
+  if (purchaseOrder.isError || !purchaseOrder.data) {
+    return (
+      <ErrorState
+        message="Purchase order could not be loaded."
+        onRetry={() => void purchaseOrder.refetch()}
+      />
+    );
+  }
 
   const order = purchaseOrder.data;
+
   const canManage = order.status === "DRAFT";
   const canCreateBill = order.status === "CONFIRMED";
+
+  const statusColor =
+    order.status === "CONFIRMED"
+      ? COLORS.success
+      : order.status === "CANCELLED"
+      ? COLORS.danger
+      : COLORS.warning;
+
+  const statusBackground =
+    order.status === "CONFIRMED"
+      ? COLORS.successSoft
+      : order.status === "CANCELLED"
+      ? COLORS.dangerSoft
+      : COLORS.warningSoft;
 
   return (
     <DarkContainer title="Purchase Order">
       <Stack spacing={4}>
+
         {/* Header Actions */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={2}>
-            <CustomButton onClick={() => navigate("/purchase-orders/new")}>New</CustomButton>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", md: "center" }}
+          spacing={2}
+        >
+          <Stack
+            direction="row"
+            spacing={1.5}
+            flexWrap="wrap"
+            useFlexGap
+          >
             {canManage && (
               <CustomButton
                 disabled={transition.isPending}
                 onClick={() => transition.mutate("CONFIRMED")}
               >
-                {transition.isPending ? "..." : "Confirm"}
+                {transition.isPending ? "Confirming..." : "Confirm"}
               </CustomButton>
             )}
+
             {canCreateBill && (
               <CustomButton
                 active
@@ -113,83 +233,336 @@ export const PurchaseOrderDetailsPage = () => {
               </CustomButton>
             )}
           </Stack>
-          <Stack direction="row" spacing={2}>
+
+          <Stack
+            direction="row"
+            spacing={1.5}
+            flexWrap="wrap"
+            useFlexGap
+          >
             {canManage && (
               <CustomButton
                 disabled={transition.isPending}
                 onClick={() => transition.mutate("CANCELLED")}
+                sx={{
+                  color: COLORS.danger,
+                  borderColor: COLORS.danger,
+
+                  "&:hover": {
+                    color: COLORS.danger,
+                    borderColor: COLORS.danger,
+                    bgcolor: COLORS.dangerSoft,
+                  },
+                }}
               >
                 Cancel
               </CustomButton>
             )}
-            <CustomButton onClick={() => navigate("/purchase-orders")}>Back</CustomButton>
+
+            <CustomButton
+              onClick={() => navigate("/purchase-orders")}
+            >
+              Back
+            </CustomButton>
           </Stack>
         </Stack>
 
-        {transition.isError && <Alert severity="error">Could not update purchase order status.</Alert>}
-        {createBill.isError && <Alert severity="error">Vendor bill already exists or could not be generated.</Alert>}
+        {/* Error Messages */}
+        {transition.isError && (
+          <Alert
+            severity="error"
+            sx={{
+              bgcolor: COLORS.dangerSoft,
+              color: COLORS.danger,
+              border: `1px solid ${COLORS.danger}`,
+              "& .MuiAlert-icon": {
+                color: COLORS.danger,
+              },
+            }}
+          >
+            Could not update purchase order status.
+          </Alert>
+        )}
 
-        {/* Header Fields */}
-        <Stack spacing={2} maxWidth={650}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>PO No.</Typography>
-            <Typography color="#90caf9" fontWeight={700} variant="h6">{order.orderNumber}</Typography>
-            <Chip
-              size="small"
-              label={order.status}
-              sx={{
-                bgcolor: order.status === "CONFIRMED" ? "rgba(46, 125, 50, 0.2)" : "rgba(255, 255, 255, 0.12)",
-                color: order.status === "CONFIRMED" ? "#81c784" : "white"
-              }}
-            />
+        {createBill.isError && (
+          <Alert
+            severity="error"
+            sx={{
+              bgcolor: COLORS.dangerSoft,
+              color: COLORS.danger,
+              border: `1px solid ${COLORS.danger}`,
+              "& .MuiAlert-icon": {
+                color: COLORS.danger,
+              },
+            }}
+          >
+            Vendor bill already exists or could not be generated.
+          </Alert>
+        )}
+
+        {/* Purchase Order Information */}
+        <Box
+          sx={{
+            bgcolor: COLORS.page,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 3,
+            p: { xs: 2, md: 3 },
+          }}
+        >
+          <Stack spacing={2.5} maxWidth={700}>
+
+            {/* PO Number + Status */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              spacing={2}
+            >
+              <Typography
+                color={COLORS.muted}
+                minWidth={{ sm: 140 }}
+                fontSize={14}
+              >
+                PO No.
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: COLORS.accent,
+                  fontWeight: 700,
+                  fontSize: "1.15rem",
+                }}
+              >
+                {order.orderNumber}
+              </Typography>
+
+              <Chip
+                size="small"
+                label={order.status}
+                sx={{
+                  bgcolor: statusBackground,
+                  color: statusColor,
+                  border: `1px solid ${statusColor}`,
+                  fontWeight: 700,
+                }}
+              />
+            </Stack>
+
+            {/* Vendor */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              spacing={2}
+            >
+              <Typography
+                color={COLORS.muted}
+                minWidth={{ sm: 140 }}
+                fontSize={14}
+              >
+                Vendor Name
+              </Typography>
+
+              <Typography
+                color={COLORS.text}
+                fontWeight={600}
+              >
+                {order.vendor.name}
+              </Typography>
+            </Stack>
+
+            {/* PO Date */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              spacing={2}
+            >
+              <Typography
+                color={COLORS.muted}
+                minWidth={{ sm: 140 }}
+                fontSize={14}
+              >
+                PO Date
+              </Typography>
+
+              <Typography color={COLORS.text}>
+                {new Date(order.orderDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </Typography>
+            </Stack>
           </Stack>
+        </Box>
 
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>Vendor Name</Typography>
-            <Typography color="white" fontWeight={600}>{order.vendor.name}</Typography>
-          </Stack>
-
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>PO Date</Typography>
-            <Typography color="white">
-              {new Date(order.orderDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </Typography>
-          </Stack>
-        </Stack>
-
-        {/* Line Items Table */}
-        <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+        {/* Line Items */}
+        <TableContainer
+          sx={{
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 3,
+            overflowX: "auto",
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                <TableCell sx={{ color: "white", width: 60 }}>Sr. No.</TableCell>
-                <TableCell sx={{ color: "white" }}>Product</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 100 }}>Qty</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 140 }}>Unit Price</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 140 }}>Total</TableCell>
+              <TableRow
+                sx={{
+                  bgcolor: COLORS.page,
+                  "& th": {
+                    borderBottom: `1px solid ${COLORS.borderStrong}`,
+                  },
+                }}
+              >
+                <TableCell
+                  sx={{
+                    color: COLORS.muted,
+                    width: 70,
+                    fontWeight: 600,
+                  }}
+                >
+                  Sr. No.
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    color: COLORS.muted,
+                    fontWeight: 600,
+                  }}
+                >
+                  Product
+                </TableCell>
+
+                <TableCell
+                  align="right"
+                  sx={{
+                    color: COLORS.muted,
+                    width: 100,
+                    fontWeight: 600,
+                  }}
+                >
+                  Qty
+                </TableCell>
+
+                <TableCell
+                  align="right"
+                  sx={{
+                    color: COLORS.muted,
+                    width: 140,
+                    fontWeight: 600,
+                  }}
+                >
+                  Unit Price
+                </TableCell>
+
+                <TableCell
+                  align="right"
+                  sx={{
+                    color: COLORS.muted,
+                    width: 140,
+                    fontWeight: 600,
+                  }}
+                >
+                  Total
+                </TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {order.items?.map((item, idx) => (
-                <TableRow key={item.id} sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                  <TableCell sx={{ color: "rgba(255,255,255,0.6)" }}>{idx + 1}.</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 600 }}>
+                <TableRow
+                  key={item.id}
+                  sx={{
+                    bgcolor: COLORS.card,
+                    "&:hover": {
+                      bgcolor: COLORS.cardHover,
+                    },
+                    "& td": {
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                    },
+                  }}
+                >
+                  <TableCell sx={{ color: COLORS.muted }}>
+                    {idx + 1}.
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.text,
+                      fontWeight: 600,
+                    }}
+                  >
                     {item.productName}
                   </TableCell>
-                  <TableCell align="right" sx={{ color: "white" }}>{item.quantity}</TableCell>
-                  <TableCell align="right" sx={{ color: "white" }}>{formatMoney(item.unitPrice)}</TableCell>
-                  <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>{formatMoney(item.lineTotal)}</TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{ color: COLORS.text }}
+                  >
+                    {item.quantity}
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{ color: COLORS.text }}
+                  >
+                    {formatMoney(item.unitPrice)}
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.text,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {formatMoney(item.lineTotal)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
 
-        <Stack direction="row" justifyContent="flex-end">
-          <Typography variant="h5" color="white" fontWeight={700}>
-            Total: {formatMoney(order.total)}
-          </Typography>
-        </Stack>
+        {/* Total */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Box
+            sx={{
+              minWidth: { xs: "100%", sm: 300 },
+              bgcolor: COLORS.page,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 3,
+              px: 3,
+              py: 2,
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography
+                color={COLORS.muted}
+                fontSize={15}
+              >
+                Total
+              </Typography>
+
+              <Typography
+                variant="h5"
+                color={COLORS.text}
+                fontWeight={700}
+              >
+                {formatMoney(order.total)}
+              </Typography>
+            </Stack>
+          </Box>
+        </Box>
+
       </Stack>
     </DarkContainer>
   );

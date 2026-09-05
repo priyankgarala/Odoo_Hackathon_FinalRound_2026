@@ -14,9 +14,7 @@ const nullableUnitPrice = z
 const item = z.object({
   productId: id,
   quantity: positive,
-  unitPrice: nullableUnitPrice,
-  taxId: z.union([id, z.literal(""), z.null(), z.undefined()]).transform((v) => (v && typeof v === "number" ? v : null)),
-  taxRate: z.coerce.number().finite().min(0).max(100).default(0)
+  unitPrice: nullableUnitPrice
 });
 
 const order = z.object({

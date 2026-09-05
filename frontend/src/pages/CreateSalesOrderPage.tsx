@@ -14,7 +14,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
@@ -24,57 +24,210 @@ import * as soApi from "../api/sales-orders.api";
 import { getContacts } from "../api/contacts.api";
 import { getProducts } from "../api/products.api";
 
-type Row = { productId: string; quantity: number; unitPrice: string; taxId: string; taxRate: number };
+type Row = {
+  productId: string;
+  quantity: number;
+  unitPrice: string;
+  taxId: string;
+  taxRate: number;
+};
+
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+};
 
 const formatMoney = (v: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(v);
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(v);
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4, pb: 6 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 3,
+      pb: 6,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            color: COLORS.text,
+            fontWeight: 700,
+            fontSize: { xs: "1.7rem", md: "2rem" },
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {title}
+        </Typography>
+
+        <Typography
+          sx={{
+            color: COLORS.muted,
+            mt: 0.5,
+            fontSize: "0.85rem",
+          }}
+        >
+          Create and manage customer sales orders
+        </Typography>
+
+        <Box
+          sx={{
+            width: 32,
+            height: 2,
+            bgcolor: COLORS.accent,
+            mt: 1,
+            borderRadius: 2,
+          }}
+        />
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 4,
+        p: { xs: 2, md: 3 },
+        bgcolor: COLORS.card,
+        boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+      }}
+    >
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": {
+    color: COLORS.text,
+  },
+
+  "& .MuiInput-underline:before": {
+    borderBottomColor: COLORS.borderStrong,
+  },
+
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+    borderBottomColor: COLORS.accent,
+  },
+
+  "& .MuiInput-underline:after": {
+    borderBottomColor: COLORS.accent,
+  },
+
+  "& .MuiInputLabel-root": {
+    color: COLORS.muted,
+  },
+
+  "& .MuiSvgIcon-root": {
+    color: COLORS.muted,
+  },
+
+  "& input[type=date]::-webkit-calendar-picker-indicator": {
+    filter: "invert(0.7)",
+  },
 };
 
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#1e1e1e",
-        color: "rgba(255,255,255,0.9)",
+        bgcolor: "#101A2B",
+        color: COLORS.text,
         maxHeight: 300,
-        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
-      }
-    }
-  }
+        border: `1px solid ${COLORS.borderStrong}`,
+
+        "& .MuiMenuItem-root": {
+          fontSize: "0.85rem",
+        },
+
+        "& .MuiMenuItem-root:hover": {
+          bgcolor: COLORS.accentSoft,
+        },
+
+        "& .Mui-selected": {
+          bgcolor: `${COLORS.accentSoft} !important`,
+          color: COLORS.accent,
+        },
+      },
+    },
+  },
 };
 
-const CustomButton = ({ children, active, ...props }: any) => (
+const CustomButton = ({
+  children,
+  active,
+  ...props
+}: any) => (
   <Button
-    variant="outlined"
+    variant={active ? "contained" : "outlined"}
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? "#071414" : COLORS.muted,
+      bgcolor: active ? COLORS.accent : "transparent",
+
+      borderColor: active
+        ? COLORS.accent
+        : COLORS.borderStrong,
+
       borderRadius: 2,
       textTransform: "none",
-      minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      minWidth: 90,
+      px: 2.5,
+      fontWeight: 600,
+      boxShadow: "none",
+
+      "&:hover": {
+        bgcolor: active
+          ? COLORS.accentHover
+          : COLORS.accentSoft,
+
+        borderColor: active
+          ? COLORS.accentHover
+          : COLORS.accent,
+
+        color: active
+          ? "#071414"
+          : COLORS.text,
+
+        boxShadow: "none",
+      },
+
+      "&:disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -84,293 +237,927 @@ const CustomButton = ({ children, active, ...props }: any) => (
 
 export const CreateSalesOrderPage = () => {
   const navigate = useNavigate();
+
   const [customerId, setCustomerId] = useState("");
-  const [soDate, setSoDate] = useState(new Date().toISOString().slice(0, 10));
-  const [soNo, setSoNo] = useState(`SO${Math.floor(1000 + Math.random() * 9000)}`);
+  const [soDate, setSoDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+
+  const [soNo, setSoNo] = useState(
+    `SO${Math.floor(1000 + Math.random() * 9000)}`
+  );
+
   const [notes, setNotes] = useState("");
-  const [rows, setRows] = useState<Row[]>([{ productId: "", quantity: 1, unitPrice: "", taxId: "", taxRate: 0 }]);
-  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const [rows, setRows] = useState<Row[]>([
+    {
+      productId: "",
+      quantity: 1,
+      unitPrice: "",
+      taxId: "",
+      taxRate: 0,
+    },
+  ]);
+
+  const [validationError, setValidationError] =
+    useState<string | null>(null);
 
   const customers = useQuery({
     queryKey: ["so-customers"],
-    queryFn: () => getContacts({ active: "true", page: 1, pageSize: 100 })
+    queryFn: () =>
+      getContacts({
+        active: "true",
+        page: 1,
+        pageSize: 100,
+      }),
   });
 
-  const customerList = (customers.data?.data ?? []).filter((c) => c.type === "CUSTOMER" || c.type === "BOTH");
+  const customerList = (
+    customers.data?.data ?? []
+  ).filter(
+    (c) =>
+      c.type === "CUSTOMER" ||
+      c.type === "BOTH"
+  );
 
   const products = useQuery({
     queryKey: ["so-products"],
-    queryFn: () => getProducts({ active: "true", page: 1, pageSize: 100 })
+    queryFn: () =>
+      getProducts({
+        active: "true",
+        page: 1,
+        pageSize: 100,
+      }),
   });
 
   const taxes = useQuery({
     queryKey: ["so-taxes"],
-    queryFn: () => import("../api/taxes.api").then((m) => m.getTaxes({ pageSize: 100 }))
+    queryFn: () =>
+      import("../api/taxes.api").then((m) =>
+        m.getTaxes({ pageSize: 100 })
+      ),
   });
 
   const save = useMutation({
     mutationFn: () =>
       soApi.createSalesOrder({
         customerId: Number(customerId),
+
         notes: notes.trim() || null,
+
         items: rows.map((r) => ({
           productId: Number(r.productId),
           quantity: Number(r.quantity),
-          unitPrice: r.unitPrice !== "" && !isNaN(Number(r.unitPrice)) ? Number(r.unitPrice) : undefined,
-          taxId: r.taxId ? Number(r.taxId) : null,
-          taxRate: Number(r.taxRate) || 0
-        }))
+
+          unitPrice:
+            r.unitPrice !== "" &&
+            !isNaN(Number(r.unitPrice))
+              ? Number(r.unitPrice)
+              : undefined,
+
+          taxId: r.taxId
+            ? Number(r.taxId)
+            : null,
+
+          taxRate: Number(r.taxRate) || 0,
+        })),
       }),
-    onSuccess: (o) => navigate(`/sales-orders/${o.id}`)
+
+    onSuccess: (o) =>
+      navigate(`/sales-orders/${o.id}`),
   });
 
-  const handleResetNew = () => {
-    setCustomerId("");
-    setSoDate(new Date().toISOString().slice(0, 10));
-    setSoNo(`SO${Math.floor(1000 + Math.random() * 9000)}`);
-    setNotes("");
-    setRows([{ productId: "", quantity: 1, unitPrice: "", taxId: "", taxRate: 0 }]);
-    setValidationError(null);
+  const update = (
+    i: number,
+    p: Partial<Row>
+  ) => {
+    setRows(
+      rows.map((r, n) =>
+        n === i
+          ? { ...r, ...p }
+          : r
+      )
+    );
   };
-
-  const update = (i: number, p: Partial<Row>) => setRows(rows.map((r, n) => (n === i ? { ...r, ...p } : r)));
 
   const handleConfirm = () => {
     setValidationError(null);
+
     if (!customerId) {
-      setValidationError("Please select a customer.");
+      setValidationError(
+        "Please select a customer."
+      );
       return;
     }
+
     if (rows.length === 0) {
-      setValidationError("Please add at least one line item.");
+      setValidationError(
+        "Please add at least one line item."
+      );
       return;
     }
-    const invalidRow = rows.find((r) => !r.productId || Number(r.quantity) <= 0);
+
+    const invalidRow = rows.find(
+      (r) =>
+        !r.productId ||
+        Number(r.quantity) <= 0
+    );
+
     if (invalidRow) {
-      setValidationError("Please select a product and valid quantity (> 0) for all lines.");
+      setValidationError(
+        "Please select a product and valid quantity (> 0) for all lines."
+      );
       return;
     }
+
     save.mutate();
   };
 
-  const total = rows.reduce((s, r) => {
-    const p = Number(r.unitPrice) || Number(products.data?.data.find((x) => x.id === Number(r.productId))?.unitPrice) || 0;
-    return s + p * r.quantity * (1 + (Number(r.taxRate) || 0) / 100);
+  const total = rows.reduce((sum, r) => {
+    const product =
+      products.data?.data.find(
+        (x) =>
+          x.id === Number(r.productId)
+      );
+
+    const price =
+      Number(r.unitPrice) ||
+      Number(product?.unitPrice) ||
+      0;
+
+    const tax =
+      Number(r.taxRate) || 0;
+
+    return (
+      sum +
+      price *
+        Number(r.quantity) *
+        (1 + tax / 100)
+    );
   }, 0);
 
-  const serverError = axios.isAxiosError(save.error)
-    ? (save.error.response?.data as any)?.error ?? "Could not create sales order."
+  const serverError = axios.isAxiosError(
+    save.error
+  )
+    ? (save.error.response?.data as any)
+        ?.error ??
+      "Could not create sales order."
     : save.error
     ? "Could not create sales order."
     : null;
 
   return (
     <DarkContainer title="Sales Order">
-      <Stack spacing={4}>
-        {/* Header Toolbar */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={2}>
-            <CustomButton active onClick={handleResetNew}>
-              New
-            </CustomButton>
+      <Stack spacing={3.5}>
+
+        {/* ================= HEADER ================= */}
+
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          justifyContent="space-between"
+          alignItems={{
+            xs: "stretch",
+            sm: "center",
+          }}
+          spacing={2}
+        >
+          <Stack
+            direction="row"
+            spacing={1.5}
+          >
             <CustomButton
+              active
               disabled={save.isPending}
               onClick={handleConfirm}
             >
-              {save.isPending ? "Confirming..." : "Confirm"}
+              {save.isPending
+                ? "Confirming..."
+                : "Confirm"}
             </CustomButton>
           </Stack>
-          <Stack direction="row" spacing={2}>
-            <CustomButton onClick={() => navigate("/sales-orders")}>Cancel</CustomButton>
-            <CustomButton onClick={() => navigate("/sales-orders")}>Back</CustomButton>
-          </Stack>
+
+          <CustomButton
+            onClick={() =>
+              navigate("/sales-orders")
+            }
+          >
+            Cancel
+          </CustomButton>
         </Stack>
 
+        {/* ================= ALERTS ================= */}
+
         {validationError && (
-          <Alert severity="warning" sx={{ bgcolor: "rgba(237, 108, 2, 0.2)", color: "#ffb74d" }}>
+          <Alert
+            severity="warning"
+            sx={{
+              bgcolor: COLORS.warningSoft,
+              color: COLORS.warning,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 2,
+              "& .MuiAlert-icon": {
+                color: COLORS.warning,
+              },
+            }}
+          >
             {validationError}
           </Alert>
         )}
 
         {serverError && (
-          <Alert severity="error" sx={{ bgcolor: "rgba(211, 47, 47, 0.2)", color: "#ffb4ab" }}>
+          <Alert
+            severity="error"
+            sx={{
+              bgcolor: COLORS.dangerSoft,
+              color: COLORS.danger,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 2,
+              "& .MuiAlert-icon": {
+                color: COLORS.danger,
+              },
+            }}
+          >
             {serverError}
           </Alert>
         )}
 
-        {/* Header Fields */}
-        <Stack spacing={2} maxWidth={650}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>SO No.</Typography>
-            <Typography color="#90caf9" fontWeight={700}>{soNo}</Typography>
-          </Stack>
+        {/* ================= ORDER INFO ================= */}
 
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>Customer Name</Typography>
-            <TextField
-              select
-              SelectProps={darkSelectProps}
-              variant="standard"
-              fullWidth
-              value={customerId}
-              onChange={(e) => {
-                setCustomerId(e.target.value);
-                setValidationError(null);
+        <Box
+          sx={{
+            p: 2.5,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 2.5,
+            bgcolor:
+              "rgba(255,255,255,0.015)",
+          }}
+        >
+          <Typography
+            sx={{
+              color: COLORS.text,
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              mb: 2,
+            }}
+          >
+            Order Information
+          </Typography>
+
+          <Stack spacing={2}>
+            {/* SO NUMBER */}
+
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
               }}
-              sx={darkTextFieldSx}
+              alignItems={{
+                xs: "flex-start",
+                sm: "center",
+              }}
+              spacing={2}
             >
-              <MenuItem value="" disabled>Select Customer</MenuItem>
-              {customerList.map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>{c.name}</MenuItem>
-              ))}
-            </TextField>
+              <Typography
+                sx={{
+                  color: COLORS.muted,
+                  minWidth: 140,
+                  fontSize: "0.85rem",
+                }}
+              >
+                SO No.
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: COLORS.accent,
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                }}
+              >
+                {soNo}
+              </Typography>
+            </Stack>
+
+            {/* CUSTOMER */}
+
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2}
+            >
+              <Typography
+                sx={{
+                  color: COLORS.muted,
+                  minWidth: 140,
+                  fontSize: "0.85rem",
+                }}
+              >
+                Customer Name
+              </Typography>
+
+              <TextField
+                select
+                SelectProps={darkSelectProps}
+                variant="standard"
+                fullWidth
+                value={customerId}
+                onChange={(e) => {
+                  setCustomerId(
+                    e.target.value
+                  );
+                  setValidationError(null);
+                }}
+                sx={darkTextFieldSx}
+              >
+                <MenuItem
+                  value=""
+                  disabled
+                >
+                  Select Customer
+                </MenuItem>
+
+                {customerList.map((c) => (
+                  <MenuItem
+                    key={c.id}
+                    value={String(c.id)}
+                  >
+                    {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+
+            {/* DATE */}
+
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2}
+            >
+              <Typography
+                sx={{
+                  color: COLORS.muted,
+                  minWidth: 140,
+                  fontSize: "0.85rem",
+                }}
+              >
+                Order Date
+              </Typography>
+
+              <TextField
+                type="date"
+                variant="standard"
+                fullWidth
+                value={soDate}
+                onChange={(e) =>
+                  setSoDate(e.target.value)
+                }
+                sx={darkTextFieldSx}
+              />
+            </Stack>
           </Stack>
+        </Box>
 
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>Order Date</Typography>
-            <TextField
-              type="date"
-              variant="standard"
-              fullWidth
-              value={soDate}
-              onChange={(e) => setSoDate(e.target.value)}
-              sx={darkTextFieldSx}
-            />
-          </Stack>
-        </Stack>
+        {/* ================= LINE ITEMS ================= */}
 
-        {/* Line Items Table */}
-        <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)", bgcolor: "#161616" }}>
-                <TableCell sx={{ color: "white", width: 40 }}>Sr.</TableCell>
-                <TableCell sx={{ color: "white" }}>Product</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 90 }}>Qty</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 130 }}>Unit Price</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 150 }}>Tax Rate</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 130 }}>Total</TableCell>
-                <TableCell sx={{ color: "white", width: 40 }} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r, i) => {
-                const prod = products.data?.data.find((x) => x.id === Number(r.productId));
-                const price = r.unitPrice !== "" ? Number(r.unitPrice) : Number(prod?.unitPrice || 0);
-                const lineTotal = price * (Number(r.quantity) || 0) * (1 + (Number(r.taxRate) || 0) / 100);
-                return (
-                  <TableRow key={i} sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)" }}>{i + 1}.</TableCell>
-                    <TableCell>
-                      <TextField
-                        select
-                        SelectProps={darkSelectProps}
-                        variant="standard"
-                        fullWidth
-                        value={r.productId}
-                        onChange={(e) => {
-                          const p = products.data?.data.find((x) => x.id === Number(e.target.value));
-                          const autoPrice = p ? String(p.unitPrice || 0) : "";
-                          const autoTaxId = p?.defaultTaxId ? String(p.defaultTaxId) : "";
-                          const autoTaxRate = p?.defaultTax ? Number(p.defaultTax.rate) : 0;
+        <Box>
+          <Typography
+            sx={{
+              color: COLORS.text,
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              mb: 1.5,
+            }}
+          >
+            Order Items
+          </Typography>
 
-                          update(i, {
-                            productId: e.target.value,
-                            unitPrice: autoPrice,
-                            taxId: autoTaxId,
-                            taxRate: autoTaxRate
-                          });
-                          setValidationError(null);
+          <TableContainer
+            sx={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 2.5,
+              overflow: "auto",
+            }}
+          >
+            <Table
+              size="small"
+              sx={{
+                minWidth: 800,
+              }}
+            >
+              <TableHead>
+                <TableRow
+                  sx={{
+                    bgcolor:
+                      "rgba(255,255,255,0.035)",
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 45,
+                    }}
+                  >
+                    Sr.
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Product
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 90,
+                    }}
+                  >
+                    Qty
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 130,
+                    }}
+                  >
+                    Unit Price
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 150,
+                    }}
+                  >
+                    Tax
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 130,
+                    }}
+                  >
+                    Total
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      width: 45,
+                    }}
+                  />
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {rows.map((r, i) => {
+                  const prod =
+                    products.data?.data.find(
+                      (x) =>
+                        x.id ===
+                        Number(r.productId)
+                    );
+
+                  const price =
+                    r.unitPrice !== ""
+                      ? Number(r.unitPrice)
+                      : Number(
+                          prod?.unitPrice || 0
+                        );
+
+                  const tax =
+                    Number(r.taxRate) || 0;
+
+                  const lineTotal =
+                    price *
+                    (Number(r.quantity) || 0) *
+                    (1 + tax / 100);
+
+                  return (
+                    <TableRow
+                      key={i}
+                      sx={{
+                        "&:hover": {
+                          bgcolor:
+                            "rgba(255,255,255,0.02)",
+                        },
+                      }}
+                    >
+                      {/* SERIAL */}
+
+                      <TableCell
+                        sx={{
+                          color: COLORS.muted,
+                          borderBottom: `1px solid ${COLORS.border}`,
                         }}
-                        sx={darkTextFieldSx}
                       >
-                        <MenuItem value="" disabled>Select Product</MenuItem>
-                        {products.data?.data.map((p) => (
-                          <MenuItem key={p.id} value={String(p.id)}>{p.name}</MenuItem>
-                        ))}
-                      </TextField>
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField
-                        type="number"
-                        variant="standard"
-                        value={r.quantity}
-                        onChange={(e) => {
-                          update(i, { quantity: Math.max(1, Number(e.target.value) || 1) });
-                          setValidationError(null);
+                        {i + 1}.
+                      </TableCell>
+
+                      {/* PRODUCT */}
+
+                      <TableCell
+                        sx={{
+                          borderBottom: `1px solid ${COLORS.border}`,
                         }}
-                        sx={darkTextFieldSx}
-                        inputProps={{ min: 1, style: { textAlign: "right" } }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField
-                        type="number"
-                        variant="standard"
-                        value={r.unitPrice}
-                        placeholder="Price"
-                        onChange={(e) => update(i, { unitPrice: e.target.value })}
-                        sx={darkTextFieldSx}
-                        inputProps={{ style: { textAlign: "right" } }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField
-                        select
-                        SelectProps={darkSelectProps}
-                        variant="standard"
-                        fullWidth
-                        value={r.taxId}
-                        onChange={(e) => {
-                          const selectedTax = taxes.data?.data.find((t) => t.id === Number(e.target.value));
-                          update(i, {
-                            taxId: e.target.value,
-                            taxRate: selectedTax ? Number(selectedTax.rate) : 0
-                          });
-                        }}
-                        sx={darkTextFieldSx}
                       >
-                        <MenuItem value="">Custom / No Tax (0%)</MenuItem>
-                        {taxes.data?.data.map((t) => (
-                          <MenuItem key={t.id} value={String(t.id)}>
-                            {t.name} ({parseFloat(t.rate)}%)
+                        <TextField
+                          select
+                          SelectProps={
+                            darkSelectProps
+                          }
+                          variant="standard"
+                          fullWidth
+                          value={r.productId}
+                          onChange={(e) => {
+                            const p =
+                              products.data?.data.find(
+                                (x) =>
+                                  x.id ===
+                                  Number(
+                                    e.target.value
+                                  )
+                              );
+
+                            const autoPrice =
+                              p
+                                ? String(
+                                    p.unitPrice ||
+                                      0
+                                  )
+                                : "";
+
+                            const autoTax =
+                              p?.defaultTax ??
+                              p?.productCategory
+                                ?.tax ??
+                              null;
+
+                            const autoTaxId =
+                              autoTax
+                                ? String(
+                                    autoTax.id
+                                  )
+                                : p?.defaultTaxId
+                                ? String(
+                                    p.defaultTaxId
+                                  )
+                                : "";
+
+                            const autoTaxRate =
+                              autoTax
+                                ? Number(
+                                    autoTax.rate
+                                  )
+                                : 0;
+
+                            update(i, {
+                              productId:
+                                e.target.value,
+                              unitPrice:
+                                autoPrice,
+                              taxId:
+                                autoTaxId,
+                              taxRate:
+                                autoTaxRate,
+                            });
+
+                            setValidationError(
+                              null
+                            );
+                          }}
+                          sx={darkTextFieldSx}
+                        >
+                          <MenuItem
+                            value=""
+                            disabled
+                          >
+                            Select Product
                           </MenuItem>
-                        ))}
-                      </TextField>
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>
-                      {formatMoney(lineTotal)}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        disabled={rows.length === 1}
-                        onClick={() => setRows(rows.filter((_, n) => n !== i))}
-                        sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { color: "red" } }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          {products.data?.data.map(
+                            (p) => (
+                              <MenuItem
+                                key={p.id}
+                                value={String(
+                                  p.id
+                                )}
+                              >
+                                {p.name}
+                              </MenuItem>
+                            )
+                          )}
+                        </TextField>
+                      </TableCell>
+
+                      {/* QUANTITY */}
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        <TextField
+                          type="number"
+                          variant="standard"
+                          value={r.quantity}
+                          onChange={(e) => {
+                            update(i, {
+                              quantity: Math.max(
+                                1,
+                                Number(
+                                  e.target.value
+                                ) || 1
+                              ),
+                            });
+
+                            setValidationError(
+                              null
+                            );
+                          }}
+                          sx={darkTextFieldSx}
+                          inputProps={{
+                            min: 1,
+                            style: {
+                              textAlign: "right",
+                            },
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* UNIT PRICE */}
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        <TextField
+                          type="number"
+                          variant="standard"
+                          value={r.unitPrice}
+                          placeholder="Price"
+                          onChange={(e) =>
+                            update(i, {
+                              unitPrice:
+                                e.target.value,
+                            })
+                          }
+                          sx={darkTextFieldSx}
+                          inputProps={{
+                            style: {
+                              textAlign: "right",
+                            },
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* AUTOMATIC TAX */}
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent:
+                              "flex-end",
+                            gap: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              px: 1.2,
+                              py: 0.45,
+                              borderRadius: 1.5,
+                              bgcolor:
+                                r.taxRate > 0
+                                  ? COLORS.accentSoft
+                                  : "rgba(255,255,255,0.04)",
+                              border: `1px solid ${
+                                r.taxRate > 0
+                                  ? "rgba(77,182,172,0.25)"
+                                  : COLORS.border
+                              }`,
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                color:
+                                  r.taxRate > 0
+                                    ? COLORS.accent
+                                    : COLORS.muted,
+                                fontSize:
+                                  "0.8rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {r.taxRate}%
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+
+                      {/* TOTAL */}
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          color: COLORS.text,
+                          fontWeight: 700,
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        {formatMoney(lineTotal)}
+                      </TableCell>
+
+                      {/* DELETE */}
+
+                      <TableCell
+                        sx={{
+                          borderBottom: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          disabled={
+                            rows.length === 1
+                          }
+                          onClick={() =>
+                            setRows(
+                              rows.filter(
+                                (_, n) =>
+                                  n !== i
+                              )
+                            )
+                          }
+                          sx={{
+                            color: COLORS.muted,
+
+                            "&:hover": {
+                              color: COLORS.danger,
+                              bgcolor:
+                                COLORS.dangerSoft,
+                            },
+                          }}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+
+        {/* ================= FOOTER ================= */}
+
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          justifyContent="space-between"
+          alignItems={{
+            xs: "stretch",
+            sm: "center",
+          }}
+          spacing={2}
+        >
           <Button
             startIcon={<AddIcon />}
-            onClick={() => setRows([...rows, { productId: "", quantity: 1, unitPrice: "", taxRate: 0 }])}
-            sx={{ color: "rgba(255,255,255,0.8)", borderColor: "rgba(255,255,255,0.3)", textTransform: "none" }}
+            onClick={() =>
+              setRows([
+                ...rows,
+                {
+                  productId: "",
+                  quantity: 1,
+                  unitPrice: "",
+                  taxId: "",
+                  taxRate: 0,
+                },
+              ])
+            }
+            sx={{
+              color: COLORS.accent,
+              borderColor:
+                "rgba(77,182,172,0.35)",
+              textTransform: "none",
+              borderRadius: 2,
+              fontWeight: 600,
+
+              "&:hover": {
+                bgcolor: COLORS.accentSoft,
+                borderColor: COLORS.accent,
+              },
+            }}
             variant="outlined"
           >
             Add Line
           </Button>
-          <Typography variant="h6" color="white" fontWeight={700}>
-            Total: {formatMoney(total)}
-          </Typography>
+
+          <Box
+            sx={{
+              px: 2.5,
+              py: 1.5,
+              borderRadius: 2.5,
+              bgcolor:
+                "rgba(255,255,255,0.025)",
+              border: `1px solid ${COLORS.border}`,
+            }}
+          >
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+            >
+              <Typography
+                sx={{
+                  color: COLORS.muted,
+                  fontSize: "0.85rem",
+                }}
+              >
+                Order Total
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: COLORS.accent,
+                  fontSize: "1.2rem",
+                  fontWeight: 800,
+                }}
+              >
+                {formatMoney(total)}
+              </Typography>
+            </Stack>
+          </Box>
         </Stack>
+
+        {/* ================= TAX INFO ================= */}
+
+        <Box
+          sx={{
+            p: 1.8,
+            borderRadius: 2,
+            bgcolor: COLORS.accentSoft,
+            border: `1px solid rgba(77,182,172,0.18)`,
+          }}
+        >
+          <Typography
+            sx={{
+              color: COLORS.accent,
+              fontSize: "0.78rem",
+              fontWeight: 600,
+            }}
+          >
+            Tax is automatically applied based on the
+            selected product's material category.
+          </Typography>
+        </Box>
       </Stack>
     </DarkContainer>
   );

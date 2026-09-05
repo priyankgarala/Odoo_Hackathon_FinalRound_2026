@@ -1,15 +1,35 @@
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Box, Button, Stack, Typography, Popover, Grid, Chip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Popover,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import * as soApi from "../api/sales-orders.api";
 import * as poApi from "../api/purchase-orders.api";
 import * as budgetApi from "../api/budgets.api";
-import * as reportApi from "../api/reports.api";
+
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+};
 
 const menuData = {
   Sales: [
-    { label: "Sales order", to: "/sales-orders" },
+    { label: "Sales Order", to: "/sales-orders" },
     { label: "Sale Invoice", to: "/invoices" },
     { label: "Receipt", to: "/invoices" },
   ],
@@ -28,27 +48,59 @@ const menuData = {
     { label: "Journal Entries", to: "/journal-entries" },
   ],
   Report: [
-    { label: "Balancesheet", to: "/reports" },
+    { label: "Balance Sheet", to: "/reports" },
     { label: "Profit and Loss", to: "/reports" },
     { label: "Budget Report", to: "/reports" },
   ],
 };
 
-const MetricBox = ({ label, value }: { label: string; value: string | number }) => (
+const MetricBox = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
   <Box
     sx={{
-      border: "1px solid rgba(255,255,255,0.2)",
-      borderRadius: 4,
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: 2.5,
       px: 3,
-      py: 1.5,
-      minWidth: 110,
-      textAlign: "center",
-      bgcolor: "rgba(255,255,255,0.02)",
-      "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" }
+      py: 1.7,
+      minWidth: 120,
+      textAlign: "left",
+      bgcolor: "rgba(255,255,255,0.025)",
+      transition: "all 0.2s ease",
+
+      "&:hover": {
+        borderColor: COLORS.borderStrong,
+        bgcolor: COLORS.cardHover,
+        transform: "translateY(-1px)",
+      },
     }}
   >
-    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.65)", fontSize: "0.85rem" }}>{label}</Typography>
-    <Typography variant="h6" fontWeight={700} color="white">{value}</Typography>
+    <Typography
+      variant="body2"
+      sx={{
+        color: COLORS.muted,
+        fontSize: "0.78rem",
+        fontWeight: 500,
+        mb: 0.5,
+      }}
+    >
+      {label}
+    </Typography>
+
+    <Typography
+      variant="h6"
+      sx={{
+        color: COLORS.text,
+        fontWeight: 700,
+        fontSize: "1.2rem",
+      }}
+    >
+      {value}
+    </Typography>
   </Box>
 );
 
@@ -56,7 +108,7 @@ const SectionContainer = ({
   title,
   buttonLabel,
   buttonTo,
-  metrics
+  metrics,
 }: {
   title: string;
   buttonLabel: string;
@@ -65,47 +117,101 @@ const SectionContainer = ({
 }) => (
   <Box
     sx={{
-      border: "1px solid rgba(255,255,255,0.15)",
-      borderRadius: 4,
-      p: 3,
-      mb: 3,
-      bgcolor: "#161616",
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: 3,
+      p: { xs: 2.5, md: 3 },
+      mb: 2.5,
+      bgcolor: COLORS.card,
+      transition: "border-color 0.2s ease",
+
+      "&:hover": {
+        borderColor: COLORS.borderStrong,
+      },
     }}
   >
-    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5}>
-      <Typography variant="h6" color="white" fontWeight={500}>{title}</Typography>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      justifyContent="space-between"
+      alignItems={{ xs: "flex-start", sm: "center" }}
+      spacing={2}
+      mb={2.5}
+    >
+      <Box>
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.text,
+            fontWeight: 600,
+            fontSize: "1rem",
+          }}
+        >
+          {title}
+        </Typography>
+
+        <Box
+          sx={{
+            width: 28,
+            height: 2,
+            bgcolor: COLORS.accent,
+            mt: 0.8,
+            borderRadius: 2,
+          }}
+        />
+      </Box>
+
       <Button
         component={RouterLink}
         to={buttonTo}
         variant="contained"
         sx={{
-          bgcolor: "#2B5E74",
-          color: "white",
+          bgcolor: COLORS.accent,
+          color: "#071414",
           borderRadius: 2,
-          px: 3.5,
+          px: 2.5,
           py: 0.8,
           boxShadow: "none",
           textTransform: "none",
-          fontWeight: 600,
-          "&:hover": { bgcolor: "#1f4759" }
+          fontWeight: 700,
+          fontSize: "0.82rem",
+
+          "&:hover": {
+            bgcolor: COLORS.accentHover,
+            boxShadow: "none",
+          },
         }}
       >
         {buttonLabel}
       </Button>
     </Stack>
-    <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+
+    <Stack
+      direction="row"
+      spacing={1.5}
+      flexWrap="wrap"
+      useFlexGap
+    >
       {metrics.map((m, i) => (
-        <MetricBox key={i} label={m.label} value={m.value} />
+        <MetricBox
+          key={i}
+          label={m.label}
+          value={m.value}
+        />
       ))}
     </Stack>
   </Box>
 );
 
 export const DashboardPage = () => {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const [activeMenu, setActiveMenu] = useState<keyof typeof menuData | null>(null);
+  const [anchorEl, setAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, menu: keyof typeof menuData) => {
+  const [activeMenu, setActiveMenu] =
+    useState<keyof typeof menuData | null>(null);
+
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    menu: keyof typeof menuData
+  ) => {
     setAnchorEl(event.currentTarget);
     setActiveMenu(menu);
   };
@@ -117,70 +223,142 @@ export const DashboardPage = () => {
 
   const open = Boolean(anchorEl);
 
-  // Queries for live counts
   const salesQuery = useQuery({
     queryKey: ["dash-sales-orders"],
-    queryFn: () => soApi.getSalesOrders({ page: 1, pageSize: 50 })
+    queryFn: () =>
+      soApi.getSalesOrders({
+        page: 1,
+        pageSize: 50,
+      }),
   });
 
   const purchaseQuery = useQuery({
     queryKey: ["dash-purchase-orders"],
-    queryFn: () => poApi.getPurchaseOrders({ page: 1, pageSize: 50 })
+    queryFn: () =>
+      poApi.getPurchaseOrders({
+        page: 1,
+        pageSize: 50,
+      }),
   });
 
   const budgetQuery = useQuery({
     queryKey: ["dash-budgets"],
-    queryFn: () => budgetApi.getBudgets()
+    queryFn: () => budgetApi.getBudgets(),
   });
 
   const soList = salesQuery.data?.data ?? [];
+
   const soAll = soList.length;
-  const soConfirmed = soList.filter((s) => s.status === "CONFIRMED").length;
-  const soDraft = soList.filter((s) => s.status === "DRAFT").length;
+  const soConfirmed = soList.filter(
+    (s) => s.status === "CONFIRMED"
+  ).length;
+  const soDraft = soList.filter(
+    (s) => s.status === "DRAFT"
+  ).length;
 
   const poList = purchaseQuery.data?.data ?? [];
+
   const poAll = poList.length;
-  const poConfirmed = poList.filter((p) => p.status === "CONFIRMED").length;
-  const poDraft = poList.filter((p) => p.status === "DRAFT").length;
+  const poConfirmed = poList.filter(
+    (p) => p.status === "CONFIRMED"
+  ).length;
+  const poDraft = poList.filter(
+    (p) => p.status === "DRAFT"
+  ).length;
 
   const budgets = budgetQuery.data?.data ?? [];
   const budgetCount = budgets.length;
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 2, pb: 6 }}>
-      {/* Title Badge matching wireframes */}
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>
-          App Dashboard
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: 1100,
+        mx: "auto",
+        pt: 3,
+        pb: 6,
+        color: COLORS.text,
+      }}
+    >
+      {/* Page Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            color: COLORS.text,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            fontSize: { xs: "1.7rem", md: "2rem" },
+          }}
+        >
+          Dashboard
+        </Typography>
+
+        <Typography
+          sx={{
+            color: COLORS.muted,
+            mt: 0.5,
+            fontSize: "0.9rem",
+          }}
+        >
+          Overview of your sales, purchases and financial activity
         </Typography>
       </Box>
 
-      {/* Main Dashboard Card */}
+      {/* Main Dashboard */}
       <Box
         sx={{
           width: "100%",
-          borderRadius: 6,
-          bgcolor: "#121212",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          overflow: "hidden"
+          borderRadius: 4,
+          bgcolor: COLORS.page,
+          border: `1px solid ${COLORS.border}`,
+          overflow: "hidden",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
         }}
       >
         {/* Top Navigation */}
-        <Box sx={{ borderBottom: "1px solid rgba(255,255,255,0.15)", px: 3, py: 1.5 }}>
-          <Stack direction="row" justifyContent="space-around">
-            {(Object.keys(menuData) as Array<keyof typeof menuData>).map((key) => (
+        <Box
+          sx={{
+            borderBottom: `1px solid ${COLORS.border}`,
+            px: { xs: 1, md: 3 },
+            py: 1,
+            bgcolor: "rgba(255,255,255,0.015)",
+          }}
+        >
+          <Stack
+            direction="row"
+            justifyContent="flex-start"
+            spacing={1}
+            sx={{
+              overflowX: "auto",
+            }}
+          >
+            {(
+              Object.keys(menuData) as Array<
+                keyof typeof menuData
+              >
+            ).map((key) => (
               <Button
                 key={key}
                 onClick={(e) => handleMenuClick(e, key)}
                 sx={{
-                  color: activeMenu === key ? "#90EE90" : "rgba(255,255,255,0.8)",
+                  color:
+                    activeMenu === key
+                      ? COLORS.accent
+                      : COLORS.muted,
+
                   textTransform: "none",
-                  fontSize: "1.05rem",
-                  fontWeight: 500,
-                  "&:hover": { color: "#ffffff", bgcolor: "rgba(255,255,255,0.05)" }
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  px: 2,
+                  py: 1,
+
+                  borderRadius: 1.5,
+
+                  "&:hover": {
+                    color: COLORS.text,
+                    bgcolor: "rgba(255,255,255,0.05)",
+                  },
                 }}
               >
                 {key}
@@ -189,90 +367,152 @@ export const DashboardPage = () => {
           </Stack>
         </Box>
 
-        {/* Mega Menu Popover */}
+        {/* Menu Popover */}
         <Popover
           open={open}
           anchorEl={anchorEl}
           onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          transformOrigin={{ vertical: "top", horizontal: "center" }}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "center",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "center",
+          }}
           slotProps={{
             paper: {
               sx: {
-                bgcolor: "#121212",
-                border: "1px solid rgba(255,255,255,0.25)",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
-                borderRadius: 3,
+                bgcolor: "#101A2B",
+                border: `1px solid ${COLORS.borderStrong}`,
+                boxShadow:
+                  "0 20px 50px rgba(0,0,0,0.45)",
+                borderRadius: 2.5,
                 mt: 1,
-                minWidth: 260
-              }
-            }
+                minWidth: 220,
+                overflow: "hidden",
+              },
+            },
           }}
         >
-          <Box sx={{ p: 3, display: "flex", gap: 5, flexWrap: "wrap" }}>
-            {(Object.keys(menuData) as Array<keyof typeof menuData>).map((colKey) => (
-              <Stack key={colKey} spacing={1} minWidth={140}>
-                <Typography color="#90EE90" fontWeight={700} fontSize="0.95rem" mb={0.5}>
-                  {colKey}
-                </Typography>
-                {menuData[colKey].map((item, idx) => (
-                  <Button
-                    key={idx}
-                    component={RouterLink}
-                    to={item.to}
-                    onClick={handleClose}
-                    sx={{
-                      color: "rgba(255,255,255,0.7)",
-                      justifyContent: "flex-start",
-                      textTransform: "none",
-                      fontSize: "0.9rem",
-                      p: 0,
-                      "&:hover": { color: "white", bgcolor: "transparent" }
-                    }}
-                  >
-                    {item.label}
-                  </Button>
-                ))}
-              </Stack>
-            ))}
-          </Box>
+          {activeMenu && (
+            <Box
+              sx={{
+                p: 1.5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.3,
+              }}
+            >
+              <Typography
+                sx={{
+                  color: COLORS.accent,
+                  fontWeight: 700,
+                  fontSize: "0.78rem",
+                  px: 1.5,
+                  py: 1,
+                  borderBottom: `1px solid ${COLORS.border}`,
+                  mb: 0.5,
+                }}
+              >
+                {activeMenu}
+              </Typography>
+
+              {menuData[activeMenu].map((item, idx) => (
+                <Button
+                  key={idx}
+                  component={RouterLink}
+                  to={item.to}
+                  onClick={handleClose}
+                  sx={{
+                    color: COLORS.muted,
+                    justifyContent: "flex-start",
+                    textTransform: "none",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    py: 0.9,
+                    px: 1.5,
+                    borderRadius: 1.5,
+
+                    "&:hover": {
+                      color: COLORS.text,
+                      bgcolor: COLORS.accentSoft,
+                    },
+                  }}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </Box>
+          )}
         </Popover>
 
-        {/* Sections Container */}
-        <Box sx={{ p: { xs: 2.5, md: 4 } }}>
-          {/* Sales Section */}
+        {/* Sections */}
+        <Box
+          sx={{
+            p: { xs: 2, md: 3.5 },
+          }}
+        >
+          {/* Sales */}
           <SectionContainer
             title="Sales"
             buttonLabel="+ New Sales Order"
             buttonTo="/sales-orders/new"
             metrics={[
-              { label: "All Orders", value: soAll || 12 },
-              { label: "Confirmed", value: soConfirmed || 10 },
-              { label: "Draft", value: soDraft || 2 },
+              {
+                label: "All Orders",
+                value: soAll || 12,
+              },
+              {
+                label: "Confirmed",
+                value: soConfirmed || 10,
+              },
+              {
+                label: "Draft",
+                value: soDraft || 2,
+              },
             ]}
           />
 
-          {/* Purchase Section */}
+          {/* Purchase */}
           <SectionContainer
             title="Purchase"
             buttonLabel="+ New Purchase Order"
             buttonTo="/purchase-orders/new"
             metrics={[
-              { label: "All Orders", value: poAll || 12 },
-              { label: "Confirmed", value: poConfirmed || 10 },
-              { label: "Draft", value: poDraft || 2 },
+              {
+                label: "All Orders",
+                value: poAll || 12,
+              },
+              {
+                label: "Confirmed",
+                value: poConfirmed || 10,
+              },
+              {
+                label: "Draft",
+                value: poDraft || 2,
+              },
             ]}
           />
 
-          {/* Budget Reports Section */}
+          {/* Budget */}
           <SectionContainer
             title="Budget Reports"
             buttonLabel="View Reports"
             buttonTo="/reports"
             metrics={[
-              { label: "Active Budgets", value: budgetCount || 8 },
-              { label: "Tracked Analytics", value: 5 },
-              { label: "Years Covered", value: "2025 & 2026" },
+              {
+                label: "Active Budgets",
+                value: budgetCount || 8,
+              },
+              {
+                label: "Tracked Analytics",
+                value: 5,
+              },
+              {
+                label: "Years Covered",
+                value: "2025 & 2026",
+              },
             ]}
           />
         </Box>
