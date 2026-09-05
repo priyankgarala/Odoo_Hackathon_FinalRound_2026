@@ -1,0 +1,14 @@
+import { Router } from "express";
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
+import { validate } from "../../middleware/validate.js";
+import * as controller from "./contact.controller.js";
+import { createContactSchema, getContactSchema, listContactsSchema, statusContactSchema, updateContactSchema } from "./contact.schemas.js";
+const manageRoles = ["Admin", "Accountant", "Sales", "Purchase"];
+export const contactRouter = Router();
+contactRouter.use(authenticate);
+contactRouter.get("/", validate(listContactsSchema), controller.list);
+contactRouter.get("/:id", validate(getContactSchema), controller.get);
+contactRouter.post("/", authorize(...manageRoles), validate(createContactSchema), controller.create);
+contactRouter.put("/:id", authorize(...manageRoles), validate(updateContactSchema), controller.update);
+contactRouter.patch("/:id/status", authorize(...manageRoles), validate(statusContactSchema), controller.status);

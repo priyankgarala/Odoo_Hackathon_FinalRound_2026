@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
 export class AppError extends Error {
@@ -10,6 +11,14 @@ export const notFound: RequestHandler = (_req, _res, next) => next(new AppError(
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof ZodError) {
     res.status(400).json({ error: "Validation failed", details: error.flatten() });
+    return;
+  }
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    res.status(503).json({ error: "Database is unavailable. Please start PostgreSQL and try again." });
+    return;
+  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    res.status(409).json({ error: "A record with this unique value already exists." });
     return;
   }
   const status = error instanceof AppError ? error.statusCode : 500;

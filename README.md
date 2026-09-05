@@ -16,6 +16,13 @@ Full-stack accounting foundation: React/Vite frontend, Express API, Prisma, and 
 5. Start both apps: `npm run dev`
 
 Frontend: `http://localhost:5173`  
-API: `http://localhost:4000/api/health`
+API: `http://localhost:4000/api/auth/login`
 
-The dashboard health card calls the API and reports both API and database connectivity.
+## Authentication
+
+Run `npm run prisma:seed -w backend` after migrating to create the required roles and the development administrator:
+
+- Email: `admin@urbanfurniture.local`
+- Password: `Admin@123`
+
+The application uses one essential HTTP-only session cookie (`urban_furniture_session`) for authentication. No optional cookies or browser-stored access tokens are used.
