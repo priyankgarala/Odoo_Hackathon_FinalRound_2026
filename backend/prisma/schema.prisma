@@ -86,6 +86,8 @@ model Product {
 
   @@index([name])
   @@index([active])
+  defaultTaxId Int?
+  defaultTax   Tax?        @relation(fields: [defaultTaxId], references: [id], onDelete: SetNull)
   purchaseOrderItems PurchaseOrderItem[]
   vendorBillItems VendorBillItem[]
   salesOrderItems SalesOrderItem[]
@@ -112,6 +114,8 @@ model Account {
   children  Account[]   @relation("AccountHierarchy")
   journalEntryLines JournalEntryLine[]
   defaultForJournals Journal[] @relation("JournalDefaultAccount")
+  taxSalesAccounts    Tax[] @relation("TaxSalesAccount")
+  taxPurchaseAccounts Tax[] @relation("TaxPurchaseAccount")
   active    Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -186,6 +190,32 @@ model JournalEntryLine {
   @@index([partnerId])
 }
 
+enum TaxType {
+  GST
+  OTHER
+}
+
+model Tax {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  rate               Decimal              @db.Decimal(5, 2)
+  type               TaxType              @default(GST)
+  salesAccountId     Int
+  salesAccount       Account              @relation("TaxSalesAccount", fields: [salesAccountId], references: [id], onDelete: Restrict)
+  purchaseAccountId  Int
+  purchaseAccount    Account              @relation("TaxPurchaseAccount", fields: [purchaseAccountId], references: [id], onDelete: Restrict)
+  isActive           Boolean              @default(true)
+  products           Product[]
+  salesOrderItems    SalesOrderItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  invoiceTaxLines    InvoiceTaxLine[]
+  vendorBillTaxLines VendorBillTaxLine[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([type, isActive])
+}
+
 enum PurchaseOrderStatus {
   DRAFT
   CONFIRMED
@@ -223,6 +253,8 @@ model PurchaseOrderItem {
   quantity        Decimal       @db.Decimal(14, 2)
   unitPrice       Decimal       @db.Decimal(14, 2)
   taxRate         Decimal       @default(0) @db.Decimal(5, 2)
+  taxId           Int?
+  tax             Tax?          @relation(fields: [taxId], references: [id], onDelete: SetNull)
   lineSubtotal    Decimal       @db.Decimal(14, 2)
   taxAmount       Decimal       @db.Decimal(14, 2)
   lineTotal       Decimal       @db.Decimal(14, 2)
@@ -278,9 +310,28 @@ model VendorBillItem {
   lineSubtotal Decimal @db.Decimal(14,2)
   taxAmount Decimal @db.Decimal(14,2)
   lineTotal Decimal @db.Decimal(14,2)
+  taxLines VendorBillTaxLine[]
   createdAt DateTime @default(now())
   @@index([vendorBillId])
 }
+
+model VendorBillTaxLine {
+  id               Int            @id @default(autoincrement())
+  vendorBillItemId Int
+  vendorBillItem   VendorBillItem @relation(fields: [vendorBillItemId], references: [id], onDelete: Cascade)
+  taxId            Int?
+  tax              Tax?           @relation(fields: [taxId], references: [id], onDelete: SetNull)
+  taxName          String
+  taxType          String
+  rate             Decimal        @db.Decimal(5, 2)
+  taxableAmount    Decimal        @db.Decimal(14, 2)
+  taxAmount        Decimal        @db.Decimal(14, 2)
+  jurisdiction     String?
+  createdAt        DateTime       @default(now())
+
+  @@index([vendorBillItemId])
+}
+
 model Payment {
   id Int @id @default(autoincrement())
   paymentNumber String @unique
@@ -333,6 +384,8 @@ model SalesOrderItem {
   quantity Decimal @db.Decimal(14,2)
   unitPrice Decimal @db.Decimal(14,2)
   taxRate Decimal @default(0) @db.Decimal(5,2)
+  taxId Int?
+  tax   Tax? @relation(fields: [taxId], references: [id], onDelete: SetNull)
   lineSubtotal Decimal @db.Decimal(14,2)
   taxAmount Decimal @db.Decimal(14,2)
   lineTotal Decimal @db.Decimal(14,2)
@@ -386,8 +439,26 @@ model InvoiceItem {
   lineSubtotal Decimal @db.Decimal(14,2)
   taxAmount Decimal @db.Decimal(14,2)
   lineTotal Decimal @db.Decimal(14,2)
+  taxLines InvoiceTaxLine[]
   createdAt DateTime @default(now())
   @@index([invoiceId])
+}
+
+model InvoiceTaxLine {
+  id            Int         @id @default(autoincrement())
+  invoiceItemId Int
+  invoiceItem   InvoiceItem @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+  taxId         Int?
+  tax           Tax?        @relation(fields: [taxId], references: [id], onDelete: SetNull)
+  taxName       String
+  taxType       String
+  rate          Decimal     @db.Decimal(5, 2)
+  taxableAmount Decimal     @db.Decimal(14, 2)
+  taxAmount     Decimal     @db.Decimal(14, 2)
+  jurisdiction  String?
+  createdAt     DateTime    @default(now())
+
+  @@index([invoiceItemId])
 }
 
 enum AnalyticType {

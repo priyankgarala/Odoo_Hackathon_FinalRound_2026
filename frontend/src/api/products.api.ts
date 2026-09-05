@@ -8,6 +8,8 @@ export type Product = {
   type: ProductType;
   unitPrice: string;
   costPrice: string;
+  defaultTaxId: number | null;
+  defaultTax?: { id: number; name: string; rate: string; type: string } | null;
   category: string | null;
   image: string | null;
   active: boolean;
@@ -21,6 +23,7 @@ export type ProductInput = {
   type?: ProductType;
   unitPrice: number;
   costPrice?: number;
+  defaultTaxId?: number | null;
   category?: string | null;
   image?: string | null;
 };

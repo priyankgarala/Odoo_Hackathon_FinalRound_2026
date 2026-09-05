@@ -39,6 +39,42 @@ export const getBalanceSheet = async (asOfDate?: Date) => {
     }
   }
 
+  // Retained earnings from all revenues and expenses up to asOfDate
+  const pnlAccounts = await prisma.account.findMany({
+    where: { active: true, type: { in: ["REVENUE", "INCOME", "EXPENSE"] } },
+    include: {
+      journalEntryLines: {
+        where: {
+          journalEntry: {
+            status: "POSTED",
+            entryDate: { lte: date }
+          }
+        },
+        select: { debit: true, credit: true }
+      }
+    }
+  });
+
+  let retainedEarnings = 0;
+  for (const acc of pnlAccounts) {
+    const totalDebit = acc.journalEntryLines.reduce((s, l) => s + Number(l.debit), 0);
+    const totalCredit = acc.journalEntryLines.reduce((s, l) => s + Number(l.credit), 0);
+    if (acc.type === "REVENUE" || acc.type === "INCOME") {
+      retainedEarnings += (totalCredit - totalDebit);
+    } else if (acc.type === "EXPENSE") {
+      retainedEarnings -= (totalDebit - totalCredit);
+    }
+  }
+
+  if (retainedEarnings !== 0) {
+    capital.push({
+      id: 999999,
+      code: "3999",
+      name: "Retained Earnings / Accumulated Profit",
+      balance: retainedEarnings
+    });
+  }
+
   const totalAssets = assets.reduce((s, a) => s + a.balance, 0);
   const totalLiabilities = liabilities.reduce((s, l) => s + l.balance, 0);
   const totalCapital = capital.reduce((s, c) => s + c.balance, 0);

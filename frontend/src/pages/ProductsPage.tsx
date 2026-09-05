@@ -26,6 +26,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as productsApi from "../api/products.api";
+import * as taxesApi from "../api/taxes.api";
 import { EmptyState } from "../components/feedback/EmptyState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
@@ -117,6 +118,7 @@ export const ProductsPage = () => {
 
   const params = useMemo(() => ({ search: search || undefined, page, pageSize: 12 }), [search, page]);
   const products = useQuery({ queryKey: ["products", params], queryFn: () => productsApi.getProducts(params) });
+  const taxesQuery = useQuery({ queryKey: ["taxes"], queryFn: () => taxesApi.getTaxes({ pageSize: 100 }) });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
   const save = useMutation({
@@ -145,6 +147,7 @@ export const ProductsPage = () => {
       type: prod.type || "GOODS",
       unitPrice: Number(prod.unitPrice),
       costPrice: Number(prod.costPrice) || 0,
+      defaultTaxId: prod.defaultTaxId ?? null,
       category: prod.category || "",
       description: prod.description || "",
       image: prod.image
@@ -266,6 +269,26 @@ export const ProductsPage = () => {
                   onChange={(e) => setForm({ ...form, costPrice: Number(e.target.value) })}
                   sx={darkTextFieldSx}
                 />
+              </Stack>
+
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Typography color="white" minWidth={140}>Default Tax</Typography>
+                <TextField
+                  select
+                  SelectProps={darkSelectProps}
+                  variant="standard"
+                  fullWidth
+                  value={form.defaultTaxId ? String(form.defaultTaxId) : ""}
+                  onChange={(e) => setForm({ ...form, defaultTaxId: e.target.value ? Number(e.target.value) : null })}
+                  sx={darkTextFieldSx}
+                >
+                  <MenuItem value="">No Tax (0%)</MenuItem>
+                  {taxesQuery.data?.data.map((t) => (
+                    <MenuItem key={t.id} value={String(t.id)}>
+                      {t.name} ({parseFloat(t.rate)}%)
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Stack>
             </Stack>
 

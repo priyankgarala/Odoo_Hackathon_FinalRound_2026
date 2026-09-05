@@ -29,22 +29,23 @@ async function main() {
 
   // 2. Chart of Accounts (COA)
   const accountsData = [
-    { code: "1000", name: "Cash in Hand", type: "ASSET" as const },
-    { code: "1010", name: "HDFC Bank Operating A/c", type: "ASSET" as const },
-    { code: "1020", name: "ICICI Business A/c", type: "ASSET" as const },
-    { code: "1100", name: "Trade Debtors (Receivables)", type: "ASSET" as const },
-    { code: "1200", name: "Furniture Stock / Inventory", type: "ASSET" as const },
-    { code: "2000", name: "Trade Creditors (Payables)", type: "LIABILITY" as const },
-    { code: "2100", name: "GST Output Tax Payable", type: "LIABILITY" as const },
-    { code: "3000", name: "Founder Share Capital", type: "CAPITAL" as const },
-    { code: "4000", name: "Sales Revenue (Goods)", type: "INCOME" as const },
-    { code: "4100", name: "Custom Interior & Assembly Income", type: "INCOME" as const },
-    { code: "5000", name: "Raw Timber & Metal Purchases", type: "EXPENSE" as const },
-    { code: "5100", name: "Cost of Goods Sold (COGS)", type: "EXPENSE" as const },
-    { code: "6000", name: "Employee Salaries & Wages", type: "EXPENSE" as const },
-    { code: "6100", name: "Showroom & Factory Rent", type: "EXPENSE" as const },
-    { code: "6200", name: "Electricity & Power Utilities", type: "EXPENSE" as const },
-    { code: "6300", name: "General & Administrative Expenses", type: "EXPENSE" as const },
+    { code: "1000", name: "Cash in Hand", type: "ASSET" },
+    { code: "1010", name: "HDFC Bank Operating A/c", type: "ASSET" },
+    { code: "1020", name: "ICICI Business A/c", type: "ASSET" },
+    { code: "1100", name: "Trade Debtors (Receivables)", type: "ASSET" },
+    { code: "1200", name: "Furniture Stock / Inventory", type: "ASSET" },
+    { code: "1300", name: "GST Input Tax Credit", type: "ASSET" },
+    { code: "2000", name: "Trade Creditors (Payables)", type: "LIABILITY" },
+    { code: "2100", name: "GST Output Tax Payable", type: "LIABILITY" },
+    { code: "3000", name: "Founder Share Capital", type: "CAPITAL" },
+    { code: "4000", name: "Sales Revenue (Goods)", type: "INCOME" },
+    { code: "4100", name: "Custom Interior & Assembly Income", type: "INCOME" },
+    { code: "5000", name: "Raw Timber & Metal Purchases", type: "EXPENSE" },
+    { code: "5100", name: "Cost of Goods Sold (COGS)", type: "EXPENSE" },
+    { code: "6000", name: "Employee Salaries & Wages", type: "EXPENSE" },
+    { code: "6100", name: "Showroom & Factory Rent", type: "EXPENSE" },
+    { code: "6200", name: "Electricity & Power Utilities", type: "EXPENSE" },
+    { code: "6300", name: "General & Administrative Expenses", type: "EXPENSE" },
   ];
 
   for (const acc of accountsData) {
@@ -60,14 +61,41 @@ async function main() {
   const salesAccount = await prisma.account.findUniqueOrThrow({ where: { code: "4000" } });
   const purchaseAccount = await prisma.account.findUniqueOrThrow({ where: { code: "5000" } });
   const generalAccount = await prisma.account.findUniqueOrThrow({ where: { code: "3000" } });
+  const gstOutputAccount = await prisma.account.findUniqueOrThrow({ where: { code: "2100" } });
+  const gstInputAccount = await prisma.account.findUniqueOrThrow({ where: { code: "1300" } });
+
+  // 2b. Default GST Tax Master Entries
+  const taxesData = [
+    { name: "GST 0% (Exempt)", rate: 0.0, type: "GST" },
+    { name: "GST 5%", rate: 5.0, type: "GST" },
+    { name: "GST 12%", rate: 12.0, type: "GST" },
+    { name: "GST 18%", rate: 18.0, type: "GST" },
+    { name: "GST 28%", rate: 28.0, type: "GST" },
+  ];
+
+  for (const t of taxesData) {
+    const existing = await prisma.tax.findFirst({ where: { name: t.name } });
+    if (!existing) {
+      await prisma.tax.create({
+        data: {
+          name: t.name,
+          rate: t.rate,
+          type: t.type,
+          salesAccountId: gstOutputAccount.id,
+          purchaseAccountId: gstInputAccount.id,
+          isActive: true
+        }
+      });
+    }
+  }
 
   // 3. Journals with Default Accounts
   const journalsData = [
-    { code: "SAL", name: "Customer Sales Journal", type: "SALES" as const, defaultAccountId: salesAccount.id },
-    { code: "PUR", name: "Vendor Purchase Journal", type: "PURCHASE" as const, defaultAccountId: purchaseAccount.id },
-    { code: "BNK", name: "Bank Journal (HDFC)", type: "BANK" as const, defaultAccountId: bankAccount.id },
-    { code: "CSH", name: "Cash Counter Journal", type: "CASH" as const, defaultAccountId: cashAccount.id },
-    { code: "GEN", name: "General Operations Journal", type: "GENERAL" as const, defaultAccountId: generalAccount.id },
+    { code: "SAL", name: "Customer Sales Journal", type: "SALES", defaultAccountId: salesAccount.id },
+    { code: "PUR", name: "Vendor Purchase Journal", type: "PURCHASE", defaultAccountId: purchaseAccount.id },
+    { code: "BNK", name: "Bank Journal (HDFC)", type: "BANK", defaultAccountId: bankAccount.id },
+    { code: "CSH", name: "Cash Counter Journal", type: "CASH", defaultAccountId: cashAccount.id },
+    { code: "GEN", name: "General Operations Journal", type: "GENERAL", defaultAccountId: generalAccount.id },
   ];
 
   for (const j of journalsData) {
@@ -80,14 +108,14 @@ async function main() {
 
   // 4. Analytic Accounts
   const analyticAccountsData = [
-    { name: "Commercial & Office Furnishings", type: "INCOME" as const },
-    { name: "Luxury Residential Interiors", type: "INCOME" as const },
-    { name: "Factory Timber Processing", type: "EXPENSE" as const },
-    { name: "Showroom Marketing & Brand", type: "EXPENSE" as const },
-    { name: "Corporate Operations & Admin", type: "EXPENSE" as const },
+    { name: "Commercial & Office Furnishings", type: "INCOME" },
+    { name: "Luxury Residential Interiors", type: "INCOME" },
+    { name: "Factory Timber Processing", type: "EXPENSE" },
+    { name: "Showroom Marketing & Brand", type: "EXPENSE" },
+    { name: "Corporate Operations & Admin", type: "EXPENSE" },
   ];
 
-  const createdAnalytics: Record<string, number> = {};
+  const createdAnalytics = {};
   for (const item of analyticAccountsData) {
     const existing = await prisma.analyticAccount.findFirst({ where: { name: item.name } });
     if (existing) {
@@ -171,12 +199,12 @@ async function main() {
 
   // 6. Contacts
   const contactsData = [
-    { name: "TimberCraft Wood Suppliers", email: "sales@timbercraft.demo", type: "VENDOR" as const, phone: "+91 98765 10001", address: "Ahmedabad, Gujarat" },
-    { name: "Apex Hardware & Fittings", email: "support@apexmetal.demo", type: "VENDOR" as const, phone: "+91 98765 10002", address: "Rajkot, Gujarat" },
-    { name: "Nova Velvet Fabrics Ltd", email: "orders@novafabric.demo", type: "VENDOR" as const, phone: "+91 98765 10003", address: "Surat, Gujarat" },
-    { name: "Skyline Tech Workspace", email: "procurement@skylinetech.demo", type: "CUSTOMER" as const, phone: "+91 98765 20001", address: "Bengaluru, Karnataka" },
-    { name: "Urban Retreat Apartments", email: "mgmt@urbanretreat.demo", type: "CUSTOMER" as const, phone: "+91 98765 20002", address: "Mumbai, Maharashtra" },
-    { name: "Nexus Design Architects", email: "billing@nexusdesign.demo", type: "BOTH" as const, phone: "+91 98765 20003", address: "Pune, Maharashtra" },
+    { name: "TimberCraft Wood Suppliers", email: "sales@timbercraft.demo", type: "VENDOR", phone: "+91 98765 10001", address: "Ahmedabad, Gujarat" },
+    { name: "Apex Hardware & Fittings", email: "support@apexmetal.demo", type: "VENDOR", phone: "+91 98765 10002", address: "Rajkot, Gujarat" },
+    { name: "Nova Velvet Fabrics Ltd", email: "orders@novafabric.demo", type: "VENDOR", phone: "+91 98765 10003", address: "Surat, Gujarat" },
+    { name: "Skyline Tech Workspace", email: "procurement@skylinetech.demo", type: "CUSTOMER", phone: "+91 98765 20001", address: "Bengaluru, Karnataka" },
+    { name: "Urban Retreat Apartments", email: "mgmt@urbanretreat.demo", type: "CUSTOMER", phone: "+91 98765 20002", address: "Mumbai, Maharashtra" },
+    { name: "Nexus Design Architects", email: "billing@nexusdesign.demo", type: "BOTH", phone: "+91 98765 20003", address: "Pune, Maharashtra" },
   ];
 
   for (const c of contactsData) {
@@ -189,11 +217,11 @@ async function main() {
 
   // 7. Products
   const productsData = [
-    { sku: "UF-EXEC-001", name: "Ergo Executive Desk Chair", category: "Office Seating", type: "GOODS" as const, unitPrice: "8500.00", costPrice: "4800.00", description: "Ergonomic mesh office chair with lumbar support" },
-    { sku: "UF-CONF-002", name: "Solid Teak Conference Table", category: "Conference Tables", type: "GOODS" as const, unitPrice: "42000.00", costPrice: "24000.00", description: "10-seater natural teak boardroom conference table" },
-    { sku: "UF-SOFA-003", name: "Modena 3-Seater Velvet Sofa", category: "Living Room", type: "GOODS" as const, unitPrice: "34000.00", costPrice: "19500.00", description: "Deep navy velvet 3-seater luxury lounge sofa" },
-    { sku: "UF-WORK-004", name: "Dual Motor Standing Desk", category: "Desks & Workstations", type: "GOODS" as const, unitPrice: "28500.00", costPrice: "16000.00", description: "Electric height-adjustable motorized desk" },
-    { sku: "UF-SERV-005", name: "Onsite Interior Consultation & Fitting", category: "Services", type: "SERVICE" as const, unitPrice: "7500.00", costPrice: "2000.00", description: "Professional layout planning and on-site furniture installation" },
+    { sku: "UF-EXEC-001", name: "Ergo Executive Desk Chair", category: "Office Seating", type: "GOODS", unitPrice: "8500.00", costPrice: "4800.00", description: "Ergonomic mesh office chair with lumbar support" },
+    { sku: "UF-CONF-002", name: "Solid Teak Conference Table", category: "Conference Tables", type: "GOODS", unitPrice: "42000.00", costPrice: "24000.00", description: "10-seater natural teak boardroom conference table" },
+    { sku: "UF-SOFA-003", name: "Modena 3-Seater Velvet Sofa", category: "Living Room", type: "GOODS", unitPrice: "34000.00", costPrice: "19500.00", description: "Deep navy velvet 3-seater luxury lounge sofa" },
+    { sku: "UF-WORK-004", name: "Dual Motor Standing Desk", category: "Desks & Workstations", type: "GOODS", unitPrice: "28500.00", costPrice: "16000.00", description: "Electric height-adjustable motorized desk" },
+    { sku: "UF-SERV-005", name: "Onsite Interior Consultation & Fitting", category: "Services", type: "SERVICE", unitPrice: "7500.00", costPrice: "2000.00", description: "Professional layout planning and on-site furniture installation" },
   ];
 
   for (const p of productsData) {
@@ -294,6 +322,7 @@ async function main() {
       invoiceNumber: "INV-2025-001",
       salesOrderId: so2025_1.id,
       customerId: customerSkyline.id,
+      dueDate: new Date("2025-04-15T11:00:00.000Z"),
       subtotal: "1250000.00",
       taxTotal: "0.00",
       total: "1250000.00",
@@ -383,6 +412,7 @@ async function main() {
       invoiceNumber: "INV-2025-002",
       salesOrderId: so2025_2.id,
       customerId: customerRetreat.id,
+      dueDate: new Date("2025-09-10T12:00:00.000Z"),
       subtotal: "780000.00",
       taxTotal: "0.00",
       total: "780000.00",
@@ -703,6 +733,7 @@ async function main() {
       invoiceNumber: "INV-2026-001",
       salesOrderId: so2026_1.id,
       customerId: customerNexus.id,
+      dueDate: new Date("2026-02-22T11:00:00.000Z"),
       subtotal: "890000.00",
       taxTotal: "0.00",
       total: "890000.00",
@@ -792,6 +823,7 @@ async function main() {
       invoiceNumber: "INV-2026-002",
       salesOrderId: so2026_2.id,
       customerId: customerSkyline.id,
+      dueDate: new Date("2026-03-18T12:00:00.000Z"),
       subtotal: "420000.00",
       taxTotal: "0.00",
       total: "420000.00",

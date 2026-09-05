@@ -24,6 +24,7 @@ import { CreateSalesOrderPage } from "./pages/CreateSalesOrderPage";
 import { AnalyticAccountsPage } from "./pages/AnalyticAccountsPage";
 import { BudgetsPage } from "./pages/BudgetsPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import TaxesPage from "./pages/TaxesPage";
 
 export const App = () => <Routes>
   <Route path="/login" element={<LoginPage />} />
@@ -32,6 +33,7 @@ export const App = () => <Routes>
     <Route index element={<DashboardPage />} />
     <Route path="contacts" element={<ContactsPage />} />
     <Route path="products" element={<ProductsPage />} />
+    <Route path="taxes" element={<TaxesPage />} />
     <Route path="accounts" element={<AccountsPage />} />
     <Route path="journals" element={<JournalsPage />} />
     <Route path="journal-entries" element={<JournalEntriesPage />} />

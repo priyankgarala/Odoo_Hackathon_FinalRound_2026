@@ -1,5 +1,29 @@
 import { api } from "./client";
 
+export type TaxLineSnapshot = {
+  id: number;
+  taxId?: number | null;
+  taxName: string;
+  taxType: string;
+  rate: string;
+  taxableAmount: string;
+  taxAmount: string;
+  jurisdiction: string;
+};
+
+export type InvoiceItem = {
+  id: number;
+  productSku: string;
+  productName: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate: string;
+  lineSubtotal: string;
+  taxAmount: string;
+  lineTotal: string;
+  taxLines?: TaxLineSnapshot[];
+};
+
 export type Invoice = {
   id: number;
   invoiceNumber: string;
@@ -11,10 +35,10 @@ export type Invoice = {
   total: string;
   paidAmount: string;
   outstanding: string;
-  customer: { id: number; name: string; email?: string | null };
+  customer: { id: number; name: string; email?: string | null; phone?: string | null; address?: string | null };
   salesOrder: { id: number; orderNumber: string };
   journalEntry?: { id: number; entryNumber: string };
-  items?: Array<{ id: number; productSku: string; productName: string; quantity: string; unitPrice: string; taxRate: string; taxAmount: string; lineTotal: string }>;
+  items?: InvoiceItem[];
   payments?: Array<{ id: number; paymentNumber: string; amount: string; paymentMethod: string; reference: string | null; paymentDate: string; journalEntry: { id: number; entryNumber: string } }>;
   _count?: { items: number; payments: number };
 };

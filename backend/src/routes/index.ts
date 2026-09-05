@@ -12,11 +12,13 @@ import { dashboardRouter } from "../modules/dashboard/dashboard.routes.js";
 import { analyticRouter } from "../modules/analyticals/analytic.routes.js";
 import { budgetRouter } from "../modules/budgets/budget.routes.js";
 import { reportRouter } from "../modules/reports/report.routes.js";
+import { taxRouter } from "../modules/taxes/tax.routes.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/contacts", contactRouter);
 apiRouter.use("/products", productRouter);
+apiRouter.use("/taxes", taxRouter);
 apiRouter.use("/accounts", accountRouter);
 apiRouter.use("/journals", journalRouter);
 apiRouter.use("/journal-entries", journalEntryRouter);
@@ -28,4 +30,5 @@ apiRouter.use("/dashboard", dashboardRouter);
 apiRouter.use("/analyticals", analyticRouter);
 apiRouter.use("/budgets", budgetRouter);
 apiRouter.use("/reports", reportRouter);
+
 

@@ -1,3 +1,65 @@
 import { api } from "./client";
-export type PurchaseOrderItemInput={productId:number;quantity:number;unitPrice?:number;taxRate:number}; export type PurchaseOrderInput={vendorId:number;orderDate?:string;notes:string|null;items:PurchaseOrderItemInput[]}; export type PurchaseOrder={id:number;orderNumber:string;orderDate:string;status:"DRAFT"|"CONFIRMED"|"CANCELLED";notes:string|null;subtotal:string;taxTotal:string;total:string;vendor:{id:number;name:string;type?:string};items?:Array<{id:number;productId:number;productSku:string;productName:string;quantity:string;unitPrice:string;taxRate:string;lineSubtotal:string;taxAmount:string;lineTotal:string}>;_count?:{items:number}}; export type PurchaseOrderList={data:PurchaseOrder[];meta:{page:number;pageSize:number;total:number;totalPages:number}};
-export const getPurchaseOrders=async(params:{search?:string;status?:string;page:number;pageSize:number})=>(await api.get<PurchaseOrderList>("/purchase-orders",{params})).data; export const getPurchaseOrder=async(id:number)=>(await api.get<{data:PurchaseOrder}>(`/purchase-orders/${id}`)).data.data; export const createPurchaseOrder=async(input:PurchaseOrderInput)=>(await api.post<{data:PurchaseOrder}>("/purchase-orders",input)).data.data; export const updatePurchaseOrder=async({id,input}:{id:number;input:PurchaseOrderInput})=>(await api.put<{data:PurchaseOrder}>(`/purchase-orders/${id}`,input)).data.data; export const setPurchaseOrderStatus=async({id,status}:{id:number;status:"CONFIRMED"|"CANCELLED"})=>(await api.patch<{data:PurchaseOrder}>(`/purchase-orders/${id}/status`,{status})).data.data;
+
+export type PurchaseOrderItemInput = {
+  productId: number;
+  quantity: number;
+  unitPrice?: number;
+  taxId?: number | null;
+  taxRate?: number;
+};
+
+export type PurchaseOrderInput = {
+  vendorId: number;
+  orderDate?: string;
+  notes: string | null;
+  items: PurchaseOrderItemInput[];
+};
+
+export type PurchaseOrderItem = {
+  id: number;
+  productId: number;
+  productSku: string;
+  productName: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate: string;
+  taxId?: number | null;
+  tax?: { id: number; name: string; rate: string; type: string } | null;
+  lineSubtotal: string;
+  taxAmount: string;
+  lineTotal: string;
+};
+
+export type PurchaseOrder = {
+  id: number;
+  orderNumber: string;
+  orderDate: string;
+  status: "DRAFT" | "CONFIRMED" | "CANCELLED";
+  notes: string | null;
+  subtotal: string;
+  taxTotal: string;
+  total: string;
+  vendor: { id: number; name: string; type?: string };
+  items?: PurchaseOrderItem[];
+  _count?: { items: number };
+};
+
+export type PurchaseOrderList = {
+  data: PurchaseOrder[];
+  meta: { page: number; pageSize: number; total: number; totalPages: number };
+};
+
+export const getPurchaseOrders = async (params: { search?: string; status?: string; page: number; pageSize: number }) =>
+  (await api.get<PurchaseOrderList>("/purchase-orders", { params })).data;
+
+export const getPurchaseOrder = async (id: number) =>
+  (await api.get<{ data: PurchaseOrder }>(`/purchase-orders/${id}`)).data.data;
+
+export const createPurchaseOrder = async (input: PurchaseOrderInput) =>
+  (await api.post<{ data: PurchaseOrder }>("/purchase-orders", input)).data.data;
+
+export const updatePurchaseOrder = async ({ id, input }: { id: number; input: PurchaseOrderInput }) =>
+  (await api.put<{ data: PurchaseOrder }>(`/purchase-orders/${id}`, input)).data.data;
+
+export const setPurchaseOrderStatus = async ({ id, status }: { id: number; status: "CONFIRMED" | "CANCELLED" }) =>
+  (await api.patch<{ data: PurchaseOrder }>(`/purchase-orders/${id}/status`, { status })).data.data;

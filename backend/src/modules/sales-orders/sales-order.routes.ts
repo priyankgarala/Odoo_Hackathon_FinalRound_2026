@@ -1,4 +1,225 @@
-import { Router } from "express"; import { z } from "zod"; import { randomUUID } from "node:crypto"; import { Prisma } from "@prisma/client"; import { prisma } from "../../lib/prisma.js"; import { authenticate } from "../../middleware/authenticate.js"; import { authorize } from "../../middleware/authorize.js"; import { validate } from "../../middleware/validate.js"; import { AppError } from "../../middleware/error-handler.js";
-const id=z.coerce.number().int().positive(),value=z.coerce.number().positive(),item=z.object({productId:id,quantity:value,unitPrice:value.optional(),taxRate:z.coerce.number().min(0).max(100).default(0)}),body=z.object({customerId:id,orderDate:z.coerce.date().optional(),notes:z.string().max(1000).optional().transform(v=>v||null),items:z.array(item).min(1)}),createSchema=z.object({body,params:z.object({}),query:z.object({})}),updateSchema=z.object({body,params:z.object({id}),query:z.object({})}),idSchema=z.object({body:z.object({}),params:z.object({id}),query:z.object({})}),statusSchema=z.object({body:z.object({status:z.enum(["CONFIRMED","CANCELLED"])}),params:z.object({id}),query:z.object({})}),listSchema=z.object({body:z.object({}),params:z.object({}),query:z.object({status:z.enum(["DRAFT","CONFIRMED","CANCELLED"]).optional(),search:z.string().max(120).optional(),page:z.coerce.number().int().positive().default(1),pageSize:z.coerce.number().int().min(1).max(100).default(20)})});
-const router=Router(),include={customer:{select:{id:true,name:true,type:true}},items:true} as const,num=()=>`SO-${new Date().toISOString().slice(0,10).replaceAll("-","")}-${randomUUID().slice(0,6).toUpperCase()}`;type Input=z.infer<typeof body>;const prepare=async(tx:Prisma.TransactionClient,input:Input)=>{const c=await tx.contact.findUnique({where:{id:input.customerId}});if(!c||!c.active||!["CUSTOMER","BOTH"].includes(c.type))throw new AppError(400,"A valid active customer is required");const ps=await tx.product.findMany({where:{id:{in:input.items.map(i=>i.productId)},active:true}});if(ps.length!==new Set(input.items.map(i=>i.productId)).size)throw new AppError(400,"All items require active products");const rows=input.items.map(i=>{const p=ps.find(x=>x.id===i.productId)!;const q=new Prisma.Decimal(i.quantity),u=new Prisma.Decimal(i.unitPrice??p.unitPrice),r=new Prisma.Decimal(i.taxRate),sub=q.mul(u),tax=sub.mul(r).div(100);return{productId:p.id,productSku:p.sku,productName:p.name,quantity:q,unitPrice:u,taxRate:r,lineSubtotal:sub,taxAmount:tax,lineTotal:sub.plus(tax)}});const subtotal=rows.reduce((s,r)=>s.plus(r.lineSubtotal),new Prisma.Decimal(0)),taxTotal=rows.reduce((s,r)=>s.plus(r.taxAmount),new Prisma.Decimal(0));return{rows,subtotal,taxTotal,total:subtotal.plus(taxTotal)}};
-router.use(authenticate);router.get("/",validate(listSchema),async(req,res,next)=>{try{const q=req.query as unknown as {status?:"DRAFT"|"CONFIRMED"|"CANCELLED";search?:string;page:number;pageSize:number},where={...(q.status?{status:q.status}:{}),...(q.search?{OR:[{orderNumber:{contains:q.search,mode:"insensitive" as const}},{customer:{name:{contains:q.search,mode:"insensitive" as const}}}]}:{})};const[data,total]=await prisma.$transaction([prisma.salesOrder.findMany({where,include:{customer:{select:{id:true,name:true}},_count:{select:{items:true}}},orderBy:{createdAt:"desc"},skip:(q.page-1)*q.pageSize,take:q.pageSize}),prisma.salesOrder.count({where})]);res.json({data,meta:{page:q.page,pageSize:q.pageSize,total,totalPages:Math.ceil(total/q.pageSize)}})}catch(e){next(e)}});router.get("/:id",validate(idSchema),async(req,res,next)=>{try{const o=await prisma.salesOrder.findUnique({where:{id:Number(req.params.id)},include});if(!o)throw new AppError(404,"Sales order not found");res.json({data:o})}catch(e){next(e)}});router.post("/",authorize("Admin","Accountant","Sales"),validate(createSchema),async(req,res,next)=>{try{const o=await prisma.$transaction(async tx=>{const d=await prepare(tx,req.body);return tx.salesOrder.create({data:{orderNumber:num(),customerId:req.body.customerId,orderDate:req.body.orderDate??new Date(),notes:req.body.notes,subtotal:d.subtotal,taxTotal:d.taxTotal,total:d.total,items:{create:d.rows}},include})});res.status(201).json({data:o})}catch(e){next(e)}});router.put("/:id",authorize("Admin","Accountant","Sales"),validate(updateSchema),async(req,res,next)=>{try{const o=await prisma.$transaction(async tx=>{const old=await tx.salesOrder.findUnique({where:{id:Number(req.params.id)}});if(!old||old.status!=="DRAFT")throw new AppError(400,"Only draft sales orders can be edited");const d=await prepare(tx,req.body);await tx.salesOrderItem.deleteMany({where:{salesOrderId:old.id}});return tx.salesOrder.update({where:{id:old.id},data:{customerId:req.body.customerId,notes:req.body.notes,subtotal:d.subtotal,taxTotal:d.taxTotal,total:d.total,items:{create:d.rows}},include})});res.json({data:o})}catch(e){next(e)}});router.patch("/:id/status",authorize("Admin","Accountant","Sales"),validate(statusSchema),async(req,res,next)=>{try{const old=await prisma.salesOrder.findUnique({where:{id:Number(req.params.id)}});if(!old||old.status!=="DRAFT")throw new AppError(400,"Only draft sales orders can change status");res.json({data:await prisma.salesOrder.update({where:{id:old.id},data:{status:req.body.status},include})})}catch(e){next(e)}});export{router as salesOrderRouter};
+import { Router } from "express";
+import { z } from "zod";
+import { randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
+import { validate } from "../../middleware/validate.js";
+import { AppError } from "../../middleware/error-handler.js";
+
+const id = z.coerce.number().int().positive();
+const value = z.coerce.number().positive();
+
+const itemSchema = z.object({
+  productId: id,
+  quantity: value,
+  unitPrice: value.optional(),
+  taxId: z.union([id, z.literal(""), z.null(), z.undefined()]).transform((v) => (v && typeof v === "number" ? v : null)),
+  taxRate: z.coerce.number().min(0).max(100).default(0)
+});
+
+const bodySchema = z.object({
+  customerId: id,
+  orderDate: z.coerce.date().optional(),
+  notes: z.string().max(1000).optional().transform((v) => v || null),
+  items: z.array(itemSchema).min(1)
+});
+
+const createSchema = z.object({ body: bodySchema, params: z.object({}), query: z.object({}) });
+const updateSchema = z.object({ body: bodySchema, params: z.object({ id }), query: z.object({}) });
+const idSchema = z.object({ body: z.object({}), params: z.object({ id }), query: z.object({}) });
+const statusSchema = z.object({ body: z.object({ status: z.enum(["CONFIRMED", "CANCELLED"]) }), params: z.object({ id }), query: z.object({}) });
+const listSchema = z.object({
+  body: z.object({}),
+  params: z.object({}),
+  query: z.object({
+    status: z.enum(["DRAFT", "CONFIRMED", "CANCELLED"]).optional(),
+    search: z.string().max(120).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20)
+  })
+});
+
+const router = Router();
+const include = {
+  customer: { select: { id: true, name: true, type: true, email: true, phone: true } },
+  items: {
+    include: {
+      product: { select: { id: true, sku: true, name: true } },
+      tax: { select: { id: true, name: true, rate: true, type: true } }
+    }
+  }
+} as const;
+
+const generateOrderNumber = () => `SO-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${randomUUID().slice(0, 6).toUpperCase()}`;
+
+type Input = z.infer<typeof bodySchema>;
+
+const prepare = async (tx: Prisma.TransactionClient, input: Input) => {
+  const customer = await tx.contact.findUnique({ where: { id: input.customerId } });
+  if (!customer || !customer.active || !["CUSTOMER", "BOTH"].includes(customer.type)) {
+    throw new AppError(400, "A valid active customer is required");
+  }
+
+  const productIds = input.items.map((i) => i.productId);
+  const products = await tx.product.findMany({
+    where: { id: { in: productIds }, active: true },
+    include: { defaultTax: true }
+  });
+
+  if (products.length !== new Set(productIds).size) {
+    throw new AppError(400, "All items require valid active products");
+  }
+
+  const taxIds = input.items.map((i) => i.taxId).filter((t): t is number => t !== null);
+  const taxes = taxIds.length > 0 ? await tx.tax.findMany({ where: { id: { in: taxIds } } }) : [];
+
+  const rows = input.items.map((i) => {
+    const product = products.find((x) => x.id === i.productId)!;
+    const resolvedTax = i.taxId
+      ? taxes.find((t) => t.id === i.taxId)
+      : product.defaultTax;
+
+    const quantity = new Prisma.Decimal(i.quantity);
+    const unitPrice = new Prisma.Decimal(i.unitPrice ?? product.unitPrice);
+    const rate = resolvedTax ? new Prisma.Decimal(resolvedTax.rate) : new Prisma.Decimal(i.taxRate);
+
+    const lineSubtotal = quantity.mul(unitPrice);
+    const taxAmount = lineSubtotal.mul(rate).div(100);
+    const lineTotal = lineSubtotal.plus(taxAmount);
+
+    return {
+      productId: product.id,
+      productSku: product.sku,
+      productName: product.name,
+      quantity,
+      unitPrice,
+      taxRate: rate,
+      taxId: resolvedTax?.id ?? null,
+      lineSubtotal,
+      taxAmount,
+      lineTotal
+    };
+  });
+
+  const subtotal = rows.reduce((s, r) => s.plus(r.lineSubtotal), new Prisma.Decimal(0));
+  const taxTotal = rows.reduce((s, r) => s.plus(r.taxAmount), new Prisma.Decimal(0));
+  const total = subtotal.plus(taxTotal);
+
+  return { rows, subtotal, taxTotal, total };
+};
+
+router.use(authenticate);
+
+router.get("/", validate(listSchema), async (req, res, next) => {
+  try {
+    const query = req.query as unknown as { status?: "DRAFT" | "CONFIRMED" | "CANCELLED"; search?: string; page: number; pageSize: number };
+    const where = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { orderNumber: { contains: query.search, mode: "insensitive" as const } },
+              { customer: { name: { contains: query.search, mode: "insensitive" as const } } }
+            ]
+          }
+        : {})
+    };
+
+    const [data, total] = await prisma.$transaction([
+      prisma.salesOrder.findMany({
+        where,
+        include: {
+          customer: { select: { id: true, name: true } },
+          _count: { select: { items: true } }
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize
+      }),
+      prisma.salesOrder.count({ where })
+    ]);
+
+    res.json({ data, meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.ceil(total / query.pageSize) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/:id", validate(idSchema), async (req, res, next) => {
+  try {
+    const order = await prisma.salesOrder.findUnique({ where: { id: Number(req.params.id) }, include });
+    if (!order) throw new AppError(404, "Sales order not found");
+    res.json({ data: order });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/", authorize("Admin", "Accountant", "Sales"), validate(createSchema), async (req, res, next) => {
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      const prepared = await prepare(tx, req.body);
+      return tx.salesOrder.create({
+        data: {
+          orderNumber: generateOrderNumber(),
+          customerId: req.body.customerId,
+          orderDate: req.body.orderDate ?? new Date(),
+          notes: req.body.notes,
+          subtotal: prepared.subtotal,
+          taxTotal: prepared.taxTotal,
+          total: prepared.total,
+          items: { create: prepared.rows }
+        },
+        include
+      });
+    });
+    res.status(201).json({ data: order });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/:id", authorize("Admin", "Accountant", "Sales"), validate(updateSchema), async (req, res, next) => {
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.salesOrder.findUnique({ where: { id: Number(req.params.id) } });
+      if (!existing || existing.status !== "DRAFT") throw new AppError(400, "Only draft sales orders can be edited");
+      const prepared = await prepare(tx, req.body);
+      await tx.salesOrderItem.deleteMany({ where: { salesOrderId: existing.id } });
+      return tx.salesOrder.update({
+        where: { id: existing.id },
+        data: {
+          customerId: req.body.customerId,
+          notes: req.body.notes,
+          subtotal: prepared.subtotal,
+          taxTotal: prepared.taxTotal,
+          total: prepared.total,
+          items: { create: prepared.rows }
+        },
+        include
+      });
+    });
+    res.json({ data: order });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:id/status", authorize("Admin", "Accountant", "Sales"), validate(statusSchema), async (req, res, next) => {
+  try {
+    const existing = await prisma.salesOrder.findUnique({ where: { id: Number(req.params.id) } });
+    if (!existing || existing.status !== "DRAFT") throw new AppError(400, "Only draft sales orders can change status");
+    const updated = await prisma.salesOrder.update({
+      where: { id: existing.id },
+      data: { status: req.body.status },
+      include
+    });
+    res.json({ data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { router as salesOrderRouter };
