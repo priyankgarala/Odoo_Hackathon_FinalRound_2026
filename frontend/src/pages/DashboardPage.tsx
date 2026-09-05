@@ -18,11 +18,14 @@ const COLORS = {
   cardHover: "#16233A",
   border: "rgba(148, 163, 184, 0.16)",
   borderStrong: "rgba(148, 163, 184, 0.28)",
+
   text: "#F1F5F9",
   muted: "#94A3B8",
+
   accent: "#4DB6AC",
   accentHover: "#3F9E96",
   accentSoft: "rgba(77, 182, 172, 0.12)",
+
   success: "#6FCF97",
   successSoft: "rgba(111, 207, 151, 0.12)",
 };
@@ -33,11 +36,13 @@ const menuData = {
     { label: "Sale Invoice", to: "/invoices" },
     { label: "Receipt", to: "/invoices" },
   ],
+
   Purchase: [
     { label: "Purchase Order", to: "/purchase-orders" },
     { label: "Purchase Bill", to: "/vendor-bills" },
     { label: "Payment", to: "/vendor-bills" },
   ],
+
   Account: [
     { label: "Contact", to: "/contacts" },
     { label: "Product", to: "/products" },
@@ -47,6 +52,7 @@ const menuData = {
     { label: "Journals", to: "/journals" },
     { label: "Journal Entries", to: "/journal-entries" },
   ],
+
   Report: [
     { label: "Balance Sheet", to: "/reports" },
     { label: "Profit and Loss", to: "/reports" },
@@ -54,14 +60,20 @@ const menuData = {
   ],
 };
 
+type MetricBoxProps = {
+  label: string;
+  value: string | number;
+  to: string;
+};
+
 const MetricBox = ({
   label,
   value,
-}: {
-  label: string;
-  value: string | number;
-}) => (
+  to,
+}: MetricBoxProps) => (
   <Box
+    component={RouterLink}
+    to={to}
     sx={{
       border: `1px solid ${COLORS.border}`,
       borderRadius: 2.5,
@@ -71,11 +83,13 @@ const MetricBox = ({
       textAlign: "left",
       bgcolor: "rgba(255,255,255,0.025)",
       transition: "all 0.2s ease",
+      textDecoration: "none",
+      cursor: "pointer",
 
       "&:hover": {
-        borderColor: COLORS.borderStrong,
+        borderColor: COLORS.accent,
         bgcolor: COLORS.cardHover,
-        transform: "translateY(-1px)",
+        transform: "translateY(-2px)",
       },
     }}
   >
@@ -104,17 +118,23 @@ const MetricBox = ({
   </Box>
 );
 
+type SectionContainerProps = {
+  title: string;
+  buttonLabel: string;
+  buttonTo: string;
+  metrics: {
+    label: string;
+    value: number | string;
+    to: string;
+  }[];
+};
+
 const SectionContainer = ({
   title,
   buttonLabel,
   buttonTo,
   metrics,
-}: {
-  title: string;
-  buttonLabel: string;
-  buttonTo: string;
-  metrics: { label: string; value: number | string }[];
-}) => (
+}: SectionContainerProps) => (
   <Box
     sx={{
       border: `1px solid ${COLORS.border}`,
@@ -190,11 +210,12 @@ const SectionContainer = ({
       flexWrap="wrap"
       useFlexGap
     >
-      {metrics.map((m, i) => (
+      {metrics.map((m) => (
         <MetricBox
-          key={i}
+          key={`${title}-${m.label}`}
           label={m.label}
           value={m.value}
+          to={m.to}
         />
       ))}
     </Stack>
@@ -249,9 +270,11 @@ export const DashboardPage = () => {
   const soList = salesQuery.data?.data ?? [];
 
   const soAll = soList.length;
+
   const soConfirmed = soList.filter(
     (s) => s.status === "CONFIRMED"
   ).length;
+
   const soDraft = soList.filter(
     (s) => s.status === "DRAFT"
   ).length;
@@ -259,14 +282,17 @@ export const DashboardPage = () => {
   const poList = purchaseQuery.data?.data ?? [];
 
   const poAll = poList.length;
+
   const poConfirmed = poList.filter(
     (p) => p.status === "CONFIRMED"
   ).length;
+
   const poDraft = poList.filter(
     (p) => p.status === "DRAFT"
   ).length;
 
   const budgets = budgetQuery.data?.data ?? [];
+
   const budgetCount = budgets.length;
 
   return (
@@ -288,7 +314,10 @@ export const DashboardPage = () => {
             color: COLORS.text,
             fontWeight: 700,
             letterSpacing: "-0.02em",
-            fontSize: { xs: "1.7rem", md: "2rem" },
+            fontSize: {
+              xs: "1.7rem",
+              md: "2rem",
+            },
           }}
         >
           Dashboard
@@ -320,7 +349,10 @@ export const DashboardPage = () => {
         <Box
           sx={{
             borderBottom: `1px solid ${COLORS.border}`,
-            px: { xs: 1, md: 3 },
+            px: {
+              xs: 1,
+              md: 3,
+            },
             py: 1,
             bgcolor: "rgba(255,255,255,0.015)",
           }}
@@ -340,7 +372,9 @@ export const DashboardPage = () => {
             ).map((key) => (
               <Button
                 key={key}
-                onClick={(e) => handleMenuClick(e, key)}
+                onClick={(e) =>
+                  handleMenuClick(e, key)
+                }
                 sx={{
                   color:
                     activeMenu === key
@@ -352,12 +386,12 @@ export const DashboardPage = () => {
                   fontWeight: 600,
                   px: 2,
                   py: 1,
-
                   borderRadius: 1.5,
 
                   "&:hover": {
                     color: COLORS.text,
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor:
+                      "rgba(255,255,255,0.05)",
                   },
                 }}
               >
@@ -418,39 +452,45 @@ export const DashboardPage = () => {
                 {activeMenu}
               </Typography>
 
-              {menuData[activeMenu].map((item, idx) => (
-                <Button
-                  key={idx}
-                  component={RouterLink}
-                  to={item.to}
-                  onClick={handleClose}
-                  sx={{
-                    color: COLORS.muted,
-                    justifyContent: "flex-start",
-                    textTransform: "none",
-                    fontSize: "0.85rem",
-                    fontWeight: 500,
-                    py: 0.9,
-                    px: 1.5,
-                    borderRadius: 1.5,
+              {menuData[activeMenu].map(
+                (item, idx) => (
+                  <Button
+                    key={`${item.label}-${idx}`}
+                    component={RouterLink}
+                    to={item.to}
+                    onClick={handleClose}
+                    sx={{
+                      color: COLORS.muted,
+                      justifyContent: "flex-start",
+                      textTransform: "none",
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                      py: 0.9,
+                      px: 1.5,
+                      borderRadius: 1.5,
 
-                    "&:hover": {
-                      color: COLORS.text,
-                      bgcolor: COLORS.accentSoft,
-                    },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
+                      "&:hover": {
+                        color: COLORS.text,
+                        bgcolor:
+                          COLORS.accentSoft,
+                      },
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                )
+              )}
             </Box>
           )}
         </Popover>
 
-        {/* Sections */}
+        {/* Dashboard Sections */}
         <Box
           sx={{
-            p: { xs: 2, md: 3.5 },
+            p: {
+              xs: 2,
+              md: 3.5,
+            },
           }}
         >
           {/* Sales */}
@@ -462,14 +502,17 @@ export const DashboardPage = () => {
               {
                 label: "All Orders",
                 value: soAll || 12,
+                to: "/sales-orders",
               },
               {
                 label: "Confirmed",
                 value: soConfirmed || 10,
+                to: "/sales-orders?status=CONFIRMED",
               },
               {
                 label: "Draft",
                 value: soDraft || 2,
+                to: "/sales-orders?status=DRAFT",
               },
             ]}
           />
@@ -483,14 +526,17 @@ export const DashboardPage = () => {
               {
                 label: "All Orders",
                 value: poAll || 12,
+                to: "/purchase-orders",
               },
               {
                 label: "Confirmed",
                 value: poConfirmed || 10,
+                to: "/purchase-orders?status=CONFIRMED",
               },
               {
                 label: "Draft",
                 value: poDraft || 2,
+                to: "/purchase-orders?status=DRAFT",
               },
             ]}
           />
@@ -504,14 +550,17 @@ export const DashboardPage = () => {
               {
                 label: "Active Budgets",
                 value: budgetCount || 8,
+                to: "/budgets",
               },
               {
                 label: "Tracked Analytics",
                 value: 5,
+                to: "/analyticals",
               },
               {
                 label: "Years Covered",
                 value: "2025 & 2026",
+                to: "/reports",
               },
             ]}
           />

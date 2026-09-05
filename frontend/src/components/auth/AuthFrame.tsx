@@ -28,20 +28,7 @@ export const AuthFrame = ({ title, subtitle, children }: { title: string; subtit
         alignItems: "center",
       }}
     >
-      <Box
-        sx={{
-          border: "1px solid rgba(255,255,255,0.2)",
-          borderRadius: 2,
-          px: 3,
-          py: 1.5,
-          display: "inline-block",
-          mb: 4,
-        }}
-      >
-        <Typography fontWeight={900} letterSpacing={2} color="white" align="center">
-          App Logo
-        </Typography>
-      </Box>
+      
       <Typography variant="h5" fontWeight={700} mb={3} color="white">
         {title}
       </Typography>

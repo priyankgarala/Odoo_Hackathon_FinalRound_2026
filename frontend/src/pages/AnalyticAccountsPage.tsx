@@ -20,7 +20,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "../api/analyticals.api";
@@ -28,57 +28,157 @@ import { EmptyState } from "../components/feedback/EmptyState";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { LoadingState } from "../components/feedback/LoadingState";
 
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
+
 const apiError = (error: unknown) =>
   axios.isAxiosError<{ error?: string }>(error)
     ? error.response?.data?.error ?? "Request failed."
     : "Request failed.";
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 4,
+      px: { xs: 2, sm: 3 },
+      pb: 5,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          px: 2.5,
+          py: 1,
+          mb: 3,
+          borderRadius: 2,
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.accent}`,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: COLORS.accent,
+            fontWeight: 700,
+            letterSpacing: 0.2,
+          }}
+        >
+          {title}
+        </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 3,
+        p: { xs: 2, sm: 3.5 },
+        bgcolor: COLORS.card,
+        boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+      }}
+    >
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": {
+    color: COLORS.text,
+  },
+  "& .MuiInput-underline:before": {
+    borderBottomColor: COLORS.borderStrong,
+  },
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+    borderBottomColor: COLORS.accent,
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: COLORS.accent,
+  },
+  "& .MuiInputLabel-root": {
+    color: COLORS.muted,
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: COLORS.accent,
+  },
+  "& .MuiSvgIcon-root": {
+    color: COLORS.muted,
+  },
 };
 
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#1e1e1e",
-        color: "rgba(255,255,255,0.9)",
+        bgcolor: COLORS.card,
+        color: COLORS.text,
         maxHeight: 300,
-        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
-      }
-    }
-  }
+        border: `1px solid ${COLORS.border}`,
+        "& .MuiMenuItem-root": {
+          "&:hover": {
+            bgcolor: COLORS.cardHover,
+          },
+        },
+        "& .Mui-selected": {
+          bgcolor: `${COLORS.accentSoft} !important`,
+          color: COLORS.accent,
+        },
+      },
+    },
+  },
 };
 
 const CustomButton = ({ children, active, ...props }: any) => (
   <Button
     variant="outlined"
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? COLORS.page : COLORS.text,
+      bgcolor: active ? COLORS.accent : "transparent",
+      borderColor: active ? COLORS.accent : COLORS.borderStrong,
       borderRadius: 2,
       textTransform: "none",
-      minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      minWidth: 82,
+      px: 2,
+      py: 0.8,
+      fontWeight: 600,
+      transition: "all 0.2s ease",
+      "&:hover": {
+        bgcolor: active ? COLORS.accentHover : COLORS.accentSoft,
+        borderColor: COLORS.accent,
+      },
+      "&.Mui-disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -88,6 +188,7 @@ const CustomButton = ({ children, active, ...props }: any) => (
 
 export const AnalyticAccountsPage = () => {
   const queryClient = useQueryClient();
+
   const [screen, setScreen] = useState<"list" | "form">("list");
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
@@ -97,7 +198,7 @@ export const AnalyticAccountsPage = () => {
 
   const analytics = useQuery({
     queryKey: ["analyticals", search],
-    queryFn: () => api.getAnalytics({ search: search || undefined })
+    queryFn: () => api.getAnalytics({ search: search || undefined }),
   });
 
   const save = useMutation({
@@ -106,7 +207,7 @@ export const AnalyticAccountsPage = () => {
       setScreen("list");
       setName("");
       queryClient.invalidateQueries({ queryKey: ["analyticals"] });
-    }
+    },
   });
 
   const openCreate = () => {
@@ -118,10 +219,14 @@ export const AnalyticAccountsPage = () => {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+
     if (!name || name.trim().length < 2) {
-      setValidationError("Analytic Account name must be at least 2 characters.");
+      setValidationError(
+        "Analytic Account name must be at least 2 characters."
+      );
       return;
     }
+
     setValidationError(null);
     save.mutate();
   };
@@ -130,48 +235,121 @@ export const AnalyticAccountsPage = () => {
     return (
       <DarkContainer title="Analytic Accounts">
         <Stack component="form" onSubmit={submit} spacing={4}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Stack direction="row" spacing={2}>
-              <CustomButton type="submit" disabled={save.isPending}>
-                {save.isPending ? "..." : "Confirm"}
-              </CustomButton>
-            </Stack>
-            <CustomButton onClick={() => setScreen("list")}>Back</CustomButton>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", sm: "center" }}
+            gap={2}
+          >
+            <CustomButton type="submit" active disabled={save.isPending}>
+              {save.isPending ? "Saving..." : "Confirm"}
+            </CustomButton>
+
+            <CustomButton onClick={() => setScreen("list")}>
+              Back
+            </CustomButton>
           </Stack>
 
-          {validationError && <Alert severity="warning">{validationError}</Alert>}
-          {save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}
+          {validationError && (
+            <Alert
+              severity="warning"
+              sx={{
+                bgcolor: COLORS.warningSoft,
+                color: COLORS.warning,
+                border: `1px solid ${COLORS.warning}`,
+                "& .MuiAlert-icon": {
+                  color: COLORS.warning,
+                },
+              }}
+            >
+              {validationError}
+            </Alert>
+          )}
 
-          <Stack spacing={3} maxWidth={600}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={160}>Analytic Account Name</Typography>
-              <TextField
-                variant="standard"
-                fullWidth
-                placeholder="e.g. Project Urban Expansion, IT Department"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                sx={darkTextFieldSx}
-              />
-            </Stack>
+          {save.isError && (
+            <Alert
+              severity="error"
+              sx={{
+                bgcolor: COLORS.dangerSoft,
+                color: COLORS.danger,
+                border: `1px solid ${COLORS.danger}`,
+                "& .MuiAlert-icon": {
+                  color: COLORS.danger,
+                },
+              }}
+            >
+              {apiError(save.error)}
+            </Alert>
+          )}
 
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography color="white" minWidth={160}>Type</Typography>
-              <TextField
-                select
-                SelectProps={darkSelectProps}
-                variant="standard"
-                fullWidth
-                value={type}
-                onChange={(e) => setType(e.target.value as api.AnalyticType)}
-                sx={darkTextFieldSx}
+          <Box
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 2.5,
+              border: `1px solid ${COLORS.border}`,
+              bgcolor: COLORS.page,
+              maxWidth: 720,
+            }}
+          >
+            <Stack spacing={3.5}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems={{ xs: "stretch", sm: "center" }}
+                spacing={{ xs: 1, sm: 2 }}
               >
-                <MenuItem value="INCOME">Income</MenuItem>
-                <MenuItem value="EXPENSE">Expense</MenuItem>
-              </TextField>
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    minWidth: { sm: 180 },
+                    fontWeight: 600,
+                  }}
+                >
+                  Analytic Account Name
+                </Typography>
+
+                <TextField
+                  variant="standard"
+                  fullWidth
+                  placeholder="e.g. Project Urban Expansion, IT Department"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  sx={darkTextFieldSx}
+                />
+              </Stack>
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems={{ xs: "stretch", sm: "center" }}
+                spacing={{ xs: 1, sm: 2 }}
+              >
+                <Typography
+                  sx={{
+                    color: COLORS.text,
+                    minWidth: { sm: 180 },
+                    fontWeight: 600,
+                  }}
+                >
+                  Type
+                </Typography>
+
+                <TextField
+                  select
+                  SelectProps={darkSelectProps}
+                  variant="standard"
+                  fullWidth
+                  value={type}
+                  onChange={(e) =>
+                    setType(e.target.value as api.AnalyticType)
+                  }
+                  sx={darkTextFieldSx}
+                >
+                  <MenuItem value="INCOME">Income</MenuItem>
+                  <MenuItem value="EXPENSE">Expense</MenuItem>
+                </TextField>
+              </Stack>
             </Stack>
-          </Stack>
+          </Box>
         </Stack>
       </DarkContainer>
     );
@@ -181,9 +359,18 @@ export const AnalyticAccountsPage = () => {
 
   return (
     <DarkContainer title="Analytic Accounts">
-      <Stack spacing={3}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <CustomButton onClick={openCreate}>New</CustomButton>
+      <Stack spacing={4}>
+        {/* Header */}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", md: "center" }}
+          gap={2}
+        >
+          <CustomButton onClick={openCreate} active>
+            New
+          </CustomButton>
+
           <TextField
             variant="outlined"
             size="small"
@@ -191,54 +378,194 @@ export const AnalyticAccountsPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             sx={{
-              width: 300,
-              input: { color: "white" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-                "&:hover fieldset": { borderColor: "white" }
-              }
+              width: { xs: "100%", md: 320 },
+              "& .MuiInputBase-root": {
+                color: COLORS.text,
+                bgcolor: COLORS.page,
+                borderRadius: 2,
+              },
+              "& input::placeholder": {
+                color: COLORS.muted,
+                opacity: 1,
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: COLORS.borderStrong,
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: COLORS.accent,
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: COLORS.accent,
+                },
             }}
           />
-          <Stack direction="row" spacing={2} alignItems="center">
-            <CustomButton onClick={() => window.history.back()}>Back</CustomButton>
-            <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, next) => next && setView(next)} sx={{ bgcolor: "white", borderRadius: 1 }}>
-              <ToggleButton value="list"><ViewListIcon sx={{ color: "black" }} /></ToggleButton>
-              <ToggleButton value="kanban"><ViewModuleIcon sx={{ color: "black" }} /></ToggleButton>
+
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent={{ xs: "space-between", md: "flex-end" }}
+          >
+            <CustomButton onClick={() => window.history.back()}>
+              Back
+            </CustomButton>
+
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={view}
+              onChange={(_, next) => next && setView(next)}
+              sx={{
+                bgcolor: COLORS.page,
+                border: `1px solid ${COLORS.borderStrong}`,
+                borderRadius: 2,
+                p: 0.25,
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  borderRadius: 1.5,
+                  color: COLORS.muted,
+                  px: 1.2,
+                  "&:hover": {
+                    bgcolor: COLORS.cardHover,
+                  },
+                  "&.Mui-selected": {
+                    bgcolor: COLORS.accentSoft,
+                    color: COLORS.accent,
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="list">
+                <ViewListIcon />
+              </ToggleButton>
+
+              <ToggleButton value="kanban">
+                <ViewModuleIcon />
+              </ToggleButton>
             </ToggleButtonGroup>
           </Stack>
         </Stack>
 
+        {/* Content */}
         {analytics.isLoading ? (
           <LoadingState label="Loading analytic accounts..." />
         ) : analytics.isError ? (
-          <ErrorState message={apiError(analytics.error)} onRetry={() => void analytics.refetch()} />
+          <ErrorState
+            message={apiError(analytics.error)}
+            onRetry={() => void analytics.refetch()}
+          />
         ) : renderedData.length === 0 ? (
           <EmptyState message="No analytic accounts found. Click 'New' to create one." />
         ) : view === "list" ? (
-          <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+          <TableContainer
+            sx={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 2.5,
+              bgcolor: COLORS.page,
+              overflowX: "auto",
+            }}
+          >
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Name</TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Type</TableCell>
-                  <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Linked Budgets</TableCell>
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.cardHover,
+                    "& th": {
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    },
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      py: 1.8,
+                    }}
+                  >
+                    Name
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      py: 1.8,
+                    }}
+                  >
+                    Type
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      py: 1.8,
+                    }}
+                  >
+                    Linked Budgets
+                  </TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {renderedData.map((item) => (
-                  <TableRow key={item.id} hover sx={{ "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <TableCell sx={{ color: "white", borderBottom: "none", fontWeight: 600 }}>{item.name}</TableCell>
-                    <TableCell sx={{ borderBottom: "none" }}>
+                  <TableRow
+                    key={item.id}
+                    hover
+                    sx={{
+                      transition: "background-color 0.2s ease",
+                      "&:hover": {
+                        bgcolor: COLORS.cardHover,
+                      },
+                      "& td": {
+                        borderBottom: `1px solid ${COLORS.border}`,
+                        py: 1.8,
+                      },
+                    }}
+                  >
+                    <TableCell
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.name}
+                    </TableCell>
+
+                    <TableCell>
                       <Chip
                         size="small"
-                        label={item.type === "INCOME" ? "Income" : "Expense"}
+                        label={
+                          item.type === "INCOME" ? "Income" : "Expense"
+                        }
                         sx={{
-                          bgcolor: item.type === "INCOME" ? "rgba(46, 125, 50, 0.2)" : "rgba(211, 47, 47, 0.2)",
-                          color: item.type === "INCOME" ? "#81c784" : "#ff8a80"
+                          bgcolor:
+                            item.type === "INCOME"
+                              ? COLORS.successSoft
+                              : COLORS.dangerSoft,
+                          color:
+                            item.type === "INCOME"
+                              ? COLORS.success
+                              : COLORS.danger,
+                          border: `1px solid ${
+                            item.type === "INCOME"
+                              ? "rgba(111, 207, 151, 0.25)"
+                              : "rgba(233, 139, 139, 0.25)"
+                          }`,
+                          fontWeight: 600,
                         }}
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ color: "rgba(255,255,255,0.7)", borderBottom: "none" }}>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.muted,
+                        fontWeight: 600,
+                      }}
+                    >
                       {item._count?.budgets ?? 0}
                     </TableCell>
                   </TableRow>
@@ -247,27 +574,112 @@ export const AnalyticAccountsPage = () => {
             </Table>
           </TableContainer>
         ) : (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 3, pt: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 3,
+            }}
+          >
             {renderedData.map((item) => (
               <Paper
                 key={item.id}
                 variant="outlined"
                 sx={{
-                  p: 2,
-                  bgcolor: "transparent",
-                  borderColor: "rgba(255,255,255,0.3)",
-                  borderRadius: 3
+                  p: 2.5,
+                  bgcolor: COLORS.page,
+                  borderColor: COLORS.border,
+                  borderRadius: 2.5,
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    bgcolor: COLORS.cardHover,
+                    borderColor: COLORS.borderStrong,
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <Box sx={{ width: 50, height: 50, bgcolor: "rgba(255,255,255,0.08)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <AccountTreeOutlinedIcon sx={{ color: "rgba(255,255,255,0.5)" }} />
+                  <Box
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      flexShrink: 0,
+                      bgcolor: COLORS.accentSoft,
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AccountTreeOutlinedIcon
+                      sx={{
+                        color: COLORS.accent,
+                        fontSize: 26,
+                      }}
+                    />
                   </Box>
-                  <Stack>
-                    <Typography color="white" fontWeight={700}>{item.name}</Typography>
-                    <Typography color="rgba(255,255,255,0.6)" variant="body2">{item.type}</Typography>
+
+                  <Stack spacing={0.5} minWidth={0}>
+                    <Typography
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 700,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+
+                    <Chip
+                      size="small"
+                      label={item.type === "INCOME" ? "Income" : "Expense"}
+                      sx={{
+                        width: "fit-content",
+                        height: 24,
+                        bgcolor:
+                          item.type === "INCOME"
+                            ? COLORS.successSoft
+                            : COLORS.dangerSoft,
+                        color:
+                          item.type === "INCOME"
+                            ? COLORS.success
+                            : COLORS.danger,
+                        fontWeight: 600,
+                      }}
+                    />
                   </Stack>
                 </Stack>
+
+                <Box
+                  sx={{
+                    mt: 2.5,
+                    pt: 2,
+                    borderTop: `1px solid ${COLORS.border}`,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: COLORS.muted,
+                    }}
+                  >
+                    Linked Budgets
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: COLORS.text,
+                      fontWeight: 700,
+                      mt: 0.5,
+                    }}
+                  >
+                    {item._count?.budgets ?? 0}
+                  </Typography>
+                </Box>
               </Paper>
             ))}
           </Box>

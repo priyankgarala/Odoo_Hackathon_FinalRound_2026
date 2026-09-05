@@ -76,8 +76,8 @@ const DarkContainer = ({
       width: "100%",
       maxWidth: 1000,
       mx: "auto",
-      pt: 4,
-      pb: 6,
+      pt: 5,
+      pb: 7,
     }}
   >
     {title && (
@@ -86,9 +86,9 @@ const DarkContainer = ({
           bgcolor: COLORS.accentSoft,
           border: `1px solid ${COLORS.borderStrong}`,
           borderRadius: 2,
-          py: 1,
+          py: 1.25,
           px: 3,
-          mb: 3,
+          mb: 4,
           display: "inline-block",
         }}
       >
@@ -108,7 +108,7 @@ const DarkContainer = ({
       sx={{
         border: `1px solid ${COLORS.border}`,
         borderRadius: 4,
-        p: 3,
+        p: 4,
         bgcolor: COLORS.card,
       }}
     >
@@ -186,6 +186,7 @@ const CustomButton = ({
       textTransform: "none",
       minWidth: 80,
       fontWeight: 600,
+      px: 2,
 
       "&:hover": {
         bgcolor: active
@@ -220,13 +221,18 @@ export const AccountsPage = () => {
   const { user } = useAuth();
   const canManage = isSystemAdministrator(user?.role);
 
-  const [screen, setScreen] = useState<"list" | "form">("list");
+  const [screen, setScreen] =
+    useState<"list" | "form">("list");
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+
   const [form, setForm] =
     useState<accountsApi.AccountInput>(blank);
+
   const [editing, setEditing] =
     useState<accountsApi.Account | null>(null);
+
   const [validationError, setValidationError] =
     useState<string | null>(null);
 
@@ -314,13 +320,16 @@ export const AccountsPage = () => {
         <Stack
           component="form"
           onSubmit={submit}
-          spacing={4}
+          spacing={5}
         >
           {/* Form Actions */}
           <Stack
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            sx={{
+              pb: 1,
+            }}
           >
             <CustomButton
               type="submit"
@@ -341,39 +350,50 @@ export const AccountsPage = () => {
             </CustomButton>
           </Stack>
 
-          {/* Validation */}
-          {validationError && (
-            <Alert
-              severity="warning"
-              sx={{
-                bgcolor: COLORS.warningSoft,
-                color: COLORS.warning,
-                border: `1px solid ${COLORS.border}`,
-              }}
-            >
-              {validationError}
-            </Alert>
-          )}
+          {/* Alerts */}
+          <Stack spacing={2}>
+            {validationError && (
+              <Alert
+                severity="warning"
+                sx={{
+                  bgcolor: COLORS.warningSoft,
+                  color: COLORS.warning,
+                  border: `1px solid ${COLORS.border}`,
+                }}
+              >
+                {validationError}
+              </Alert>
+            )}
 
-          {save.isError && (
-            <Alert
-              severity="error"
-              sx={{
-                bgcolor: COLORS.dangerSoft,
-                color: COLORS.danger,
-                border: `1px solid ${COLORS.border}`,
-              }}
-            >
-              {apiError(save.error)}
-            </Alert>
-          )}
+            {save.isError && (
+              <Alert
+                severity="error"
+                sx={{
+                  bgcolor: COLORS.dangerSoft,
+                  color: COLORS.danger,
+                  border: `1px solid ${COLORS.border}`,
+                }}
+              >
+                {apiError(save.error)}
+              </Alert>
+            )}
+          </Stack>
 
           {/* Form Fields */}
-          <Stack spacing={3} maxWidth={600}>
+          <Stack
+            spacing={4}
+            maxWidth={650}
+          >
             <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2.5}
             >
               <Typography
                 minWidth={140}
@@ -402,9 +422,15 @@ export const AccountsPage = () => {
             </Stack>
 
             <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2.5}
             >
               <Typography
                 minWidth={140}
@@ -431,50 +457,77 @@ export const AccountsPage = () => {
                 }
                 sx={darkTextFieldSx}
               >
-                <MenuItem value="ASSET">Asset</MenuItem>
+                <MenuItem value="ASSET">
+                  Asset
+                </MenuItem>
+
                 <MenuItem value="LIABILITY">
                   Liability
                 </MenuItem>
+
                 <MenuItem value="REVENUE">
                   Income
                 </MenuItem>
+
                 <MenuItem value="EXPENSE">
                   Expenses
                 </MenuItem>
+
                 <MenuItem value="EQUITY">
                   Capital
                 </MenuItem>
               </TextField>
             </Stack>
 
-            <Typography
-              variant="body2"
+            <Box
               sx={{
-                color: COLORS.muted,
-                lineHeight: 1.7,
+                mt: 1,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: COLORS.infoSoft,
+                border: `1px solid ${COLORS.border}`,
               }}
             >
-              Each account is assigned an Account Type,
-              which is used for financial reporting
-              (Balance Sheet and Profit & Loss).
-            </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: COLORS.muted,
+                  lineHeight: 1.7,
+                }}
+              >
+                Each account is assigned an Account
+                Type, which is used for financial
+                reporting (Balance Sheet and Profit &
+                Loss).
+              </Typography>
+            </Box>
           </Stack>
         </Stack>
       </DarkContainer>
     );
   }
 
-  const renderedAccounts = accounts.data?.data ?? [];
+  const renderedAccounts =
+    accounts.data?.data ?? [];
 
   return (
     <DarkContainer title="Chart of Accounts">
-      <Stack spacing={3}>
+      <Stack spacing={4}>
         {/* Header */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
           justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
-          spacing={2}
+          alignItems={{
+            xs: "stretch",
+            sm: "center",
+          }}
+          spacing={3}
+          sx={{
+            pb: 1,
+          }}
         >
           <CustomButton
             onClick={openCreate}
@@ -494,7 +547,10 @@ export const AccountsPage = () => {
               setPage(1);
             }}
             sx={{
-              width: { xs: "100%", sm: 300 },
+              width: {
+                xs: "100%",
+                sm: 300,
+              },
 
               "& .MuiOutlinedInput-root": {
                 color: COLORS.text,
@@ -530,11 +586,15 @@ export const AccountsPage = () => {
 
         {/* Table */}
         {accounts.isLoading ? (
-          <LoadingState label="Loading chart of accounts..." />
+          <LoadingState
+            label="Loading chart of accounts..."
+          />
         ) : accounts.isError ? (
           <ErrorState
             message={apiError(accounts.error)}
-            onRetry={() => void accounts.refetch()}
+            onRetry={() =>
+              void accounts.refetch()
+            }
           />
         ) : renderedAccounts.length === 0 ? (
           <EmptyState message="No accounts found." />
@@ -559,6 +619,7 @@ export const AccountsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Account Name
@@ -569,6 +630,7 @@ export const AccountsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Code
@@ -579,6 +641,7 @@ export const AccountsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Type
@@ -601,12 +664,17 @@ export const AccountsPage = () => {
 
                       "& td": {
                         borderBottom: `1px solid ${COLORS.border}`,
+                        py: 2,
                       },
 
                       "&:hover": {
                         bgcolor: canManage
                           ? COLORS.cardHover
                           : "transparent",
+                      },
+
+                      "&:last-child td": {
+                        borderBottom: "none",
                       },
                     }}
                   >
@@ -632,7 +700,8 @@ export const AccountsPage = () => {
                         size="small"
                         label={displayType(acc.type)}
                         sx={{
-                          bgcolor: COLORS.accentSoft,
+                          bgcolor:
+                            COLORS.accentSoft,
                           color: COLORS.accent,
                           border: `1px solid ${COLORS.border}`,
                           fontWeight: 600,
@@ -653,7 +722,8 @@ export const AccountsPage = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: 2,
+            gap: 3,
+            pt: 1,
           }}
         >
           <Typography
@@ -671,7 +741,9 @@ export const AccountsPage = () => {
               1,
               accounts.data?.meta.totalPages ?? 1
             )}
-            onChange={(_, value) => setPage(value)}
+            onChange={(_, value) =>
+              setPage(value)
+            }
             sx={{
               "& .MuiPaginationItem-root": {
                 color: COLORS.muted,

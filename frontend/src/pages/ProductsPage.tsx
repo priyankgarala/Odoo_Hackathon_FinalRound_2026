@@ -22,7 +22,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as productsApi from "../api/products.api";
@@ -33,6 +33,27 @@ import { LoadingState } from "../components/feedback/LoadingState";
 import { useAuth } from "../features/auth/AuthProvider";
 import { isSystemAdministrator } from "../features/auth/roles";
 
+const COLORS = {
+  page: "#0B1220",
+  card: "#111B2E",
+  cardHover: "#16233A",
+  border: "rgba(148, 163, 184, 0.16)",
+  borderStrong: "rgba(148, 163, 184, 0.28)",
+  text: "#F1F5F9",
+  muted: "#94A3B8",
+  accent: "#4DB6AC",
+  accentHover: "#3F9E96",
+  accentSoft: "rgba(77, 182, 172, 0.12)",
+  success: "#6FCF97",
+  successSoft: "rgba(111, 207, 151, 0.12)",
+  danger: "#E98B8B",
+  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  warning: "#D9B86C",
+  warningSoft: "rgba(217, 184, 108, 0.10)",
+  info: "#7FA9C9",
+  infoSoft: "rgba(127, 169, 201, 0.10)",
+};
+
 const blank: productsApi.ProductInput = {
   name: "",
   type: "GOODS",
@@ -40,7 +61,7 @@ const blank: productsApi.ProductInput = {
   costPrice: 0,
   category: "",
   description: "",
-  image: null
+  image: null,
 };
 
 const apiError = (error: unknown) =>
@@ -48,52 +69,128 @@ const apiError = (error: unknown) =>
     ? error.response?.data?.error ?? "Request failed."
     : "Request failed.";
 
-const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4 }}>
+const DarkContainer = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) => (
+  <Box
+    sx={{
+      width: "100%",
+      maxWidth: 1100,
+      mx: "auto",
+      pt: 4,
+      pb: 6,
+    }}
+  >
     {title && (
-      <Box sx={{ bgcolor: "#172642", border: "1px solid #2563eb", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#7dd3fc" fontWeight={600}>{title}</Typography>
+      <Box
+        sx={{
+          bgcolor: COLORS.accentSoft,
+          border: `1px solid ${COLORS.accent}`,
+          borderRadius: 2,
+          py: 1,
+          px: 3,
+          mb: 3,
+          display: "inline-block",
+        }}
+      >
+        <Typography
+          variant="h6"
+          color={COLORS.accent}
+          fontWeight={700}
+        >
+          {title}
+        </Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid #263550", borderRadius: 6, p: 3, bgcolor: "#111c31" }}>
+
+    <Box
+      sx={{
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 4,
+        p: { xs: 2, md: 3 },
+        bgcolor: COLORS.card,
+      }}
+    >
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": {
+    color: COLORS.text,
+  },
+  "& .MuiInput-underline:before": {
+    borderBottomColor: COLORS.borderStrong,
+  },
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+    borderBottomColor: COLORS.accent,
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: COLORS.accent,
+  },
+  "& .MuiInputLabel-root": {
+    color: COLORS.muted,
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: COLORS.accent,
+  },
+  "& .MuiSvgIcon-root": {
+    color: COLORS.muted,
+  },
 };
 
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#1e1e1e",
-        color: "rgba(255,255,255,0.9)",
+        bgcolor: COLORS.card,
+        color: COLORS.text,
         maxHeight: 300,
-        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
-      }
-    }
-  }
+        border: `1px solid ${COLORS.borderStrong}`,
+        "& .MuiMenuItem-root:hover": {
+          bgcolor: COLORS.cardHover,
+        },
+        "& .Mui-selected": {
+          bgcolor: `${COLORS.accentSoft} !important`,
+          color: COLORS.accent,
+        },
+      },
+    },
+  },
 };
 
-const CustomButton = ({ children, active, ...props }: any) => (
+const CustomButton = ({
+  children,
+  active,
+  ...props
+}: any) => (
   <Button
-    variant="outlined"
+    variant={active ? "contained" : "outlined"}
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? "#071313" : COLORS.text,
+      bgcolor: active ? COLORS.accent : "transparent",
+      borderColor: active
+        ? COLORS.accent
+        : COLORS.borderStrong,
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      fontWeight: 600,
+      "&:hover": {
+        bgcolor: active
+          ? COLORS.accentHover
+          : COLORS.accentSoft,
+        borderColor: COLORS.accent,
+      },
+      "&.Mui-disabled": {
+        color: COLORS.muted,
+        borderColor: COLORS.border,
+      },
     }}
     {...props}
   >
@@ -102,7 +199,11 @@ const CustomButton = ({ children, active, ...props }: any) => (
 );
 
 const formatMoney = (amount: number | string) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(amount) || 0);
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(Number(amount) || 0);
 
 export const ProductsPage = () => {
   const queryClient = useQueryClient();
@@ -113,56 +214,106 @@ export const ProductsPage = () => {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [form, setForm] = useState<productsApi.ProductInput>(blank);
-  const [editing, setEditing] = useState<productsApi.Product | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [form, setForm] =
+    useState<productsApi.ProductInput>(blank);
+  const [editing, setEditing] =
+    useState<productsApi.Product | null>(null);
+  const [validationError, setValidationError] =
+    useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  const params = useMemo(() => ({ search: search || undefined, page, pageSize: 12 }), [search, page]);
-  const products = useQuery({ queryKey: ["products", params], queryFn: () => productsApi.getProducts(params) });
-  const taxesQuery = useQuery({ queryKey: ["taxes"], queryFn: () => taxesApi.getTaxes({ pageSize: 100 }) });
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["products"] });
+  const params = useMemo(
+    () => ({
+      search: search || undefined,
+      page,
+      pageSize: 12,
+    }),
+    [search, page]
+  );
+
+  const products = useQuery({
+    queryKey: ["products", params],
+    queryFn: () => productsApi.getProducts(params),
+  });
+
+  const taxesQuery = useQuery({
+    queryKey: ["taxes"],
+    queryFn: () => taxesApi.getTaxes({ pageSize: 100 }),
+  });
+
+  const refresh = () =>
+    queryClient.invalidateQueries({
+      queryKey: ["products"],
+    });
 
   const deleteMutation = useMutation({
-    mutationFn: (ids: number[]) => (ids.length === 1 ? productsApi.deleteProduct(ids[0]) : productsApi.deleteProductsBulk(ids)),
+    mutationFn: (ids: number[]) =>
+      ids.length === 1
+        ? productsApi.deleteProduct(ids[0])
+        : productsApi.deleteProductsBulk(ids),
     onSuccess: () => {
       setSelectedIds([]);
       refresh();
-    }
+    },
   });
 
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected product(s)?`)) {
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedIds.length} selected product(s)?`
+      )
+    ) {
       deleteMutation.mutate(selectedIds);
     }
   };
 
   const renderedProducts = products.data?.data ?? [];
-  const isAllSelected = renderedProducts.length > 0 && selectedIds.length === renderedProducts.length;
-  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < renderedProducts.length;
+
+  const isAllSelected =
+    renderedProducts.length > 0 &&
+    selectedIds.length === renderedProducts.length;
+
+  const isSomeSelected =
+    selectedIds.length > 0 &&
+    selectedIds.length < renderedProducts.length;
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(renderedProducts.map((p) => p.id));
+      setSelectedIds(
+        renderedProducts.map((product) => product.id)
+      );
     } else {
       setSelectedIds([]);
     }
   };
 
   const toggleSelectRow = (id: number) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
+    );
   };
 
   const save = useMutation({
-    mutationFn: (payload: productsApi.ProductInput) =>
-      editing ? productsApi.updateProduct({ id: editing.id, input: payload }) : productsApi.createProduct(payload),
+    mutationFn: (
+      payload: productsApi.ProductInput
+    ) =>
+      editing
+        ? productsApi.updateProduct({
+            id: editing.id,
+            input: payload,
+          })
+        : productsApi.createProduct(payload),
+
     onSuccess: () => {
       setScreen("list");
       setEditing(null);
       setForm(blank);
       refresh();
-    }
+    },
   });
 
   const openCreate = () => {
@@ -172,8 +323,11 @@ export const ProductsPage = () => {
     setScreen("form");
   };
 
-  const openRecord = (prod: productsApi.Product) => {
+  const openRecord = (
+    prod: productsApi.Product
+  ) => {
     setEditing(prod);
+
     setForm({
       sku: prod.sku,
       name: prod.name,
@@ -183,145 +337,384 @@ export const ProductsPage = () => {
       defaultTaxId: prod.defaultTaxId ?? null,
       category: prod.category || "",
       description: prod.description || "",
-      image: prod.image
+      image: prod.image,
     });
+
     setValidationError(null);
     setScreen("form");
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
+
     if (file) {
       const reader = new FileReader();
+
       reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, image: reader.result as string }));
+        setForm((prev) => ({
+          ...prev,
+          image: reader.result as string,
+        }));
       };
+
       reader.readAsDataURL(file);
     }
   };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
+
     if (!form.name || form.name.trim().length < 2) {
-      setValidationError("Product Name must be at least 2 characters long.");
+      setValidationError(
+        "Product Name must be at least 2 characters long."
+      );
       return;
     }
+
     if (form.unitPrice < 0) {
-      setValidationError("Sales Price cannot be negative.");
+      setValidationError(
+        "Sales Price cannot be negative."
+      );
       return;
     }
+
     if ((form.costPrice ?? 0) < 0) {
-      setValidationError("Cost cannot be negative.");
+      setValidationError(
+        "Cost cannot be negative."
+      );
       return;
     }
+
     setValidationError(null);
     save.mutate(form);
   };
 
+  /* =========================
+     FORM VIEW
+  ========================= */
+
   if (screen === "form") {
     return (
       <DarkContainer>
-        <Stack component="form" onSubmit={submit} spacing={4}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          component="form"
+          onSubmit={submit}
+          spacing={4}
+        >
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Stack direction="row" spacing={2}>
-              <CustomButton type="submit" disabled={save.isPending}>
-                {save.isPending ? "..." : "Confirm"}
+              <CustomButton
+                type="submit"
+                disabled={save.isPending || !canManage}
+                active
+              >
+                {save.isPending ? "Saving..." : "Confirm"}
               </CustomButton>
             </Stack>
-            <CustomButton onClick={() => { setScreen("list"); setEditing(null); }}>
+
+            <CustomButton
+              type="button"
+              onClick={() => {
+                setScreen("list");
+                setEditing(null);
+              }}
+            >
               Back
             </CustomButton>
           </Stack>
 
-          {validationError && <Alert severity="warning">{validationError}</Alert>}
-          {save.isError && <Alert severity="error">{apiError(save.error)}</Alert>}
+          {!canManage && (
+            <Alert
+              severity="info"
+              sx={{
+                bgcolor: COLORS.infoSoft,
+                color: COLORS.info,
+                border: `1px solid ${COLORS.border}`,
+              }}
+            >
+              You have view-only access to product
+              management.
+            </Alert>
+          )}
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={6}>
+          {validationError && (
+            <Alert
+              severity="warning"
+              sx={{
+                bgcolor: COLORS.warningSoft,
+                color: COLORS.warning,
+                border: `1px solid ${COLORS.border}`,
+              }}
+            >
+              {validationError}
+            </Alert>
+          )}
+
+          {save.isError && (
+            <Alert
+              severity="error"
+              sx={{
+                bgcolor: COLORS.dangerSoft,
+                color: COLORS.danger,
+                border: `1px solid ${COLORS.border}`,
+              }}
+            >
+              {apiError(save.error)}
+            </Alert>
+          )}
+
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            spacing={6}
+          >
             <Stack spacing={3} flex={1}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Product Name</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Product Name
+                </Typography>
+
                 <TextField
                   variant="standard"
                   fullWidth
                   placeholder="e.g. Office Chair"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      name: e.target.value,
+                    })
+                  }
                   required
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Product Type</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Product Type
+                </Typography>
+
                 <TextField
                   select
                   SelectProps={darkSelectProps}
                   variant="standard"
                   fullWidth
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value as productsApi.ProductType })}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      type: e.target
+                        .value as productsApi.ProductType,
+                    })
+                  }
                   sx={darkTextFieldSx}
                 >
-                  <MenuItem value="GOODS">Goods</MenuItem>
-                  <MenuItem value="SERVICE">Service</MenuItem>
-                  <MenuItem value="COMBO">Combo</MenuItem>
+                  <MenuItem value="GOODS">
+                    Goods
+                  </MenuItem>
+                  <MenuItem value="SERVICE">
+                    Service
+                  </MenuItem>
+                  <MenuItem value="COMBO">
+                    Combo
+                  </MenuItem>
                 </TextField>
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Category</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Category
+                </Typography>
+
                 <TextField
                   variant="standard"
                   fullWidth
                   placeholder="e.g. Electronics, Furniture"
                   value={form.category ?? ""}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      category: e.target.value,
+                    })
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Sales Price (Rs.)</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Sales Price (Rs.)
+                </Typography>
+
                 <TextField
                   variant="standard"
                   type="number"
                   fullWidth
                   value={form.unitPrice}
-                  onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      unitPrice: Number(
+                        e.target.value
+                      ),
+                    })
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Cost (Rs.)</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Cost (Rs.)
+                </Typography>
+
                 <TextField
                   variant="standard"
                   type="number"
                   fullWidth
                   value={form.costPrice}
-                  onChange={(e) => setForm({ ...form, costPrice: Number(e.target.value) })}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      costPrice: Number(
+                        e.target.value
+                      ),
+                    })
+                  }
                   sx={darkTextFieldSx}
                 />
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography color="white" minWidth={140}>Default Tax</Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                >
+                  Default Tax
+                </Typography>
+
                 <TextField
                   select
                   SelectProps={darkSelectProps}
                   variant="standard"
                   fullWidth
-                  value={form.defaultTaxId ? String(form.defaultTaxId) : ""}
-                  onChange={(e) => setForm({ ...form, defaultTaxId: e.target.value ? Number(e.target.value) : null })}
+                  value={
+                    form.defaultTaxId
+                      ? String(form.defaultTaxId)
+                      : ""
+                  }
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      defaultTaxId: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    })
+                  }
                   sx={darkTextFieldSx}
                 >
-                  <MenuItem value="">No Tax (0%)</MenuItem>
-                  {taxesQuery.data?.data.map((t) => (
-                    <MenuItem key={t.id} value={String(t.id)}>
-                      {t.name} ({parseFloat(t.rate)}%)
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="">
+                    No Tax (0%)
+                  </MenuItem>
+
+                  {taxesQuery.data?.data.map(
+                    (tax) => (
+                      <MenuItem
+                        key={tax.id}
+                        value={String(tax.id)}
+                      >
+                        {tax.name} (
+                        {parseFloat(tax.rate)}
+                        %)
+                      </MenuItem>
+                    )
+                  )}
                 </TextField>
+              </Stack>
+
+              <Stack
+                direction="row"
+                alignItems="flex-start"
+                spacing={2}
+              >
+                <Typography
+                  color={COLORS.text}
+                  minWidth={140}
+                  pt={1}
+                >
+                  Description
+                </Typography>
+
+                <TextField
+                  variant="standard"
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  value={form.description ?? ""}
+                  disabled={!canManage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      description:
+                        e.target.value,
+                    })
+                  }
+                  sx={darkTextFieldSx}
+                />
               </Stack>
             </Stack>
 
@@ -330,21 +723,60 @@ export const ProductsPage = () => {
               sx={{
                 width: 200,
                 height: 200,
-                border: "1px dashed rgba(255,255,255,0.3)",
+                flexShrink: 0,
+                border: `1px dashed ${COLORS.borderStrong}`,
                 borderRadius: 4,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "pointer",
+                cursor: canManage
+                  ? "pointer"
+                  : "default",
                 overflow: "hidden",
-                "&:hover": { borderColor: "white" }
+                bgcolor: COLORS.page,
+                "&:hover": {
+                  borderColor: canManage
+                    ? COLORS.accent
+                    : COLORS.borderStrong,
+                },
               }}
             >
-              <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                disabled={!canManage}
+                onChange={handleImageUpload}
+              />
+
               {form.image ? (
-                <Box component="img" src={form.image} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <Box
+                  component="img"
+                  src={form.image}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
               ) : (
-                <Typography color="rgba(255,255,255,0.5)">Upload Image</Typography>
+                <Stack
+                  alignItems="center"
+                  spacing={1}
+                >
+                  <Inventory2OutlinedIcon
+                    sx={{
+                      fontSize: 40,
+                      color: COLORS.muted,
+                    }}
+                  />
+
+                  <Typography
+                    color={COLORS.muted}
+                  >
+                    Upload Image
+                  </Typography>
+                </Stack>
               )}
             </Box>
           </Stack>
@@ -353,136 +785,504 @@ export const ProductsPage = () => {
     );
   }
 
+  /* =========================
+     LIST VIEW
+  ========================= */
+
   return (
-    <DarkContainer title="Master Data">
-      <Stack spacing={3}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={2} alignItems="center">
-            <CustomButton onClick={openCreate}>New</CustomButton>
-            {selectedIds.length > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
-                size="small"
-                onClick={handleDeleteSelected}
-                disabled={deleteMutation.isPending}
-                sx={{
-                  color: "#ff6b6b",
-                  borderColor: "#ff6b6b",
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  "&:hover": { bgcolor: "rgba(255,107,107,0.15)", borderColor: "#ff6b6b" }
-                }}
+    <DarkContainer title="Products">
+      <Stack spacing={4}>
+        {/* Top Actions */}
+        <Stack
+          direction={{
+            xs: "column",
+            lg: "row",
+          }}
+          justifyContent="space-between"
+          alignItems={{
+            xs: "stretch",
+            lg: "center",
+          }}
+          spacing={2}
+        >
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+          >
+            {canManage && (
+              <CustomButton
+                onClick={openCreate}
+                active
               >
-                Delete ({selectedIds.length})
-              </Button>
+                New
+              </CustomButton>
             )}
+
+            {selectedIds.length > 0 &&
+              canManage && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleDeleteSelected}
+                  disabled={deleteMutation.isPending}
+                  sx={{
+                    color: COLORS.danger,
+                    borderColor:
+                      "rgba(233,139,139,0.5)",
+                    bgcolor:
+                      COLORS.dangerSoft,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "&:hover": {
+                      bgcolor:
+                        "rgba(233,139,139,0.18)",
+                      borderColor:
+                        COLORS.danger,
+                    },
+                  }}
+                >
+                  Delete ({selectedIds.length})
+                </Button>
+              )}
           </Stack>
+
           <TextField
             variant="outlined"
             size="small"
-            placeholder="Search product..."
+            placeholder="Search products..."
             value={search}
-            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
             sx={{
-              width: 300,
-              input: { color: "white" },
+              width: {
+                xs: "100%",
+                lg: 300,
+              },
+              input: {
+                color: COLORS.text,
+              },
               "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-                "&:hover fieldset": { borderColor: "white" }
-              }
+                bgcolor: COLORS.page,
+                borderRadius: 2,
+                "& fieldset": {
+                  borderColor: COLORS.borderStrong,
+                },
+                "&:hover fieldset": {
+                  borderColor: COLORS.accent,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: COLORS.accent,
+                },
+              },
             }}
           />
-          <Stack direction="row" spacing={2} alignItems="center">
-            <CustomButton onClick={() => setScreen("list")}>Back</CustomButton>
-            <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, next) => next && setView(next)} sx={{ bgcolor: "white", borderRadius: 1 }}>
-              <ToggleButton value="list"><ViewListIcon sx={{ color: "black" }} /></ToggleButton>
-              <ToggleButton value="kanban"><ViewModuleIcon sx={{ color: "black" }} /></ToggleButton>
+
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="flex-end"
+          >
+            <CustomButton
+              onClick={() => setScreen("list")}
+            >
+              Back
+            </CustomButton>
+
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={view}
+              onChange={(_, next) =>
+                next && setView(next)
+              }
+              sx={{
+                bgcolor: COLORS.page,
+                border: `1px solid ${COLORS.borderStrong}`,
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <ToggleButton
+                value="list"
+                sx={{
+                  color: COLORS.muted,
+                  border: "none",
+                  "&.Mui-selected": {
+                    bgcolor: COLORS.accentSoft,
+                    color: COLORS.accent,
+                  },
+                  "&:hover": {
+                    bgcolor: COLORS.accentSoft,
+                  },
+                }}
+              >
+                <ViewListIcon />
+              </ToggleButton>
+
+              <ToggleButton
+                value="kanban"
+                sx={{
+                  color: COLORS.muted,
+                  border: "none",
+                  "&.Mui-selected": {
+                    bgcolor: COLORS.accentSoft,
+                    color: COLORS.accent,
+                  },
+                  "&:hover": {
+                    bgcolor: COLORS.accentSoft,
+                  },
+                }}
+              >
+                <ViewModuleIcon />
+              </ToggleButton>
             </ToggleButtonGroup>
           </Stack>
         </Stack>
 
-        {deleteMutation.isError && <Alert severity="error">{apiError(deleteMutation.error)}</Alert>}
+        {/* Delete Error */}
+        {deleteMutation.isError && (
+          <Alert
+            severity="error"
+            sx={{
+              bgcolor: COLORS.dangerSoft,
+              color: COLORS.danger,
+              border: `1px solid ${COLORS.border}`,
+            }}
+          >
+            {apiError(deleteMutation.error)}
+          </Alert>
+        )}
 
+        {/* Content */}
         {products.isLoading ? (
           <LoadingState label="Loading products..." />
         ) : products.isError ? (
-          <ErrorState message={apiError(products.error)} onRetry={() => void products.refetch()} />
+          <ErrorState
+            message={apiError(products.error)}
+            onRetry={() =>
+              void products.refetch()
+            }
+          />
         ) : renderedProducts.length === 0 ? (
           <EmptyState message="No products found. Click 'New' to create one." />
         ) : view === "list" ? (
-          <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
-            <Table size="small">
+          /* =========================
+             TABLE VIEW
+          ========================= */
+          <TableContainer
+            sx={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 3,
+              bgcolor: COLORS.page,
+              overflow: "hidden",
+            }}
+          >
+            <Table>
               <TableHead>
-                <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>
+                <TableRow
+                  sx={{
+                    bgcolor: COLORS.cardHover,
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
                     <Checkbox
                       size="small"
                       checked={isAllSelected}
                       indeterminate={isSomeSelected}
-                      onChange={(e) => toggleSelectAll(e.target.checked)}
-                      sx={{ color: "rgba(255,255,255,0.5)", "&.Mui-checked": { color: "#90EE90" }, "&.MuiCheckbox-indeterminate": { color: "#90EE90" } }}
+                      onChange={(e) =>
+                        toggleSelectAll(
+                          e.target.checked
+                        )
+                      }
+                      sx={{
+                        color: COLORS.muted,
+                        "&.Mui-checked": {
+                          color: COLORS.accent,
+                        },
+                        "&.MuiCheckbox-indeterminate": {
+                          color: COLORS.accent,
+                        },
+                      }}
                     />
                   </TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Product</TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Category</TableCell>
-                  <TableCell sx={{ color: "white", borderBottom: "none" }}>Type</TableCell>
-                  <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Sales Price</TableCell>
-                  <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Cost</TableCell>
-                  <TableCell align="right" sx={{ color: "white", borderBottom: "none" }}>Actions</TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Product
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Category
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Type
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Sales Price
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Cost
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 600,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {renderedProducts.map((prod) => (
                   <TableRow
                     key={prod.id}
                     hover
-                    onClick={() => openRecord(prod)}
-                    sx={{ cursor: "pointer", "&:hover": { bgcolor: "rgba(255,255,255,0.05)" }, borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                    onClick={() =>
+                      openRecord(prod)
+                    }
+                    sx={{
+                      cursor: "pointer",
+                      bgcolor: COLORS.page,
+                      "&:hover": {
+                        bgcolor:
+                          COLORS.cardHover,
+                      },
+                    }}
                   >
-                    <TableCell sx={{ borderBottom: "none" }} onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      onClick={(e) =>
+                        e.stopPropagation()
+                      }
+                      sx={{
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
                       <Checkbox
                         size="small"
-                        checked={selectedIds.includes(prod.id)}
-                        onChange={() => toggleSelectRow(prod.id)}
-                        sx={{ color: "rgba(255,255,255,0.5)", "&.Mui-checked": { color: "#90EE90" } }}
+                        checked={selectedIds.includes(
+                          prod.id
+                        )}
+                        onChange={() =>
+                          toggleSelectRow(
+                            prod.id
+                          )
+                        }
+                        sx={{
+                          color: COLORS.muted,
+                          "&.Mui-checked": {
+                            color: COLORS.accent,
+                          },
+                        }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
+
+                    <TableCell
+                      sx={{
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1.5}
+                      >
                         {prod.image ? (
-                          <Box component="img" src={prod.image} sx={{ width: 32, height: 32, borderRadius: 1, objectFit: "cover" }} />
+                          <Box
+                            component="img"
+                            src={prod.image}
+                            sx={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 1.5,
+                              objectFit: "cover",
+                              border: `1px solid ${COLORS.border}`,
+                            }}
+                          />
                         ) : (
-                          <Inventory2OutlinedIcon sx={{ color: "rgba(255,255,255,0.4)" }} />
+                          <Box
+                            sx={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 1.5,
+                              bgcolor:
+                                COLORS.accentSoft,
+                              display: "flex",
+                              alignItems:
+                                "center",
+                              justifyContent:
+                                "center",
+                            }}
+                          >
+                            <Inventory2OutlinedIcon
+                              sx={{
+                                color:
+                                  COLORS.accent,
+                                fontSize: 22,
+                              }}
+                            />
+                          </Box>
                         )}
-                        <Typography color="white" fontWeight={600}>{prod.name}</Typography>
+
+                        <Typography
+                          color={COLORS.text}
+                          fontWeight={600}
+                        >
+                          {prod.name}
+                        </Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>{prod.category || "—"}</TableCell>
-                    <TableCell sx={{ color: "white", borderBottom: "none" }}>
-                      <Chip size="small" label={prod.type || "GOODS"} sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }} />
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.text,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      {prod.category || "—"}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: "white", borderBottom: "none", fontWeight: 600 }}>
-                      {formatMoney(prod.unitPrice)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: "rgba(255,255,255,0.7)", borderBottom: "none" }}>
-                      {formatMoney(prod.costPrice)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ borderBottom: "none" }}>
-                      <Button
+
+                    <TableCell
+                      sx={{
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      <Chip
                         size="small"
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Delete ${prod.name}?`)) {
-                            deleteMutation.mutate([prod.id]);
-                          }
+                        label={
+                          prod.type || "GOODS"
+                        }
+                        sx={{
+                          bgcolor:
+                            COLORS.accentSoft,
+                          color:
+                            COLORS.accent,
+                          border: `1px solid rgba(77,182,172,0.25)`,
+                          fontWeight: 600,
                         }}
-                        sx={{ color: "#ff6b6b", textTransform: "none", fontSize: "0.8rem" }}
-                      >
-                        Delete
-                      </Button>
+                      />
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      {formatMoney(
+                        prod.unitPrice
+                      )}
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: COLORS.muted,
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      {formatMoney(
+                        prod.costPrice
+                      )}
+                    </TableCell>
+
+                    <TableCell
+                      align="right"
+                      onClick={(e) =>
+                        e.stopPropagation()
+                      }
+                      sx={{
+                        borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                    >
+                      {canManage && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Delete ${prod.name}?`
+                              )
+                            ) {
+                              deleteMutation.mutate([
+                                prod.id,
+                              ]);
+                            }
+                          }}
+                          sx={{
+                            color: COLORS.danger,
+                            borderColor:
+                              "rgba(233,139,139,0.45)",
+                            bgcolor:
+                              COLORS.dangerSoft,
+                            borderRadius: 1.5,
+                            textTransform:
+                              "none",
+                            fontSize:
+                              "0.8rem",
+                            fontWeight: 600,
+                            "&:hover": {
+                              bgcolor:
+                                "rgba(233,139,139,0.18)",
+                              borderColor:
+                                COLORS.danger,
+                            },
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -490,51 +1290,181 @@ export const ProductsPage = () => {
             </Table>
           </TableContainer>
         ) : (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 3, pt: 2 }}>
+          /* =========================
+             KANBAN VIEW
+          ========================= */
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 3,
+            }}
+          >
             {renderedProducts.map((prod) => (
               <Paper
                 key={prod.id}
                 variant="outlined"
-                onClick={() => openRecord(prod)}
+                onClick={() =>
+                  openRecord(prod)
+                }
                 sx={{
-                  p: 2,
+                  p: 2.5,
                   cursor: "pointer",
-                  bgcolor: "transparent",
-                  borderColor: "rgba(255,255,255,0.3)",
+                  bgcolor: COLORS.page,
+                  borderColor: COLORS.border,
                   borderRadius: 3,
-                  "&:hover": { borderColor: "white" }
+                  transition:
+                    "all 0.2s ease",
+                  "&:hover": {
+                    borderColor:
+                      COLORS.accent,
+                    bgcolor:
+                      COLORS.cardHover,
+                    transform:
+                      "translateY(-2px)",
+                  },
                 }}
               >
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box sx={{ width: 64, height: 64, bgcolor: "rgba(255,255,255,0.08)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{
+                      minWidth: 0,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        bgcolor:
+                          COLORS.accentSoft,
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems:
+                          "center",
+                        justifyContent:
+                          "center",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        border: `1px solid ${COLORS.border}`,
+                      }}
+                    >
                       {prod.image ? (
-                        <Box component="img" src={prod.image} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <Box
+                          component="img"
+                          src={prod.image}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
                       ) : (
-                        <Inventory2OutlinedIcon sx={{ fontSize: 36, color: "rgba(255,255,255,0.4)" }} />
+                        <Inventory2OutlinedIcon
+                          sx={{
+                            fontSize: 36,
+                            color:
+                              COLORS.accent,
+                          }}
+                        />
                       )}
                     </Box>
-                    <Stack spacing={0.5} overflow="hidden">
-                      <Typography color="white" fontWeight={700} noWrap>{prod.name}</Typography>
-                      <Typography color="rgba(255,255,255,0.75)" variant="body2">
-                        Sales Price: {formatMoney(prod.unitPrice)}
+
+                    <Stack
+                      spacing={0.5}
+                      overflow="hidden"
+                    >
+                      <Typography
+                        color={COLORS.text}
+                        fontWeight={700}
+                        noWrap
+                      >
+                        {prod.name}
                       </Typography>
-                      <Typography color="rgba(255,255,255,0.5)" variant="body2">
-                        Cost: {formatMoney(prod.costPrice)}
+
+                      <Typography
+                        color={COLORS.muted}
+                        variant="body2"
+                        noWrap
+                      >
+                        {prod.category ||
+                          "Uncategorized"}
+                      </Typography>
+
+                      <Typography
+                        color={COLORS.text}
+                        variant="body2"
+                      >
+                        Sales Price:{" "}
+                        <Box
+                          component="span"
+                          sx={{
+                            color:
+                              COLORS.accent,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {formatMoney(
+                            prod.unitPrice
+                          )}
+                        </Box>
+                      </Typography>
+
+                      <Typography
+                        color={COLORS.muted}
+                        variant="body2"
+                      >
+                        Cost:{" "}
+                        {formatMoney(
+                          prod.costPrice
+                        )}
                       </Typography>
                     </Stack>
                   </Stack>
+
                   {canManage && (
                     <Button
                       size="small"
-                      color="error"
+                      variant="outlined"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm(`Delete ${prod.name}?`)) {
-                          deleteMutation.mutate([prod.id]);
+
+                        if (
+                          window.confirm(
+                            `Delete ${prod.name}?`
+                          )
+                        ) {
+                          deleteMutation.mutate([
+                            prod.id,
+                          ]);
                         }
                       }}
-                      sx={{ color: "#ff6b6b", textTransform: "none", minWidth: "auto" }}
+                      sx={{
+                        color: COLORS.danger,
+                        borderColor:
+                          "rgba(233,139,139,0.45)",
+                        bgcolor:
+                          COLORS.dangerSoft,
+                        borderRadius: 1.5,
+                        textTransform:
+                          "none",
+                        minWidth: "auto",
+                        px: 1.5,
+                        "&:hover": {
+                          bgcolor:
+                            "rgba(233,139,139,0.18)",
+                          borderColor:
+                            COLORS.danger,
+                        },
+                      }}
                     >
                       Delete
                     </Button>
@@ -545,16 +1475,48 @@ export const ProductsPage = () => {
           </Box>
         )}
 
-
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="body2" color="rgba(255,255,255,0.5)">
-            {products.data?.meta.total ?? 0} products
+        {/* Pagination */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent:
+              "space-between",
+            alignItems: "center",
+            pt: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            color={COLORS.muted}
+          >
+            {products.data?.meta.total ?? 0}{" "}
+            products
           </Typography>
+
           <Pagination
             page={page}
-            count={Math.max(1, products.data?.meta.totalPages ?? 1)}
-            onChange={(_, value) => setPage(value)}
-            sx={{ "& .MuiPaginationItem-root": { color: "white" } }}
+            count={Math.max(
+              1,
+              products.data?.meta.totalPages ??
+                1
+            )}
+            onChange={(_, value) =>
+              setPage(value)
+            }
+            sx={{
+              "& .MuiPaginationItem-root": {
+                color: COLORS.muted,
+              },
+              "& .MuiPaginationItem-root:hover": {
+                bgcolor: COLORS.accentSoft,
+              },
+              "& .MuiPaginationItem-root.Mui-selected":
+                {
+                  bgcolor: COLORS.accent,
+                  color: "#071313",
+                  fontWeight: 700,
+                },
+            }}
           />
         </Box>
       </Stack>

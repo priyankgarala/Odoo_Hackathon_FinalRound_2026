@@ -67,8 +67,8 @@ const DarkContainer = ({
       width: "100%",
       maxWidth: 1000,
       mx: "auto",
-      pt: 4,
-      pb: 6,
+      pt: 5,
+      pb: 7,
     }}
   >
     {title && (
@@ -77,9 +77,9 @@ const DarkContainer = ({
           bgcolor: COLORS.accentSoft,
           border: `1px solid ${COLORS.borderStrong}`,
           borderRadius: 2,
-          py: 1,
+          py: 1.25,
           px: 3,
-          mb: 3,
+          mb: 4,
           display: "inline-block",
         }}
       >
@@ -99,7 +99,7 @@ const DarkContainer = ({
       sx={{
         border: `1px solid ${COLORS.border}`,
         borderRadius: 4,
-        p: 3,
+        p: 4,
         bgcolor: COLORS.card,
       }}
     >
@@ -176,6 +176,7 @@ const CustomButton = ({
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
+      px: 2,
       fontWeight: 600,
 
       "&:hover": {
@@ -277,13 +278,16 @@ export const JournalsPage = () => {
         <Stack
           component="form"
           onSubmit={submit}
-          spacing={4}
+          spacing={5}
         >
           {/* Form Actions */}
           <Stack
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            sx={{
+              pb: 1,
+            }}
           >
             <CustomButton
               type="submit"
@@ -302,38 +306,50 @@ export const JournalsPage = () => {
           </Stack>
 
           {/* Alerts */}
-          {validationError && (
-            <Alert
-              severity="warning"
-              sx={{
-                bgcolor: COLORS.warningSoft,
-                color: COLORS.warning,
-                border: `1px solid ${COLORS.border}`,
-              }}
-            >
-              {validationError}
-            </Alert>
-          )}
+          <Stack spacing={2}>
+            {validationError && (
+              <Alert
+                severity="warning"
+                sx={{
+                  bgcolor: COLORS.warningSoft,
+                  color: COLORS.warning,
+                  border: `1px solid ${COLORS.border}`,
+                }}
+              >
+                {validationError}
+              </Alert>
+            )}
 
-          {save.isError && (
-            <Alert
-              severity="error"
-              sx={{
-                bgcolor: COLORS.dangerSoft,
-                color: COLORS.danger,
-                border: `1px solid ${COLORS.border}`,
-              }}
-            >
-              {apiError(save.error)}
-            </Alert>
-          )}
+            {save.isError && (
+              <Alert
+                severity="error"
+                sx={{
+                  bgcolor: COLORS.dangerSoft,
+                  color: COLORS.danger,
+                  border: `1px solid ${COLORS.border}`,
+                }}
+              >
+                {apiError(save.error)}
+              </Alert>
+            )}
+          </Stack>
 
           {/* Form */}
-          <Stack spacing={3} maxWidth={600}>
+          <Stack
+            spacing={4}
+            maxWidth={650}
+          >
+            {/* Journal Name */}
             <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2.5}
             >
               <Typography
                 minWidth={140}
@@ -358,10 +374,17 @@ export const JournalsPage = () => {
               />
             </Stack>
 
+            {/* Journal Type */}
             <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2.5}
             >
               <Typography
                 minWidth={140}
@@ -408,10 +431,17 @@ export const JournalsPage = () => {
               </TextField>
             </Stack>
 
+            {/* Default Account */}
             <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              spacing={2.5}
             >
               <Typography
                 minWidth={140}
@@ -462,12 +492,22 @@ export const JournalsPage = () => {
 
   return (
     <DarkContainer title="Journals">
-      <Stack spacing={3}>
+      <Stack spacing={4}>
         {/* Header */}
         <Stack
-          direction="row"
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
           justifyContent="space-between"
-          alignItems="center"
+          alignItems={{
+            xs: "stretch",
+            sm: "center",
+          }}
+          spacing={3}
+          sx={{
+            pb: 1,
+          }}
         >
           <CustomButton
             onClick={openCreate}
@@ -516,6 +556,7 @@ export const JournalsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Journal Name
@@ -526,6 +567,7 @@ export const JournalsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Type
@@ -536,6 +578,7 @@ export const JournalsPage = () => {
                       color: COLORS.muted,
                       fontWeight: 600,
                       borderBottom: `1px solid ${COLORS.border}`,
+                      py: 2,
                     }}
                   >
                     Default Account
@@ -551,10 +594,15 @@ export const JournalsPage = () => {
                     sx={{
                       "& td": {
                         borderBottom: `1px solid ${COLORS.border}`,
+                        py: 2,
                       },
 
                       "&:hover": {
                         bgcolor: COLORS.cardHover,
+                      },
+
+                      "&:last-child td": {
+                        borderBottom: "none",
                       },
                     }}
                   >
