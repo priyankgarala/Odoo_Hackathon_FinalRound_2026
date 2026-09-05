@@ -5,6 +5,10 @@ import { productRouter } from "../modules/products/product.routes.js";
 import { accountRouter } from "../modules/accounts/account.routes.js";
 import { journalEntryRouter, journalRouter } from "../modules/journals/journal.routes.js";
 import { purchaseOrderRouter } from "../modules/purchase-orders/purchase-order.routes.js";
+import { vendorBillRouter } from "../modules/vendor-bills/vendor-bill.routes.js";
+import { salesOrderRouter } from "../modules/sales-orders/sales-order.routes.js";
+import { invoiceRouter } from "../modules/invoices/invoice.routes.js";
+import { dashboardRouter } from "../modules/dashboard/dashboard.routes.js";
 
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
@@ -14,3 +18,7 @@ apiRouter.use("/accounts", accountRouter);
 apiRouter.use("/journals", journalRouter);
 apiRouter.use("/journal-entries", journalEntryRouter);
 apiRouter.use("/purchase-orders", purchaseOrderRouter);
+apiRouter.use("/vendor-bills", vendorBillRouter);
+apiRouter.use("/sales-orders", salesOrderRouter);
+apiRouter.use("/invoices", invoiceRouter);
+apiRouter.use("/dashboard", dashboardRouter);

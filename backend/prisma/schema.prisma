@@ -56,6 +56,9 @@ model Contact {
   @@index([type, active])
   @@index([name])
   purchaseOrders PurchaseOrder[]
+  vendorBills VendorBill[]
+  salesOrders SalesOrder[]
+  invoices    Invoice[]
 }
 
 model Product {
@@ -71,6 +74,9 @@ model Product {
   @@index([name])
   @@index([active])
   purchaseOrderItems PurchaseOrderItem[]
+  vendorBillItems VendorBillItem[]
+  salesOrderItems SalesOrderItem[]
+  invoiceItems InvoiceItem[]
 }
 
 enum AccountType {
@@ -133,6 +139,9 @@ model JournalEntry {
   description   String?
   status        JournalEntryStatus @default(DRAFT)
   lines         JournalEntryLine[]
+  vendorBill    VendorBill? @relation("VendorBillJournal")
+  invoice       Invoice?    @relation("InvoiceJournal")
+  payment       Payment?    @relation("PaymentJournal")
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
@@ -174,6 +183,7 @@ model PurchaseOrder {
   taxTotal    Decimal             @default(0) @db.Decimal(14, 2)
   total       Decimal             @default(0) @db.Decimal(14, 2)
   items       PurchaseOrderItem[]
+  vendorBills VendorBill[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
@@ -199,4 +209,162 @@ model PurchaseOrderItem {
 
   @@index([purchaseOrderId])
   @@index([productId])
+}
+
+enum VendorBillStatus {
+  POSTED
+  PAID
+  CANCELLED
+}
+enum PaymentType {
+  VENDOR_PAYMENT
+  CUSTOMER_PAYMENT
+}
+model VendorBill {
+  id Int @id @default(autoincrement())
+  billNumber String @unique
+  purchaseOrderId Int
+  purchaseOrder PurchaseOrder @relation(fields:[purchaseOrderId],references:[id],onDelete:Restrict)
+  vendorId Int
+  vendor Contact @relation(fields:[vendorId],references:[id],onDelete:Restrict)
+  billDate DateTime @default(now()) @db.Date
+  status VendorBillStatus @default(POSTED)
+  subtotal Decimal @db.Decimal(14,2)
+  taxTotal Decimal @db.Decimal(14,2)
+  total Decimal @db.Decimal(14,2)
+  paidAmount Decimal @default(0) @db.Decimal(14,2)
+  outstanding Decimal @db.Decimal(14,2)
+  journalEntryId Int? @unique
+  journalEntry JournalEntry? @relation("VendorBillJournal",fields:[journalEntryId],references:[id],onDelete:Restrict)
+  items VendorBillItem[]
+  payments Payment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([vendorId,status])
+  @@index([purchaseOrderId])
+}
+model VendorBillItem {
+  id Int @id @default(autoincrement())
+  vendorBillId Int
+  vendorBill VendorBill @relation(fields:[vendorBillId],references:[id],onDelete:Cascade)
+  productId Int
+  product Product @relation(fields:[productId],references:[id],onDelete:Restrict)
+  productSku String
+  productName String
+  quantity Decimal @db.Decimal(14,2)
+  unitPrice Decimal @db.Decimal(14,2)
+  taxRate Decimal @db.Decimal(5,2)
+  lineSubtotal Decimal @db.Decimal(14,2)
+  taxAmount Decimal @db.Decimal(14,2)
+  lineTotal Decimal @db.Decimal(14,2)
+  createdAt DateTime @default(now())
+  @@index([vendorBillId])
+}
+model Payment {
+  id Int @id @default(autoincrement())
+  paymentNumber String @unique
+  type PaymentType
+  vendorBillId Int?
+  vendorBill VendorBill? @relation(fields:[vendorBillId],references:[id],onDelete:Restrict)
+  invoiceId Int?
+  invoice Invoice? @relation(fields:[invoiceId],references:[id],onDelete:Restrict)
+  amount Decimal @db.Decimal(14,2)
+  paymentMethod String
+  reference String?
+  paymentDate DateTime @default(now()) @db.Date
+  journalEntryId Int @unique
+  journalEntry JournalEntry @relation("PaymentJournal",fields:[journalEntryId],references:[id],onDelete:Restrict)
+  createdAt DateTime @default(now())
+  @@index([vendorBillId])
+  @@index([invoiceId])
+}
+
+enum SalesOrderStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+model SalesOrder {
+  id Int @id @default(autoincrement())
+  orderNumber String @unique
+  customerId Int
+  customer Contact @relation(fields:[customerId],references:[id],onDelete:Restrict)
+  orderDate DateTime @default(now()) @db.Date
+  status SalesOrderStatus @default(DRAFT)
+  notes String?
+  subtotal Decimal @default(0) @db.Decimal(14,2)
+  taxTotal Decimal @default(0) @db.Decimal(14,2)
+  total Decimal @default(0) @db.Decimal(14,2)
+  items SalesOrderItem[]
+  invoice Invoice?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([customerId,status])
+}
+model SalesOrderItem {
+  id Int @id @default(autoincrement())
+  salesOrderId Int
+  salesOrder SalesOrder @relation(fields:[salesOrderId],references:[id],onDelete:Cascade)
+  productId Int
+  product Product @relation(fields:[productId],references:[id],onDelete:Restrict)
+  productSku String
+  productName String
+  quantity Decimal @db.Decimal(14,2)
+  unitPrice Decimal @db.Decimal(14,2)
+  taxRate Decimal @default(0) @db.Decimal(5,2)
+  lineSubtotal Decimal @db.Decimal(14,2)
+  taxAmount Decimal @db.Decimal(14,2)
+  lineTotal Decimal @db.Decimal(14,2)
+  createdAt DateTime @default(now())
+  @@index([salesOrderId])
+  @@index([productId])
+}
+
+enum InvoiceStatus {
+  POSTED
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id Int @id @default(autoincrement())
+  invoiceNumber String @unique
+  salesOrderId Int @unique
+  salesOrder SalesOrder @relation(fields:[salesOrderId],references:[id],onDelete:Restrict)
+  customerId Int
+  customer Contact @relation(fields:[customerId],references:[id],onDelete:Restrict)
+  invoiceDate DateTime @default(now()) @db.Date
+  dueDate DateTime @db.Date
+  status InvoiceStatus @default(POSTED)
+  subtotal Decimal @db.Decimal(14,2)
+  taxTotal Decimal @db.Decimal(14,2)
+  total Decimal @db.Decimal(14,2)
+  paidAmount Decimal @default(0) @db.Decimal(14,2)
+  outstanding Decimal @db.Decimal(14,2)
+  journalEntryId Int? @unique
+  journalEntry JournalEntry? @relation("InvoiceJournal",fields:[journalEntryId],references:[id],onDelete:Restrict)
+  items InvoiceItem[]
+  payments Payment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([customerId,status])
+  @@index([invoiceDate])
+}
+
+model InvoiceItem {
+  id Int @id @default(autoincrement())
+  invoiceId Int
+  invoice Invoice @relation(fields:[invoiceId],references:[id],onDelete:Cascade)
+  productId Int
+  product Product @relation(fields:[productId],references:[id],onDelete:Restrict)
+  productSku String
+  productName String
+  quantity Decimal @db.Decimal(14,2)
+  unitPrice Decimal @db.Decimal(14,2)
+  taxRate Decimal @db.Decimal(5,2)
+  lineSubtotal Decimal @db.Decimal(14,2)
+  taxAmount Decimal @db.Decimal(14,2)
+  lineTotal Decimal @db.Decimal(14,2)
+  createdAt DateTime @default(now())
+  @@index([invoiceId])
 }

@@ -1,0 +1,3 @@
+import { api } from "./client";
+export type DashboardData = { metrics: { customers:number;vendors:number;products:number;purchaseOrderCount:number;purchaseTotal:string;salesOrderCount:number;salesTotal:string;vendorBillCount:number;vendorBillTotal:string;paid:string;outstanding:string;postedEntries:number }; recentOrders:Array<{id:number;orderNumber:string;status:string;total:string;vendor:{name:string}}>; recentBills:Array<{id:number;billNumber:string;status:string;total:string;outstanding:string;vendor:{name:string};journalEntry:{id:number;entryNumber:string}|null}>; recentEntries:Array<{id:number;entryNumber:string;description:string|null;journal:{code:string;name:string}}> };
+export const getDashboard = async () => (await api.get<DashboardData>("/dashboard")).data;
