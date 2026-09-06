@@ -7,14 +7,15 @@ import { AuthFrame } from "../components/auth/AuthFrame";
 
 const inputStyles = {
   "& .MuiOutlinedInput-root": {
-    color: "white",
-    "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.5)" },
-    "&.Mui-focused fieldset": { borderColor: "white" },
+    color: "#0f172a",
+    bgcolor: "#ffffff",
+    "& fieldset": { borderColor: "#cbd5e1" },
+    "&:hover fieldset": { borderColor: "#94a3b8" },
+    "&.Mui-focused fieldset": { borderColor: "#2563eb" },
   },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-  "& .MuiFormHelperText-root": { color: "rgba(255,255,255,0.5)" },
+  "& .MuiInputLabel-root": { color: "#64748b" },
+  "& .MuiInputLabel-root.Mui-focused": { color: "#2563eb" },
+  "& .MuiFormHelperText-root": { color: "#64748b" },
 };
 
 export const SignupPage = () => {

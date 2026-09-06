@@ -21,17 +21,17 @@ import { SYSTEM_ADMINISTRATOR, VIEWER } from "../features/auth/roles";
 const roles = [SYSTEM_ADMINISTRATOR, VIEWER] as const;
 
 const COLORS = {
-  page: "#0B1220",
-  card: "#111B2E",
-  border: "rgba(148, 163, 184, 0.16)",
-  borderStrong: "rgba(148, 163, 184, 0.28)",
-  text: "#F1F5F9",
-  muted: "#94A3B8",
-  accent: "#4DB6AC",
-  accentHover: "#3F9E96",
-  accentSoft: "rgba(77, 182, 172, 0.12)",
-  danger: "#E98B8B",
-  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  page: "#f8fafc",
+  card: "#ffffff",
+  border: "#e2e8f0",
+  borderStrong: "#cbd5e1",
+  text: "#0f172a",
+  muted: "#64748b",
+  accent: "#2563eb",
+  accentHover: "#1d4ed8",
+  accentSoft: "#eff6ff",
+  danger: "#dc2626",
+  dangerSoft: "#fee2e2",
 };
 
 const standardInputStyles = {

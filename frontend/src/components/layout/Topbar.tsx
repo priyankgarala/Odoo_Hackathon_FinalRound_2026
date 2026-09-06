@@ -71,9 +71,9 @@ export const Topbar = () => {
       sx={{
         width: `calc(100% - ${drawerWidth}px)`,
         ml: `${drawerWidth}px`,
-        bgcolor: "#121212",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
-        color: "#ffffff"
+        bgcolor: "#ffffff",
+        borderBottom: "1px solid #e2e8f0",
+        color: "#0f172a"
       }}
     >
       <Toolbar>
@@ -86,13 +86,13 @@ export const Topbar = () => {
               onClick={(e) => handleMenuClick(e, key)}
               endIcon={<KeyboardArrowDownIcon fontSize="small" />}
               sx={{
-                color: activeMenu === key ? "#90EE90" : "rgba(255, 255, 255, 0.8)",
+                color: activeMenu === key ? "#2563eb" : "#475569",
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: "0.9rem",
                 px: 1.5,
                 borderRadius: 1.5,
-                "&:hover": { color: "#ffffff", bgcolor: "rgba(255, 255, 255, 0.08)" }
+                "&:hover": { color: "#0f172a", bgcolor: "#f1f5f9" }
               }}
             >
               {key}
@@ -110,9 +110,9 @@ export const Topbar = () => {
           slotProps={{
             paper: {
               sx: {
-                bgcolor: "#121212",
-                border: "1px solid rgba(255,255,255,0.25)",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
+                bgcolor: "#ffffff",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
                 borderRadius: 3,
                 mt: 1,
                 minWidth: 200
@@ -122,7 +122,7 @@ export const Topbar = () => {
         >
           {activeMenu && (
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography color="#90EE90" fontWeight={700} fontSize="0.95rem" mb={1} sx={{ pb: 0.5, borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+              <Typography color="#2563eb" fontWeight={700} fontSize="0.95rem" mb={1} sx={{ pb: 0.5, borderBottom: "1px solid #e2e8f0" }}>
                 {activeMenu}
               </Typography>
               {visibleMenus[activeMenu as keyof typeof visibleMenus].map((item, idx) => (
@@ -132,14 +132,14 @@ export const Topbar = () => {
                   to={item.to}
                   onClick={handleClose}
                   sx={{
-                    color: "rgba(255,255,255,0.85)",
+                    color: "#334155",
                     justifyContent: "flex-start",
                     textTransform: "none",
                     fontSize: "0.88rem",
                     py: 0.7,
                     px: 1.5,
                     borderRadius: 1.5,
-                    "&:hover": { color: "#90EE90", bgcolor: "rgba(255,255,255,0.08)" }
+                    "&:hover": { color: "#2563eb", bgcolor: "#eff6ff" }
                   }}
                 >
                   {item.label}
@@ -157,9 +157,9 @@ export const Topbar = () => {
             variant="outlined"
             sx={{
               mr: 2,
-              color: "white",
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.05)" }
+              color: "#1e3a8a",
+              borderColor: "#93c5fd",
+              "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" }
             }}
             onClick={() => navigate("/users/new")}
           >
@@ -168,10 +168,10 @@ export const Topbar = () => {
         )}
 
         <Box sx={{ textAlign: "right", mr: 1.5 }}>
-          <Typography variant="body2" fontWeight={700} color="white">
+          <Typography variant="body2" fontWeight={700} color="#0f172a">
             {user?.name}
           </Typography>
-          <Typography variant="caption" sx={{ color: "#90EE90" }}>
+          <Typography variant="caption" sx={{ color: "#2563eb", fontWeight: 600 }}>
             {user?.role}
           </Typography>
         </Box>
@@ -180,9 +180,9 @@ export const Topbar = () => {
           sx={{
             width: 34,
             height: 34,
-            bgcolor: "#2B5E74",
+            bgcolor: "#2563eb",
             color: "white",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
+            border: "1px solid #bfdbfe",
             mr: 1.5
           }}
         >
@@ -193,9 +193,9 @@ export const Topbar = () => {
           size="small"
           variant="outlined"
           sx={{
-            color: "rgba(255, 255, 255, 0.8)",
-            borderColor: "rgba(255, 255, 255, 0.2)",
-            "&:hover": { borderColor: "white", color: "white", bgcolor: "rgba(255,255,255,0.08)" }
+            color: "#475569",
+            borderColor: "#cbd5e1",
+            "&:hover": { borderColor: "#2563eb", color: "#1e3a8a", bgcolor: "#eff6ff" }
           }}
           onClick={() => void signOut()}
         >

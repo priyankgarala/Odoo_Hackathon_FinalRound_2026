@@ -8,9 +8,9 @@ export const AuthFrame = ({ title, subtitle, children }: { title: string; subtit
       display: "grid",
       placeItems: "center",
       p: 2,
-      bgcolor: "#121212",
-      backgroundImage: "radial-gradient(circle at center, #1e3c38 0%, #121212 100%)",
-      color: "white",
+      bgcolor: "#f8fafc",
+      backgroundImage: "radial-gradient(circle at center, #eff6ff 0%, #f8fafc 100%)",
+      color: "#0f172a",
     }}
   >
     <Box
@@ -19,18 +19,20 @@ export const AuthFrame = ({ title, subtitle, children }: { title: string; subtit
         maxWidth: 460,
         p: { xs: 3, sm: 5 },
         borderRadius: 4,
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        background: "rgba(255, 255, 255, 0.03)",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+        border: "1px solid #e2e8f0",
+        background: "#ffffff",
+        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
       }}
     >
       
-      <Typography variant="h5" fontWeight={700} mb={3} color="white">
+      <Typography variant="h5" fontWeight={700} mb={1} color="#0f172a">
         {title}
+      </Typography>
+      <Typography variant="body2" mb={3} color="#64748b" textAlign="center">
+        {subtitle}
       </Typography>
       {children}
     </Box>

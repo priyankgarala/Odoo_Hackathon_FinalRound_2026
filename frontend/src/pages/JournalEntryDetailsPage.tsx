@@ -23,24 +23,24 @@ import { useAuth } from "../features/auth/AuthProvider";
 import { isSystemAdministrator } from "../features/auth/roles";
 
 const COLORS = {
-  page: "#0B1220",
-  card: "#111B2E",
-  cardHover: "#16233A",
-  border: "rgba(148, 163, 184, 0.16)",
-  borderStrong: "rgba(148, 163, 184, 0.28)",
-  text: "#F1F5F9",
-  muted: "#94A3B8",
-  accent: "#4DB6AC",
-  accentHover: "#3F9E96",
-  accentSoft: "rgba(77, 182, 172, 0.12)",
-  success: "#6FCF97",
-  successSoft: "rgba(111, 207, 151, 0.12)",
-  danger: "#E98B8B",
-  dangerSoft: "rgba(233, 139, 139, 0.10)",
-  warning: "#D9B86C",
-  warningSoft: "rgba(217, 184, 108, 0.10)",
-  info: "#7FA9C9",
-  infoSoft: "rgba(127, 169, 201, 0.10)",
+  page: "#f8fafc",
+  card: "#ffffff",
+  cardHover: "#f1f5f9",
+  border: "#e2e8f0",
+  borderStrong: "#cbd5e1",
+  text: "#0f172a",
+  muted: "#64748b",
+  accent: "#2563eb",
+  accentHover: "#1d4ed8",
+  accentSoft: "#eff6ff",
+  success: "#16a34a",
+  successSoft: "#dcfce7",
+  danger: "#dc2626",
+  dangerSoft: "#fee2e2",
+  warning: "#d97706",
+  warningSoft: "#fef3c7",
+  info: "#0284c7",
+  infoSoft: "#e0f2fe",
 };
 
 const money = (value: string | number) =>
@@ -355,6 +355,17 @@ export const JournalEntryDetailsPage = () => {
                       py: 1.75,
                     }}
                   >
+                    Partner
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      color: COLORS.muted,
+                      fontWeight: 700,
+                      borderBottom: `1px solid ${COLORS.border}`,
+                      py: 1.75,
+                    }}
+                  >
                     Description
                   </TableCell>
 
@@ -406,6 +417,16 @@ export const JournalEntryDetailsPage = () => {
                       >
                         {line.account.code} - {line.account.name}
                       </Typography>
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        color: COLORS.text,
+                        fontWeight: 600,
+                        py: 2,
+                      }}
+                    >
+                      {line.partner?.name ?? "—"}
                     </TableCell>
 
                     <TableCell

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import PrintIcon from "@mui/icons-material/Print";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
   Box,
   Button,
@@ -22,29 +22,30 @@ import { useQuery } from "@tanstack/react-query";
 import * as api from "../api/reports.api";
 import { LoadingState } from "../components/feedback/LoadingState";
 import { ErrorState } from "../components/feedback/ErrorState";
+import { openReportDocument } from "../utils/report-document";
 
 const COLORS = {
-  page: "#0B1220",
-  card: "#111B2E",
-  cardHover: "#16233A",
-  border: "rgba(148, 163, 184, 0.16)",
-  borderStrong: "rgba(148, 163, 184, 0.28)",
+  page: "#f8fafc",
+  card: "#ffffff",
+  cardHover: "#f1f5f9",
+  border: "#e2e8f0",
+  borderStrong: "#cbd5e1",
 
-  text: "#F1F5F9",
-  muted: "#94A3B8",
+  text: "#0f172a",
+  muted: "#64748b",
 
-  accent: "#4DB6AC",
-  accentHover: "#3F9E96",
-  accentSoft: "rgba(77, 182, 172, 0.12)",
+  accent: "#2563eb",
+  accentHover: "#1d4ed8",
+  accentSoft: "#eff6ff",
 
-  success: "#6FCF97",
-  successSoft: "rgba(111, 207, 151, 0.12)",
+  success: "#16a34a",
+  successSoft: "#dcfce7",
 
-  danger: "#E98B8B",
-  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  danger: "#dc2626",
+  dangerSoft: "#fee2e2",
 
-  info: "#7FA9C9",
-  infoSoft: "rgba(127, 169, 201, 0.10)",
+  info: "#0284c7",
+  infoSoft: "#e0f2fe",
 };
 
 const formatMoney = (amount: number | string) =>
@@ -103,7 +104,7 @@ const DarkContainer = ({
         borderRadius: 4,
         p: { xs: 2.5, md: 4 },
         bgcolor: COLORS.card,
-        boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
       }}
     >
       {children}
@@ -119,7 +120,7 @@ const CustomButton = ({
   <Button
     variant={active ? "contained" : "outlined"}
     sx={{
-      color: active ? "#071414" : COLORS.muted,
+      color: active ? "#ffffff" : COLORS.muted,
       bgcolor: active ? COLORS.accent : "transparent",
       borderColor: active
         ? COLORS.accent
@@ -179,8 +180,14 @@ export const ReportsPage = ({
     queryFn: () => api.getBudgetReport(selectedYear),
   });
 
-  const handlePrint = () => {
-    window.print();
+  const downloadDocument = () => {
+    openReportDocument({
+      report: tab === 0 ? "profit-loss" : tab === 1 ? "balance-sheet" : "budget",
+      year: selectedYear,
+      profitLoss: profitLoss.data,
+      balanceSheet: balanceSheet.data,
+      budget: budgetReport.data,
+    });
   };
 
   const pData = profitLoss.data;
@@ -299,11 +306,8 @@ export const ReportsPage = ({
             flexWrap="wrap"
             useFlexGap
           >
-            <CustomButton
-              onClick={handlePrint}
-              startIcon={<PrintIcon />}
-            >
-              Print
+            <CustomButton onClick={downloadDocument} startIcon={<DownloadOutlinedIcon />} disabled={tab === 0 ? !profitLoss.data : tab === 1 ? !balanceSheet.data : !budgetReport.data}>
+              Download document
             </CustomButton>
 
             <TextField

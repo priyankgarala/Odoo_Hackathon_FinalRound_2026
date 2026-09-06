@@ -81,10 +81,23 @@ export const updateStatus = async (id: number, active: boolean) => {
 
 export const deleteProduct = async (id: number) => {
   await getById(id);
-  return prisma.product.delete({ where: { id } });
+  try {
+    return await prisma.product.delete({ where: { id } });
+  } catch (err: any) {
+    return await prisma.product.update({ where: { id }, data: { active: false }, include: includeTaxAndCategory });
+  }
 };
 
 export const deleteManyProducts = async (ids: number[]) => {
   if (!ids.length) throw new AppError(400, "Select at least one product to delete");
-  return prisma.$transaction(ids.map((id) => prisma.product.delete({ where: { id } })));
+  return Promise.all(
+    ids.map(async (id) => {
+      try {
+        return await prisma.product.delete({ where: { id } });
+      } catch {
+        return await prisma.product.update({ where: { id }, data: { active: false }, include: includeTaxAndCategory });
+      }
+    })
+  );
 };
+

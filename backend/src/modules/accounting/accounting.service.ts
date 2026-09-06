@@ -49,6 +49,7 @@ export const createSalesInvoiceJournalEntry = async (
     },
     {
       accountId: salesRevId,
+      partnerId: source.partnerId,
       debit: 0,
       credit: source.subtotal,
       description: "Sales Revenue"
@@ -58,6 +59,7 @@ export const createSalesInvoiceJournalEntry = async (
   if (source.taxTotal > 0) {
     lines.push({
       accountId: taxPayableId,
+      partnerId: source.partnerId,
       debit: 0,
       credit: source.taxTotal,
       description: "GST Output Tax Payable"
@@ -90,6 +92,7 @@ export const createVendorBillJournalEntry = async (
   const lines: EntryLineInput[] = [
     {
       accountId: purchaseExpId,
+      partnerId: source.partnerId,
       debit: source.subtotal,
       credit: 0,
       description: "Purchase Expense"
@@ -99,6 +102,7 @@ export const createVendorBillJournalEntry = async (
   if (source.taxTotal > 0) {
     lines.push({
       accountId: taxInputId,
+      partnerId: source.partnerId,
       debit: source.taxTotal,
       credit: 0,
       description: "GST Input Tax Credit"
@@ -150,7 +154,7 @@ export const createCustomerPaymentJournalEntry = async (tx: Prisma.TransactionCl
       referenceType: source.referenceType,
       referenceId: source.referenceId,
       lines: [
-        { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.bank), debit: source.amount, credit: 0 },
+        { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.bank), partnerId: source.partnerId, debit: source.amount, credit: 0 },
         { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.receivable), partnerId: source.partnerId, debit: 0, credit: source.amount }
       ]
     },
@@ -181,7 +185,7 @@ export const createVendorPaymentJournalEntry = async (tx: Prisma.TransactionClie
       referenceId: source.referenceId,
       lines: [
         { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.payable), partnerId: source.partnerId, debit: source.amount, credit: 0 },
-        { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.bank), debit: 0, credit: source.amount }
+        { accountId: await getAccountId(tx, SYSTEM_ACCOUNT_CODES.bank), partnerId: source.partnerId, debit: 0, credit: source.amount }
       ]
     },
     true,

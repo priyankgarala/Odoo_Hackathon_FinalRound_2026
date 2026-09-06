@@ -1,29 +1,31 @@
 import { createTheme } from "@mui/material/styles";
 
+export type AppColorMode = "light" | "dark";
+
 export const theme = createTheme({
   palette: {
-    mode: "dark",
+    mode: "light",
     primary: {
       main: "#2563eb",
-      dark: "#1e3a8a",
+      dark: "#1e40af",
       light: "#60a5fa",
       contrastText: "#ffffff",
     },
     secondary: {
       main: "#0f766e",
       light: "#14b8a6",
-      contrastText: "#ecfeff",
+      contrastText: "#ffffff",
     },
     background: {
-      default: "#0b1220",
-      paper: "#111c31",
+      default: "#f8fafc",
+      paper: "#ffffff",
     },
     text: {
-      primary: "#ffffff",
-      secondary: "rgba(255, 255, 255, 0.7)",
-      disabled: "rgba(255, 255, 255, 0.4)",
+      primary: "#0f172a",
+      secondary: "#475569",
+      disabled: "#94a3b8",
     },
-    divider: "rgba(255, 255, 255, 0.12)",
+    divider: "#e2e8f0",
   },
   shape: {
     borderRadius: 8,
@@ -35,26 +37,26 @@ export const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: "#0b1220",
-          color: "#ffffff",
-          scrollbarColor: "#334155 #0b1220",
+          backgroundColor: "#f8fafc",
+          color: "#0f172a",
+          scrollbarColor: "#cbd5e1 #f8fafc",
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: "#111c31",
+          backgroundColor: "#ffffff",
           backgroundImage: "none",
-          borderColor: "rgba(255, 255, 255, 0.15)",
+          borderColor: "#e2e8f0",
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: "#111c31",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
+          backgroundColor: "#ffffff",
+          border: "1px solid #e2e8f0",
           backgroundImage: "none",
         },
       },
@@ -62,41 +64,42 @@ export const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderColor: "rgba(255, 255, 255, 0.1)",
-          color: "rgba(255, 255, 255, 0.85)",
+          borderColor: "#e2e8f0",
+          color: "#0f172a",
         },
         head: {
-          color: "rgba(255, 255, 255, 0.6)",
+          color: "#334155",
           fontWeight: 600,
-          backgroundColor: "#172642",
+          backgroundColor: "#f1f5f9",
         },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          color: "#ffffff",
+          color: "#0f172a",
+          backgroundColor: "#ffffff",
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(255, 255, 255, 0.25)",
+            borderColor: "#cbd5e1",
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(255, 255, 255, 0.5)",
+            borderColor: "#94a3b8",
           },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#ffffff",
+            borderColor: "#2563eb",
           },
         },
         input: {
-          color: "#ffffff",
+          color: "#0f172a",
         },
       },
     },
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: "#475569",
           "&.Mui-focused": {
-            color: "#ffffff",
+            color: "#2563eb",
           },
         },
       },
@@ -105,7 +108,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          fontWeight: 500,
+          fontWeight: 600,
         },
       },
     },
@@ -118,3 +121,36 @@ export const theme = createTheme({
     },
   },
 });
+
+export const createAppTheme = (mode: AppColorMode = "light") => {
+  return createTheme({
+    palette: {
+      mode: "light",
+      primary: { main: "#2563eb", dark: "#1e40af", light: "#60a5fa", contrastText: "#ffffff" },
+      secondary: { main: "#0f766e", light: "#14b8a6", contrastText: "#ffffff" },
+      background: { default: "#f8fafc", paper: "#ffffff" },
+      text: { primary: "#0f172a", secondary: "#475569" },
+      divider: "#e2e8f0"
+    },
+    shape: { borderRadius: 8 },
+    typography: { fontFamily: "Inter, Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundColor: "#f8fafc",
+            color: "#0f172a",
+            scrollbarColor: "#cbd5e1 #f8fafc",
+          },
+        },
+      },
+      MuiPaper: { styleOverrides: { root: { backgroundColor: "#ffffff", backgroundImage: "none", borderColor: "#e2e8f0" } } },
+      MuiCard: { styleOverrides: { root: { backgroundColor: "#ffffff", border: "1px solid #e2e8f0", backgroundImage: "none" } } },
+      MuiTableCell: { styleOverrides: { root: { borderColor: "#e2e8f0", color: "#0f172a" }, head: { color: "#334155", fontWeight: 600, backgroundColor: "#f1f5f9" } } },
+      MuiOutlinedInput: { styleOverrides: { root: { color: "#0f172a", "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#94a3b8" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563eb" } }, input: { color: "#0f172a" } } },
+      MuiInputLabel: { styleOverrides: { root: { color: "#475569", "&.Mui-focused": { color: "#2563eb" } } } },
+      MuiButton: { styleOverrides: { root: { textTransform: "none", fontWeight: 600 } } },
+      MuiChip: { styleOverrides: { root: { fontWeight: 500 } } },
+    },
+  });
+};

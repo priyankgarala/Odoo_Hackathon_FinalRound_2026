@@ -13,15 +13,15 @@ import { useAuth } from "../features/auth/AuthProvider";
 import { AuthFrame } from "../components/auth/AuthFrame";
 
 const COLORS = {
-  text: "#F1F5F9",
-  muted: "#94A3B8",
-  accent: "#4DB6AC",
-  accentHover: "#3F9E96",
-  accentSoft: "rgba(77, 182, 172, 0.12)",
-  border: "rgba(148, 163, 184, 0.28)",
-  borderHover: "rgba(77, 182, 172, 0.65)",
-  danger: "#E98B8B",
-  dangerSoft: "rgba(233, 139, 139, 0.10)",
+  text: "#0f172a",
+  muted: "#64748b",
+  accent: "#2563eb",
+  accentHover: "#1d4ed8",
+  accentSoft: "#eff6ff",
+  border: "#cbd5e1",
+  borderHover: "#2563eb",
+  danger: "#dc2626",
+  dangerSoft: "#fee2e2",
 };
 
 const inputStyles = {

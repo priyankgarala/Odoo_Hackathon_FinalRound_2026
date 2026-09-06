@@ -39,35 +39,35 @@ const formatMoney = (v: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(v);
 
 const DarkContainer = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 4, pb: 6 }}>
+  <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", pt: 3, pb: 6 }}>
     {title && (
-      <Box sx={{ bgcolor: "#3c3800", border: "1px solid #7a7300", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
-        <Typography variant="h6" color="#90EE90" fontWeight={600}>{title}</Typography>
+      <Box sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 2, py: 1, px: 3, mb: 3, display: "inline-block" }}>
+        <Typography variant="h6" color="#1d4ed8" fontWeight={700}>{title}</Typography>
       </Box>
     )}
-    <Box sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, p: 3, bgcolor: "#121212" }}>
+    <Box sx={{ border: "1px solid #e2e8f0", borderRadius: 3, p: 3, bgcolor: "#ffffff", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)" }}>
       {children}
     </Box>
   </Box>
 );
 
 const darkTextFieldSx = {
-  "& .MuiInputBase-root": { color: "rgba(255,255,255,0.9)" },
-  "& .MuiInput-underline:before": { borderBottomColor: "rgba(255,255,255,0.3)" },
-  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.6)" },
-  "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.6)" }
+  "& .MuiInputBase-root": { color: "#0f172a" },
+  "& .MuiInput-underline:before": { borderBottomColor: "#cbd5e1" },
+  "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottomColor: "#94a3b8" },
+  "& .MuiInputLabel-root": { color: "#475569" },
+  "& .MuiSvgIcon-root": { color: "#475569" }
 };
 
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#1e1e1e",
-        color: "rgba(255,255,255,0.9)",
+        bgcolor: "#ffffff",
+        color: "#0f172a",
         maxHeight: 300,
-        "& .MuiMenuItem-root:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-        "& .Mui-selected": { bgcolor: "rgba(255,255,255,0.2) !important" }
+        "& .MuiMenuItem-root:hover": { bgcolor: "#f1f5f9" },
+        "& .Mui-selected": { bgcolor: "#eff6ff !important" }
       }
     }
   }
@@ -75,15 +75,15 @@ const darkSelectProps = {
 
 const CustomButton = ({ children, active, ...props }: any) => (
   <Button
-    variant="outlined"
+    variant={active ? "contained" : "outlined"}
     sx={{
-      color: active ? "black" : "white",
-      bgcolor: active ? "white" : "transparent",
-      borderColor: "rgba(255,255,255,0.5)",
+      color: active ? "#ffffff" : "#334155",
+      bgcolor: active ? "#2563eb" : "transparent",
+      borderColor: "#cbd5e1",
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
-      "&:hover": { bgcolor: active ? "white" : "rgba(255,255,255,0.1)", borderColor: "white" }
+      "&:hover": { bgcolor: active ? "#1d4ed8" : "#f1f5f9", borderColor: "#94a3b8" }
     }}
     {...props}
   >
@@ -258,7 +258,7 @@ export const CreatePurchaseOrderPage = () => {
           </Stack>
 
           <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography color="white" minWidth={140}>PO Date</Typography>
+            <Typography color="#0f172a" fontWeight={500} minWidth={140}>PO Date</Typography>
             <TextField
               type="date"
               variant="standard"
@@ -271,18 +271,18 @@ export const CreatePurchaseOrderPage = () => {
         </Stack>
 
         {/* Items Table matching wireframe */}
-        <TableContainer sx={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2 }}>
+        <TableContainer sx={{ border: "1px solid #e2e8f0", borderRadius: 2 }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ borderBottom: "1px solid rgba(255,255,255,0.2)", bgcolor: "#161616" }}>
-                <TableCell sx={{ color: "white", width: 40 }}>Sr.</TableCell>
-                <TableCell sx={{ color: "white" }}>Product</TableCell>
-                <TableCell sx={{ color: "white" }}>Budget Analytics</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 90 }}>Qty</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 120 }}>Unit Price</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 140 }}>Tax Rate</TableCell>
-                <TableCell align="right" sx={{ color: "white", width: 120 }}>Total</TableCell>
-                <TableCell sx={{ color: "white", width: 40 }} />
+              <TableRow sx={{ borderBottom: "1px solid #e2e8f0", bgcolor: "#f1f5f9" }}>
+                <TableCell sx={{ color: "#334155", fontWeight: 600, width: 40 }}>Sr.</TableCell>
+                <TableCell sx={{ color: "#334155", fontWeight: 600 }}>Product</TableCell>
+                <TableCell sx={{ color: "#334155", fontWeight: 600 }}>Budget Analytics</TableCell>
+                <TableCell align="right" sx={{ color: "#334155", fontWeight: 600, width: 90 }}>Qty</TableCell>
+                <TableCell align="right" sx={{ color: "#334155", fontWeight: 600, width: 120 }}>Unit Price</TableCell>
+                <TableCell align="right" sx={{ color: "#334155", fontWeight: 600, width: 140 }}>Tax Rate</TableCell>
+                <TableCell align="right" sx={{ color: "#334155", fontWeight: 600, width: 120 }}>Total</TableCell>
+                <TableCell sx={{ color: "#334155", fontWeight: 600, width: 40 }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -291,8 +291,8 @@ export const CreatePurchaseOrderPage = () => {
                 const price = r.unitPrice !== "" ? Number(r.unitPrice) : Number(prod?.costPrice || prod?.unitPrice || 0);
                 const lineTotal = price * (Number(r.quantity) || 0) * (1 + (Number(r.taxRate) || 0) / 100);
                 return (
-                  <TableRow key={i} sx={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <TableCell sx={{ color: "rgba(255,255,255,0.6)" }}>{i + 1}.</TableCell>
+                  <TableRow key={i} sx={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <TableCell sx={{ color: "#64748b" }}>{i + 1}.</TableCell>
                     <TableCell>
                       <TextField
                         select
@@ -386,7 +386,7 @@ export const CreatePurchaseOrderPage = () => {
                         ))}
                       </TextField>
                     </TableCell>
-                    <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>
+                    <TableCell align="right" sx={{ color: "#0f172a", fontWeight: 600 }}>
                       {formatMoney(lineTotal)}
                     </TableCell>
                     <TableCell>
@@ -394,7 +394,7 @@ export const CreatePurchaseOrderPage = () => {
                         size="small"
                         disabled={rows.length === 1}
                         onClick={() => setRows(rows.filter((_, n) => n !== i))}
-                        sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { color: "red" } }}
+                        sx={{ color: "#94a3b8", "&:hover": { color: "#dc2626" } }}
                       >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -410,12 +410,12 @@ export const CreatePurchaseOrderPage = () => {
           <Button
             startIcon={<AddIcon />}
             onClick={() => setRows([...rows, { productId: "", analyticId: "", quantity: 1, unitPrice: "", taxId: "", taxRate: 0 }])}
-            sx={{ color: "rgba(255,255,255,0.8)", borderColor: "rgba(255,255,255,0.3)", textTransform: "none" }}
+            sx={{ color: "#2563eb", borderColor: "#cbd5e1", textTransform: "none", fontWeight: 600 }}
             variant="outlined"
           >
             Add Line
           </Button>
-          <Typography variant="h6" color="white" fontWeight={700}>
+          <Typography variant="h6" color="#0f172a" fontWeight={700}>
             Total: {formatMoney(total)}
           </Typography>
         </Stack>

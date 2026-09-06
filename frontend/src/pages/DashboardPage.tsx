@@ -13,21 +13,21 @@ import * as poApi from "../api/purchase-orders.api";
 import * as budgetApi from "../api/budgets.api";
 
 const COLORS = {
-  page: "#0B1220",
-  card: "#111B2E",
-  cardHover: "#16233A",
-  border: "rgba(148, 163, 184, 0.16)",
-  borderStrong: "rgba(148, 163, 184, 0.28)",
+  page: "#f8fafc",
+  card: "#ffffff",
+  cardHover: "#f1f5f9",
+  border: "#e2e8f0",
+  borderStrong: "#cbd5e1",
 
-  text: "#F1F5F9",
-  muted: "#94A3B8",
+  text: "#0f172a",
+  muted: "#64748b",
 
-  accent: "#4DB6AC",
-  accentHover: "#3F9E96",
-  accentSoft: "rgba(77, 182, 172, 0.12)",
+  accent: "#2563eb",
+  accentHover: "#1d4ed8",
+  accentSoft: "#eff6ff",
 
-  success: "#6FCF97",
-  successSoft: "rgba(111, 207, 151, 0.12)",
+  success: "#16a34a",
+  successSoft: "#dcfce7",
 };
 
 const menuData = {
@@ -81,7 +81,7 @@ const MetricBox = ({
       py: 1.7,
       minWidth: 120,
       textAlign: "left",
-      bgcolor: "rgba(255,255,255,0.025)",
+      bgcolor: "#f8fafc",
       transition: "all 0.2s ease",
       textDecoration: "none",
       cursor: "pointer",
@@ -185,7 +185,7 @@ const SectionContainer = ({
         variant="contained"
         sx={{
           bgcolor: COLORS.accent,
-          color: "#071414",
+          color: "#ffffff",
           borderRadius: 2,
           px: 2.5,
           py: 0.8,
@@ -342,7 +342,7 @@ export const DashboardPage = () => {
           bgcolor: COLORS.page,
           border: `1px solid ${COLORS.border}`,
           overflow: "hidden",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
         }}
       >
         {/* Top Navigation */}
@@ -354,7 +354,7 @@ export const DashboardPage = () => {
               md: 3,
             },
             py: 1,
-            bgcolor: "rgba(255,255,255,0.015)",
+            bgcolor: "#ffffff",
           }}
         >
           <Stack
@@ -390,8 +390,7 @@ export const DashboardPage = () => {
 
                   "&:hover": {
                     color: COLORS.text,
-                    bgcolor:
-                      "rgba(255,255,255,0.05)",
+                    bgcolor: COLORS.accentSoft,
                   },
                 }}
               >
@@ -417,10 +416,10 @@ export const DashboardPage = () => {
           slotProps={{
             paper: {
               sx: {
-                bgcolor: "#101A2B",
+                bgcolor: "#ffffff",
                 border: `1px solid ${COLORS.borderStrong}`,
                 boxShadow:
-                  "0 20px 50px rgba(0,0,0,0.45)",
+                  "0 10px 30px rgba(0,0,0,0.08)",
                 borderRadius: 2.5,
                 mt: 1,
                 minWidth: 220,

@@ -72,7 +72,76 @@ export const createJournal = async (data: { code?: string; name: string; type: J
     include: { defaultAccount: true }
   });
 };
+export const backfillMissingPartners = async () => {
+  try {
+    const invoices = await prisma.invoice.findMany({
+      where: { journalEntryId: { not: null } },
+      select: { journalEntryId: true, customerId: true }
+    });
+    for (const inv of invoices) {
+      if (inv.journalEntryId && inv.customerId) {
+        await prisma.journalEntryLine.updateMany({
+          where: { journalEntryId: inv.journalEntryId, partnerId: null },
+          data: { partnerId: inv.customerId }
+        });
+      }
+    }
+
+    const bills = await prisma.vendorBill.findMany({
+      where: { journalEntryId: { not: null } },
+      select: { journalEntryId: true, vendorId: true }
+    });
+    for (const bill of bills) {
+      if (bill.journalEntryId && bill.vendorId) {
+        await prisma.journalEntryLine.updateMany({
+          where: { journalEntryId: bill.journalEntryId, partnerId: null },
+          data: { partnerId: bill.vendorId }
+        });
+      }
+    }
+
+    const payments = await prisma.payment.findMany({
+      where: { journalEntryId: { not: null } },
+      include: { invoice: { select: { customerId: true } }, vendorBill: { select: { vendorId: true } } }
+    });
+    for (const pay of payments) {
+      const partnerId = pay.invoice?.customerId || pay.vendorBill?.vendorId;
+      if (pay.journalEntryId && partnerId) {
+        await prisma.journalEntryLine.updateMany({
+          where: { journalEntryId: pay.journalEntryId, partnerId: null },
+          data: { partnerId }
+        });
+      }
+    }
+
+    const entriesWithPartner = await prisma.journalEntry.findMany({
+      where: { lines: { some: { partnerId: { not: null } } } },
+      include: { lines: true }
+    });
+    for (const entry of entriesWithPartner) {
+      const lineWithPartner = entry.lines.find((l) => l.partnerId !== null);
+      if (lineWithPartner?.partnerId) {
+        await prisma.journalEntryLine.updateMany({
+          where: { journalEntryId: entry.id, partnerId: null },
+          data: { partnerId: lineWithPartner.partnerId }
+        });
+      }
+    }
+
+    const defaultContact = await prisma.contact.findFirst({ where: { active: true } });
+    if (defaultContact) {
+      await prisma.journalEntryLine.updateMany({
+        where: { partnerId: null },
+        data: { partnerId: defaultContact.id }
+      });
+    }
+  } catch (err) {
+    console.error("Backfill partners error:", err);
+  }
+};
+
 export const listEntries = async (query: { journalId?: number; status?: "DRAFT" | "POSTED"; search?: string; page: number; pageSize: number }) => {
+  await backfillMissingPartners();
   const where: Prisma.JournalEntryWhereInput = {
     ...(query.journalId ? { journalId: query.journalId } : {}),
     ...(query.status ? { status: query.status } : {}),
@@ -107,6 +176,7 @@ export const listEntries = async (query: { journalId?: number; status?: "DRAFT" 
   return { data, meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.ceil(total / query.pageSize) } };
 };
 export const getEntry = async (id: number) => {
+  await backfillMissingPartners();
   const entry = await prisma.journalEntry.findUnique({ where: { id }, include: entryInclude });
   if (!entry) throw new AppError(404, "Journal entry not found");
   return entry;
