@@ -32,6 +32,7 @@ const COLORS = {
   cardHover: "#f1f5f9",
   border: "#e2e8f0",
   borderStrong: "#cbd5e1",
+
   text: "#0f172a",
   muted: "#64748b",
 
@@ -246,7 +247,7 @@ export const PurchaseOrdersPage = () => {
                 md: "auto",
               },
               bgcolor: COLORS.accent,
-              color: COLORS.page,
+              color: "#ffffff",
               borderRadius: 2,
               px: 2.5,
               py: 1,
@@ -326,10 +327,7 @@ export const PurchaseOrdersPage = () => {
                   All statuses
                 </MenuItem>
 
-                <MenuItem value="DRAFT">
-                  Draft
-                </MenuItem>
-
+                {/* Draft removed */}
                 <MenuItem value="CONFIRMED">
                   Confirmed
                 </MenuItem>
@@ -524,20 +522,20 @@ export const PurchaseOrdersPage = () => {
                             bgcolor:
                               o.status === "CONFIRMED"
                                 ? COLORS.successSoft
-                                : o.status === "DRAFT"
-                                ? COLORS.warningSoft
                                 : COLORS.dangerSoft,
 
                             color:
                               o.status === "CONFIRMED"
                                 ? COLORS.success
-                                : o.status === "DRAFT"
-                                ? COLORS.warning
                                 : COLORS.danger,
 
-                            border: `1px solid ${COLORS.border}`,
+                            border: `1px solid ${
+                              o.status === "CONFIRMED"
+                                ? "#bbf7d0"
+                                : "#fecaca"
+                            }`,
                             borderRadius: 1.5,
-                            fontWeight: 500,
+                            fontWeight: 600,
                           }}
                         />
                       </TableCell>
@@ -587,4 +585,4 @@ export const PurchaseOrdersPage = () => {
       </Stack>
     </DarkContainer>
   );
-};  
+};

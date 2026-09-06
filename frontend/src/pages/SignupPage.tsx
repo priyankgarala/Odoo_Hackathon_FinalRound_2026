@@ -107,17 +107,17 @@ export const SignupPage = () => {
             size="large" 
             disabled={signup.isPending || mismatch || invalidPassword}
             sx={{
-              color: 'white',
-              borderColor: 'white',
+              color: 'black',
+              borderColor: 'black',
               borderRadius: 2,
               px: 4,
               '&:hover': {
-                borderColor: 'white',
+                borderColor: 'black',
                 backgroundColor: 'rgba(255,255,255,0.1)'
               }
             }}
           >
-            {signup.isPending ? "SIGNING IN..." : "SIGN IN"}
+            {signup.isPending ? "SIGNING IN..." : "SIGN UP"}
           </Button>
         </Box>
         
