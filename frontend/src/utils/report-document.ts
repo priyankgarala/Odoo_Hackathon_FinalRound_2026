@@ -918,7 +918,7 @@ export const openReportDocument = ({
    * then open the print dialog once.
    */
   popup.onload = () => {
-    popup.focus();
+    popup.focus();  
 
     setTimeout(() => {
       popup.print();

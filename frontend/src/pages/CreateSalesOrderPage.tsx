@@ -130,6 +130,10 @@ const DarkContainer = ({
   </Box>
 );
 
+/* ========================================================= */
+/* TEXT FIELD                                                 */
+/* ========================================================= */
+
 const darkTextFieldSx = {
   "& .MuiInputBase-root": {
     color: COLORS.text,
@@ -160,31 +164,55 @@ const darkTextFieldSx = {
   },
 };
 
+/* ========================================================= */
+/* WHITE DROPDOWN                                            */
+/* ========================================================= */
+
 const darkSelectProps = {
   MenuProps: {
     PaperProps: {
       sx: {
-        bgcolor: "#101A2B",
+        bgcolor: "#ffffff",
         color: COLORS.text,
         maxHeight: 300,
-        border: `1px solid ${COLORS.borderStrong}`,
+
+        border: `1px solid ${COLORS.border}`,
+
+        borderRadius: 2,
+
+        boxShadow:
+          "0 12px 30px rgba(15, 23, 42, 0.12)",
 
         "& .MuiMenuItem-root": {
           fontSize: "0.85rem",
+          color: COLORS.text,
+          bgcolor: "#ffffff",
+          minHeight: 40,
+          transition: "background-color 0.15s ease",
         },
 
         "& .MuiMenuItem-root:hover": {
           bgcolor: COLORS.accentSoft,
+          color: COLORS.accent,
         },
 
-        "& .Mui-selected": {
-          bgcolor: `${COLORS.accentSoft} !important`,
+        "& .MuiMenuItem-root.Mui-selected": {
+          bgcolor: COLORS.accentSoft,
           color: COLORS.accent,
+          fontWeight: 600,
+        },
+
+        "& .MuiMenuItem-root.Mui-selected:hover": {
+          bgcolor: "#dbeafe",
         },
       },
     },
   },
 };
+
+/* ========================================================= */
+/* BUTTON                                                     */
+/* ========================================================= */
 
 const CustomButton = ({
   children,
@@ -235,10 +263,15 @@ const CustomButton = ({
   </Button>
 );
 
+/* ========================================================= */
+/* PAGE                                                        */
+/* ========================================================= */
+
 export const CreateSalesOrderPage = () => {
   const navigate = useNavigate();
 
   const [customerId, setCustomerId] = useState("");
+
   const [soDate, setSoDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -262,6 +295,10 @@ export const CreateSalesOrderPage = () => {
   const [validationError, setValidationError] =
     useState<string | null>(null);
 
+  /* ========================================================= */
+  /* CUSTOMERS                                                  */
+  /* ========================================================= */
+
   const customers = useQuery({
     queryKey: ["so-customers"],
     queryFn: () =>
@@ -280,6 +317,10 @@ export const CreateSalesOrderPage = () => {
       c.type === "BOTH"
   );
 
+  /* ========================================================= */
+  /* PRODUCTS                                                   */
+  /* ========================================================= */
+
   const products = useQuery({
     queryKey: ["so-products"],
     queryFn: () =>
@@ -290,6 +331,10 @@ export const CreateSalesOrderPage = () => {
       }),
   });
 
+  /* ========================================================= */
+  /* TAXES                                                      */
+  /* ========================================================= */
+
   const taxes = useQuery({
     queryKey: ["so-taxes"],
     queryFn: () =>
@@ -298,15 +343,19 @@ export const CreateSalesOrderPage = () => {
       ),
   });
 
+  /* ========================================================= */
+  /* SAVE                                                        */
+  /* ========================================================= */
+
   const save = useMutation({
     mutationFn: () =>
       soApi.createSalesOrder({
         customerId: Number(customerId),
 
-        notes: notes.trim() || null,
-
+        notes: notes.trim() || undefined,
         items: rows.map((r) => ({
           productId: Number(r.productId),
+
           quantity: Number(r.quantity),
 
           unitPrice:
@@ -327,6 +376,10 @@ export const CreateSalesOrderPage = () => {
       navigate(`/sales-orders/${o.id}`),
   });
 
+  /* ========================================================= */
+  /* UPDATE ROW                                                  */
+  /* ========================================================= */
+
   const update = (
     i: number,
     p: Partial<Row>
@@ -339,6 +392,10 @@ export const CreateSalesOrderPage = () => {
       )
     );
   };
+
+  /* ========================================================= */
+  /* CONFIRM                                                     */
+  /* ========================================================= */
 
   const handleConfirm = () => {
     setValidationError(null);
@@ -373,6 +430,10 @@ export const CreateSalesOrderPage = () => {
     save.mutate();
   };
 
+  /* ========================================================= */
+  /* TOTAL                                                       */
+  /* ========================================================= */
+
   const total = rows.reduce((sum, r) => {
     const product =
       products.data?.data.find(
@@ -395,6 +456,10 @@ export const CreateSalesOrderPage = () => {
         (1 + tax / 100)
     );
   }, 0);
+
+  /* ========================================================= */
+  /* ERROR                                                       */
+  /* ========================================================= */
 
   const serverError = axios.isAxiosError(
     save.error
@@ -458,6 +523,7 @@ export const CreateSalesOrderPage = () => {
               color: COLORS.warning,
               border: `1px solid ${COLORS.border}`,
               borderRadius: 2,
+
               "& .MuiAlert-icon": {
                 color: COLORS.warning,
               },
@@ -475,6 +541,7 @@ export const CreateSalesOrderPage = () => {
               color: COLORS.danger,
               border: `1px solid ${COLORS.border}`,
               borderRadius: 2,
+
               "& .MuiAlert-icon": {
                 color: COLORS.danger,
               },
@@ -507,6 +574,7 @@ export const CreateSalesOrderPage = () => {
           </Typography>
 
           <Stack spacing={2}>
+
             {/* SO NUMBER */}
 
             <Stack
@@ -574,6 +642,7 @@ export const CreateSalesOrderPage = () => {
                   setCustomerId(
                     e.target.value
                   );
+
                   setValidationError(null);
                 }}
                 sx={darkTextFieldSx}
@@ -779,6 +848,7 @@ export const CreateSalesOrderPage = () => {
                         },
                       }}
                     >
+
                       {/* SERIAL */}
 
                       <TableCell
@@ -950,7 +1020,7 @@ export const CreateSalesOrderPage = () => {
                         />
                       </TableCell>
 
-                      {/* AUTOMATIC TAX */}
+                      {/* TAX */}
 
                       <TableCell
                         align="right"
@@ -975,10 +1045,11 @@ export const CreateSalesOrderPage = () => {
                               bgcolor:
                                 r.taxRate > 0
                                   ? COLORS.accentSoft
-                                  : "rgba(255,255,255,0.04)",
+                                  : "#f8fafc",
+
                               border: `1px solid ${
                                 r.taxRate > 0
-                                  ? "rgba(77,182,172,0.25)"
+                                  ? "rgba(37,99,235,0.25)"
                                   : COLORS.border
                               }`,
                             }}
@@ -1010,7 +1081,9 @@ export const CreateSalesOrderPage = () => {
                           borderBottom: `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(lineTotal)}
+                        {formatMoney(
+                          lineTotal
+                        )}
                       </TableCell>
 
                       {/* DELETE */}
@@ -1085,7 +1158,7 @@ export const CreateSalesOrderPage = () => {
             sx={{
               color: COLORS.accent,
               borderColor:
-                "rgba(77,182,172,0.35)",
+                "rgba(37,99,235,0.35)",
               textTransform: "none",
               borderRadius: 2,
               fontWeight: 600,
@@ -1144,7 +1217,7 @@ export const CreateSalesOrderPage = () => {
             p: 1.8,
             borderRadius: 2,
             bgcolor: COLORS.accentSoft,
-            border: `1px solid rgba(77,182,172,0.18)`,
+            border: `1px solid rgba(37,99,235,0.18)`,
           }}
         >
           <Typography
@@ -1158,6 +1231,7 @@ export const CreateSalesOrderPage = () => {
             selected product's material category.
           </Typography>
         </Box>
+
       </Stack>
     </DarkContainer>
   );

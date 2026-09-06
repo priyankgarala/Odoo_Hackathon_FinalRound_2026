@@ -168,7 +168,7 @@ const CustomButton = ({
   <Button
     variant="outlined"
     sx={{
-      color: active ? "#071313" : COLORS.text,
+      color: active ? "white" : COLORS.text,
       bgcolor: active ? COLORS.accent : "transparent",
       borderColor: active
         ? COLORS.accent

@@ -153,7 +153,7 @@ export const SalesOrdersPage = () => {
             startIcon={<AddIcon />}
             sx={{
               bgcolor: COLORS.accent,
-              color: "#071313",
+              color: "white",
               borderRadius: 2,
               px: 3,
               py: 0.9,

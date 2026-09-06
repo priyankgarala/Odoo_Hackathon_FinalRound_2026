@@ -25,27 +25,44 @@ import { ErrorState } from "../components/feedback/ErrorState";
 import { openReportDocument } from "../utils/report-document";
 
 const COLORS = {
-  page: "#f8fafc",
-  card: "#ffffff",
-  cardHover: "#f1f5f9",
-  border: "#e2e8f0",
-  borderStrong: "#cbd5e1",
+  page: "#F8FAFC",
+  card: "#FFFFFF",
+  cardHover: "#F1F5F9",
 
-  text: "#0f172a",
-  muted: "#64748b",
+  border: "#E2E8F0",
+  borderStrong: "#CBD5E1",
 
-  accent: "#2563eb",
-  accentHover: "#1d4ed8",
-  accentSoft: "#eff6ff",
+  text: "#0F172A",
+  muted: "#64748B",
 
-  success: "#16a34a",
-  successSoft: "#dcfce7",
+  // Primary
+  accent: "#0F766E",
+  accentHover: "#115E59",
+  accentSoft: "#F0FDFA",
 
-  danger: "#dc2626",
-  dangerSoft: "#fee2e2",
+  // Positive
+  success: "#15803D",
+  successSoft: "#F0FDF4",
+  successBorder: "#BBF7D0",
 
-  info: "#0284c7",
-  infoSoft: "#e0f2fe",
+  // Negative
+  danger: "#B91C1C",
+  dangerSoft: "#FEF2F2",
+  dangerBorder: "#FECACA",
+
+  // Information
+  info: "#0369A1",
+  infoSoft: "#F0F9FF",
+  infoBorder: "#BAE6FD",
+
+  // Warning / tax
+  warning: "#B45309",
+  warningSoft: "#FFFBEB",
+  warningBorder: "#FDE68A",
+
+  // Navy
+  navy: "#172554",
+  navySoft: "#EFF6FF",
 };
 
 const formatMoney = (amount: number | string) =>
@@ -79,7 +96,10 @@ const DarkContainer = ({
           sx={{
             color: COLORS.text,
             fontWeight: 700,
-            fontSize: { xs: "1.7rem", md: "2rem" },
+            fontSize: {
+              xs: "1.7rem",
+              md: "2rem",
+            },
             letterSpacing: "-0.02em",
           }}
         >
@@ -88,8 +108,8 @@ const DarkContainer = ({
 
         <Box
           sx={{
-            width: 36,
-            height: 2,
+            width: 40,
+            height: 3,
             bgcolor: COLORS.accent,
             mt: 1.2,
             borderRadius: 2,
@@ -102,9 +122,13 @@ const DarkContainer = ({
       sx={{
         border: `1px solid ${COLORS.border}`,
         borderRadius: 4,
-        p: { xs: 2.5, md: 4 },
+        p: {
+          xs: 2.5,
+          md: 4,
+        },
         bgcolor: COLORS.card,
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+        boxShadow:
+          "0 4px 20px rgba(15, 23, 42, 0.05)",
       }}
     >
       {children}
@@ -120,11 +144,18 @@ const CustomButton = ({
   <Button
     variant={active ? "contained" : "outlined"}
     sx={{
-      color: active ? "#ffffff" : COLORS.muted,
-      bgcolor: active ? COLORS.accent : "transparent",
+      color: active
+        ? "#FFFFFF"
+        : COLORS.text,
+
+      bgcolor: active
+        ? COLORS.accent
+        : "#FFFFFF",
+
       borderColor: active
         ? COLORS.accent
         : COLORS.borderStrong,
+
       borderRadius: 2,
       textTransform: "none",
       minWidth: 80,
@@ -137,11 +168,22 @@ const CustomButton = ({
         bgcolor: active
           ? COLORS.accentHover
           : COLORS.accentSoft,
+
         borderColor: active
           ? COLORS.accentHover
           : COLORS.accent,
-        color: active ? "#071414" : COLORS.text,
+
+        color: active
+          ? "#FFFFFF"
+          : COLORS.accent,
+
         boxShadow: "none",
+      },
+
+      "&.Mui-disabled": {
+        color: "#94A3B8",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.page,
       },
     }}
     {...props}
@@ -159,7 +201,10 @@ export const ReportsPage = ({
   const [selectedYear, setSelectedYear] = useState("2026");
 
   const balanceSheet = useQuery({
-    queryKey: ["report-balance-sheet", selectedYear],
+    queryKey: [
+      "report-balance-sheet",
+      selectedYear,
+    ],
     queryFn: () =>
       api.getBalanceSheet(
         `${selectedYear}-12-31T23:59:59.999Z`
@@ -167,26 +212,47 @@ export const ReportsPage = ({
   });
 
   const profitLoss = useQuery({
-    queryKey: ["report-profit-loss", selectedYear],
+    queryKey: [
+      "report-profit-loss",
+      selectedYear,
+    ],
     queryFn: () =>
       api.getProfitLoss({
-        startDate: `${selectedYear}-01-01T00:00:00.000Z`,
-        endDate: `${selectedYear}-12-31T23:59:59.999Z`,
+        startDate:
+          `${selectedYear}-01-01T00:00:00.000Z`,
+        endDate:
+          `${selectedYear}-12-31T23:59:59.999Z`,
       }),
   });
 
   const budgetReport = useQuery({
-    queryKey: ["report-budget", selectedYear],
-    queryFn: () => api.getBudgetReport(selectedYear),
+    queryKey: [
+      "report-budget",
+      selectedYear,
+    ],
+    queryFn: () =>
+      api.getBudgetReport(selectedYear),
   });
 
   const downloadDocument = () => {
     openReportDocument({
-      report: tab === 0 ? "profit-loss" : tab === 1 ? "balance-sheet" : "budget",
+      report:
+        tab === 0
+          ? "profit-loss"
+          : tab === 1
+          ? "balance-sheet"
+          : "budget",
+
       year: selectedYear,
-      profitLoss: profitLoss.data,
-      balanceSheet: balanceSheet.data,
-      budget: budgetReport.data,
+
+      profitLoss:
+        profitLoss.data,
+
+      balanceSheet:
+        balanceSheet.data,
+
+      budget:
+        budgetReport.data,
     });
   };
 
@@ -205,7 +271,9 @@ export const ReportsPage = ({
 
   const purchaseExpense =
     pData?.expenses.find((e) =>
-      e.name.toLowerCase().includes("purchase")
+      e.name
+        .toLowerCase()
+        .includes("purchase")
     )?.amount ||
     Math.round(totalExpense * 0.85);
 
@@ -214,24 +282,34 @@ export const ReportsPage = ({
 
   const bankAsset =
     bData?.assets.find((a) =>
-      a.name.toLowerCase().includes("bank")
+      a.name
+        .toLowerCase()
+        .includes("bank")
     )?.balance || 0;
 
   const cashAsset =
     bData?.assets.find((a) =>
-      a.name.toLowerCase().includes("cash")
+      a.name
+        .toLowerCase()
+        .includes("cash")
     )?.balance || 0;
 
   const debtorAsset =
     bData?.assets.find(
       (a) =>
-        a.name.toLowerCase().includes("debtor") ||
-        a.name.toLowerCase().includes("receivable")
+        a.name
+          .toLowerCase()
+          .includes("debtor") ||
+        a.name
+          .toLowerCase()
+          .includes("receivable")
     )?.balance || 0;
 
   const otherAssets =
     (bData?.totals.assets || 0) -
-    (bankAsset + cashAsset + debtorAsset);
+    (bankAsset +
+      cashAsset +
+      debtorAsset);
 
   const capitalEquity =
     bData?.capital.reduce(
@@ -242,8 +320,12 @@ export const ReportsPage = ({
   const creditorLiability =
     bData?.liabilities.find(
       (l) =>
-        l.name.toLowerCase().includes("creditor") ||
-        l.name.toLowerCase().includes("payable")
+        l.name
+          .toLowerCase()
+          .includes("creditor") ||
+        l.name
+          .toLowerCase()
+          .includes("payable")
     )?.balance || 0;
 
   const otherLiabilities =
@@ -261,23 +343,34 @@ export const ReportsPage = ({
       }
     >
       <Stack spacing={5}>
-        {/* Navigation + Actions */}
+
+        {/* ================= NAVIGATION + ACTIONS ================= */}
+
         <Stack
-          direction={{ xs: "column", lg: "row" }}
+          direction={{
+            xs: "column",
+            lg: "row",
+          }}
           justifyContent="space-between"
-          alignItems={{ xs: "stretch", lg: "center" }}
+          alignItems={{
+            xs: "stretch",
+            lg: "center",
+          }}
           spacing={3}
         >
           <Tabs
             value={tab}
-            onChange={(_, v) => setTab(v)}
+            onChange={(_, v) =>
+              setTab(v)
+            }
             sx={{
               minHeight: 44,
 
               "& .MuiTabs-indicator": {
-                backgroundColor: COLORS.accent,
-                height: 2,
-                borderRadius: 2,
+                backgroundColor:
+                  COLORS.accent,
+                height: 3,
+                borderRadius: 3,
               },
 
               "& .MuiTab-root": {
@@ -289,8 +382,14 @@ export const ReportsPage = ({
                 px: 2.2,
               },
 
+              "& .MuiTab-root:hover": {
+                color: COLORS.accent,
+              },
+
               "& .Mui-selected": {
-                color: `${COLORS.accent} !important`,
+                color:
+                  `${COLORS.accent} !important`,
+                fontWeight: 700,
               },
             }}
           >
@@ -306,7 +405,19 @@ export const ReportsPage = ({
             flexWrap="wrap"
             useFlexGap
           >
-            <CustomButton onClick={downloadDocument} startIcon={<DownloadOutlinedIcon />} disabled={tab === 0 ? !profitLoss.data : tab === 1 ? !balanceSheet.data : !budgetReport.data}>
+            <CustomButton
+              onClick={downloadDocument}
+              startIcon={
+                <DownloadOutlinedIcon />
+              }
+              disabled={
+                tab === 0
+                  ? !profitLoss.data
+                  : tab === 1
+                  ? !balanceSheet.data
+                  : !budgetReport.data
+              }
+            >
               Download document
             </CustomButton>
 
@@ -315,25 +426,30 @@ export const ReportsPage = ({
               size="small"
               value={selectedYear}
               onChange={(e) =>
-                setSelectedYear(e.target.value)
+                setSelectedYear(
+                  e.target.value
+                )
               }
               sx={{
                 width: 110,
 
                 "& .MuiOutlinedInput-root": {
-                  bgcolor: "rgba(255,255,255,0.025)",
+                  bgcolor: "#FFFFFF",
                   borderRadius: 2,
 
                   "& fieldset": {
-                    borderColor: COLORS.borderStrong,
+                    borderColor:
+                      COLORS.borderStrong,
                   },
 
                   "&:hover fieldset": {
-                    borderColor: COLORS.accent,
+                    borderColor:
+                      COLORS.accent,
                   },
 
                   "&.Mui-focused fieldset": {
-                    borderColor: COLORS.accent,
+                    borderColor:
+                      COLORS.accent,
                   },
                 },
 
@@ -352,59 +468,89 @@ export const ReportsPage = ({
                 MenuProps: {
                   PaperProps: {
                     sx: {
-                      bgcolor: "#101A2B",
-                      color: COLORS.text,
-                      border: `1px solid ${COLORS.borderStrong}`,
+                      bgcolor:
+                        COLORS.card,
+                      color:
+                        COLORS.text,
+                      border:
+                        `1px solid ${COLORS.borderStrong}`,
+                      boxShadow:
+                        "0 10px 30px rgba(15, 23, 42, 0.12)",
                     },
                   },
                 },
               }}
             >
-              <MenuItem value="2026">2026</MenuItem>
-              <MenuItem value="2025">2025</MenuItem>
-              <MenuItem value="2024">2024</MenuItem>
+              <MenuItem value="2026">
+                2026
+              </MenuItem>
+
+              <MenuItem value="2025">
+                2025
+              </MenuItem>
+
+              <MenuItem value="2024">
+                2024
+              </MenuItem>
             </TextField>
 
             <CustomButton
-              onClick={() => window.history.back()}
+              onClick={() =>
+                window.history.back()
+              }
             >
               Back
             </CustomButton>
           </Stack>
         </Stack>
 
-        {/* ================= PROFIT & LOSS ================= */}
+        {/* =========================================================
+            PROFIT & LOSS
+        ========================================================= */}
+
         {tab === 0 && (
           <Stack spacing={4}>
+
             {profitLoss.isLoading ? (
-              <LoadingState label="Computing profit and loss..." />
+              <LoadingState
+                label="Computing profit and loss..."
+              />
             ) : profitLoss.isError ? (
               <ErrorState
                 message="Could not load profit and loss."
-                onRetry={() => void profitLoss.refetch()}
+                onRetry={() =>
+                  void profitLoss.refetch()
+                }
               />
             ) : (
               <TableContainer
                 sx={{
-                  border: `1px solid ${COLORS.border}`,
+                  border:
+                    `1px solid ${COLORS.border}`,
                   borderRadius: 2.5,
                   overflow: "hidden",
-                  bgcolor: COLORS.page,
+                  bgcolor: COLORS.card,
+                  boxShadow:
+                    "0 1px 3px rgba(15, 23, 42, 0.04)",
                 }}
               >
                 <Table size="small">
+
                   <TableHead>
                     <TableRow
                       sx={{
-                        bgcolor: COLORS.cardHover,
+                        bgcolor:
+                          COLORS.page,
                       }}
                     >
                       <TableCell
                         sx={{
-                          color: COLORS.muted,
+                          color:
+                            COLORS.muted,
                           fontWeight: 700,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
                         Account
@@ -413,11 +559,13 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.muted,
+                          color:
+                            COLORS.muted,
                           fontWeight: 700,
                           width: 220,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
                         Balance
@@ -426,18 +574,25 @@ export const ReportsPage = ({
                   </TableHead>
 
                   <TableBody>
-                    {/* Income */}
+
+                    {/* INCOME */}
+
                     <TableRow
                       sx={{
-                        bgcolor: COLORS.successSoft,
+                        bgcolor:
+                          "#F8FAFC",
                       }}
                     >
                       <TableCell
                         sx={{
-                          color: COLORS.success,
+                          color:
+                            COLORS.success,
                           fontWeight: 700,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
+                          borderLeft:
+                            `4px solid ${COLORS.success}`,
                         }}
                       >
                         Income
@@ -446,23 +601,29 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.success,
+                          color:
+                            COLORS.success,
                           fontWeight: 700,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(totalIncome)}
+                        {formatMoney(
+                          totalIncome
+                        )}
                       </TableCell>
                     </TableRow>
 
                     <TableRow>
                       <TableCell
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           pl: 5,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
                         Income from Sales
@@ -471,27 +632,37 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(totalIncome)}
+                        {formatMoney(
+                          totalIncome
+                        )}
                       </TableCell>
                     </TableRow>
 
-                    {/* Expenses */}
+                    {/* EXPENSES */}
+
                     <TableRow
                       sx={{
-                        bgcolor: COLORS.dangerSoft,
+                        bgcolor:
+                          "#F8FAFC",
                       }}
                     >
                       <TableCell
                         sx={{
-                          color: COLORS.danger,
+                          color:
+                            COLORS.danger,
                           fontWeight: 700,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
+                          borderLeft:
+                            `4px solid ${COLORS.danger}`,
                         }}
                       >
                         Expenses
@@ -500,23 +671,29 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.danger,
+                          color:
+                            COLORS.danger,
                           fontWeight: 700,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(totalExpense)}
+                        {formatMoney(
+                          totalExpense
+                        )}
                       </TableCell>
                     </TableRow>
 
                     <TableRow>
                       <TableCell
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           pl: 5,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
                         Purchase Expense
@@ -525,22 +702,28 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(purchaseExpense)}
+                        {formatMoney(
+                          purchaseExpense
+                        )}
                       </TableCell>
                     </TableRow>
 
                     <TableRow>
                       <TableCell
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           pl: 5,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
                         Other Expense
@@ -549,16 +732,21 @@ export const ReportsPage = ({
                       <TableCell
                         align="right"
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           py: 2,
-                          borderBottom: `1px solid ${COLORS.border}`,
+                          borderBottom:
+                            `1px solid ${COLORS.border}`,
                         }}
                       >
-                        {formatMoney(otherExpense)}
+                        {formatMoney(
+                          otherExpense
+                        )}
                       </TableCell>
                     </TableRow>
 
-                    {/* Net Income */}
+                    {/* NET INCOME */}
+
                     <TableRow
                       sx={{
                         bgcolor:
@@ -569,11 +757,17 @@ export const ReportsPage = ({
                     >
                       <TableCell
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           fontWeight: 800,
                           fontSize: "1rem",
                           py: 2.2,
-                          borderTop: `2px solid ${COLORS.borderStrong}`,
+                          borderTop:
+                            `2px solid ${
+                              netIncome >= 0
+                                ? COLORS.successBorder
+                                : COLORS.dangerBorder
+                            }`,
                         }}
                       >
                         Net Income
@@ -589,30 +783,42 @@ export const ReportsPage = ({
                           fontWeight: 800,
                           fontSize: "1rem",
                           py: 2.2,
-                          borderTop: `2px solid ${COLORS.borderStrong}`,
+                          borderTop:
+                            `2px solid ${
+                              netIncome >= 0
+                                ? COLORS.successBorder
+                                : COLORS.dangerBorder
+                            }`,
                         }}
                       >
-                        {formatMoney(netIncome)}
+                        {formatMoney(
+                          netIncome
+                        )}
                       </TableCell>
                     </TableRow>
+
                   </TableBody>
                 </Table>
               </TableContainer>
             )}
 
-            {/* Computation Note */}
+            {/* COMPUTATION NOTE */}
+
             <Paper
               sx={{
                 p: 2.5,
-                bgcolor: "rgba(255,255,255,0.02)",
-                border: `1px dashed ${COLORS.borderStrong}`,
+                bgcolor:
+                  COLORS.page,
+                border:
+                  `1px dashed ${COLORS.borderStrong}`,
                 borderRadius: 2.5,
                 boxShadow: "none",
               }}
             >
               <Typography
                 sx={{
-                  color: COLORS.text,
+                  color:
+                    COLORS.text,
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   mb: 1.2,
@@ -624,54 +830,76 @@ export const ReportsPage = ({
               <Stack spacing={0.8}>
                 <Typography
                   sx={{
-                    color: COLORS.muted,
-                    fontSize: "0.78rem",
+                    color:
+                      COLORS.muted,
+                    fontSize:
+                      "0.78rem",
                   }}
                 >
-                  • <b>Income:</b> Total of Income accounts
-                  (Sales Revenue)
+                  • <b>Income:</b>{" "}
+                  Total of Income
+                  accounts (Sales
+                  Revenue)
                 </Typography>
 
                 <Typography
                   sx={{
-                    color: COLORS.muted,
-                    fontSize: "0.78rem",
+                    color:
+                      COLORS.muted,
+                    fontSize:
+                      "0.78rem",
                   }}
                 >
-                  • <b>Expenses:</b> Total of all expense
-                  accounts
+                  • <b>Expenses:</b>{" "}
+                  Total of all
+                  expense accounts
                 </Typography>
 
                 <Typography
                   sx={{
-                    color: COLORS.muted,
-                    fontSize: "0.78rem",
+                    color:
+                      COLORS.muted,
+                    fontSize:
+                      "0.78rem",
                   }}
                 >
-                  • <b>Net Income:</b> Income − Expenses
+                  • <b>Net Income:</b>{" "}
+                  Income − Expenses
                 </Typography>
               </Stack>
             </Paper>
           </Stack>
         )}
 
-        {/* ================= BALANCE SHEET ================= */}
+        {/* =========================================================
+            BALANCE SHEET
+        ========================================================= */}
+
         {tab === 1 && (
           <Stack spacing={4}>
+
             {balanceSheet.isLoading ? (
-              <LoadingState label="Computing balance sheet..." />
+              <LoadingState
+                label="Computing balance sheet..."
+              />
             ) : balanceSheet.isError ? (
               <ErrorState
                 message="Could not load balance sheet."
-                onRetry={() => void balanceSheet.refetch()}
+                onRetry={() =>
+                  void balanceSheet.refetch()
+                }
               />
             ) : (
               <Box
                 sx={{
-                  border: `1px solid ${COLORS.border}`,
+                  border:
+                    `1px solid ${COLORS.border}`,
                   borderRadius: 2.5,
                   overflow: "hidden",
-                  bgcolor: COLORS.page,
+                  bgcolor:
+                    COLORS.card,
+                  boxShadow:
+                    "0 1px 3px rgba(15, 23, 42, 0.04)",
                 }}
               >
                 <Box
@@ -683,15 +911,20 @@ export const ReportsPage = ({
                     },
                   }}
                 >
-                  {/* Assets */}
+
+                  {/* ASSETS */}
+
                   <Box
                     sx={{
                       borderRight: {
                         xs: "none",
-                        md: `1px solid ${COLORS.border}`,
+                        md:
+                          `1px solid ${COLORS.border}`,
                       },
+
                       borderBottom: {
-                        xs: `1px solid ${COLORS.border}`,
+                        xs:
+                          `1px solid ${COLORS.border}`,
                         md: "none",
                       },
                     }}
@@ -699,15 +932,19 @@ export const ReportsPage = ({
                     <Box
                       sx={{
                         p: 2,
-                        borderBottom: `1px solid ${COLORS.border}`,
-                        bgcolor: COLORS.infoSoft,
+                        borderBottom:
+                          `1px solid ${COLORS.border}`,
+                        bgcolor:
+                          COLORS.accentSoft,
                       }}
                     >
                       <Typography
                         sx={{
-                          color: COLORS.info,
+                          color:
+                            COLORS.accent,
                           fontWeight: 700,
-                          fontSize: "0.9rem",
+                          fontSize:
+                            "0.9rem",
                         }}
                         align="center"
                       >
@@ -717,42 +954,64 @@ export const ReportsPage = ({
 
                     <Table size="small">
                       <TableBody>
-                        {[
-                          ["Bank", bankAsset],
-                          ["Cash", cashAsset],
-                          ["Debtors", debtorAsset],
-                        ].map(([label, value]) => (
-                          <TableRow key={label}>
-                            <TableCell
-                              sx={{
-                                color: COLORS.text,
-                                py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
-                              }}
-                            >
-                              {label}
-                            </TableCell>
 
-                            <TableCell
-                              align="right"
-                              sx={{
-                                color: COLORS.text,
-                                py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
-                              }}
+                        {[
+                          [
+                            "Bank",
+                            bankAsset,
+                          ],
+                          [
+                            "Cash",
+                            cashAsset,
+                          ],
+                          [
+                            "Debtors",
+                            debtorAsset,
+                          ],
+                        ].map(
+                          ([label, value]) => (
+                            <TableRow
+                              key={label}
                             >
-                              {formatMoney(value as number)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              <TableCell
+                                sx={{
+                                  color:
+                                    COLORS.text,
+                                  py: 2,
+                                  borderBottom:
+                                    `1px solid ${COLORS.border}`,
+                                }}
+                              >
+                                {label}
+                              </TableCell>
+
+                              <TableCell
+                                align="right"
+                                sx={{
+                                  color:
+                                    COLORS.text,
+                                  py: 2,
+                                  borderBottom:
+                                    `1px solid ${COLORS.border}`,
+                                }}
+                              >
+                                {formatMoney(
+                                  value as number
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
 
                         {otherAssets > 0 && (
                           <TableRow>
                             <TableCell
                               sx={{
-                                color: COLORS.muted,
+                                color:
+                                  COLORS.muted,
                                 py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
+                                borderBottom:
+                                  `1px solid ${COLORS.border}`,
                               }}
                             >
                               Other Assets
@@ -761,31 +1020,41 @@ export const ReportsPage = ({
                             <TableCell
                               align="right"
                               sx={{
-                                color: COLORS.text,
+                                color:
+                                  COLORS.text,
                                 py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
+                                borderBottom:
+                                  `1px solid ${COLORS.border}`,
                               }}
                             >
-                              {formatMoney(otherAssets)}
+                              {formatMoney(
+                                otherAssets
+                              )}
                             </TableCell>
                           </TableRow>
                         )}
+
                       </TableBody>
                     </Table>
 
                     <Box
                       sx={{
                         p: 2.2,
-                        borderTop: `2px solid ${COLORS.borderStrong}`,
-                        bgcolor: "rgba(255,255,255,0.035)",
-                        display: "flex",
-                        justifyContent: "space-between",
+                        borderTop:
+                          `2px solid ${COLORS.borderStrong}`,
+                        bgcolor:
+                          COLORS.accentSoft,
+                        display:
+                          "flex",
+                        justifyContent:
+                          "space-between",
                         gap: 2,
                       }}
                     >
                       <Typography
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           fontWeight: 800,
                         }}
                       >
@@ -794,31 +1063,38 @@ export const ReportsPage = ({
 
                       <Typography
                         sx={{
-                          color: COLORS.success,
+                          color:
+                            COLORS.accent,
                           fontWeight: 800,
                         }}
                       >
                         {formatMoney(
-                          bData?.totals.assets || 0
+                          bData?.totals
+                            .assets || 0
                         )}
                       </Typography>
                     </Box>
                   </Box>
 
-                  {/* Liabilities & Capital */}
+                  {/* LIABILITIES & CAPITAL */}
+
                   <Box>
                     <Box
                       sx={{
                         p: 2,
-                        borderBottom: `1px solid ${COLORS.border}`,
-                        bgcolor: COLORS.dangerSoft,
+                        borderBottom:
+                          `1px solid ${COLORS.border}`,
+                        bgcolor:
+                          COLORS.warningSoft,
                       }}
                     >
                       <Typography
                         sx={{
-                          color: COLORS.danger,
+                          color:
+                            COLORS.warning,
                           fontWeight: 700,
-                          fontSize: "0.9rem",
+                          fontSize:
+                            "0.9rem",
                         }}
                         align="center"
                       >
@@ -828,12 +1104,15 @@ export const ReportsPage = ({
 
                     <Table size="small">
                       <TableBody>
+
                         <TableRow>
                           <TableCell
                             sx={{
-                              color: COLORS.text,
+                              color:
+                                COLORS.text,
                               py: 2,
-                              borderBottom: `1px solid ${COLORS.border}`,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
                             }}
                           >
                             Capital
@@ -842,21 +1121,27 @@ export const ReportsPage = ({
                           <TableCell
                             align="right"
                             sx={{
-                              color: COLORS.text,
+                              color:
+                                COLORS.text,
                               py: 2,
-                              borderBottom: `1px solid ${COLORS.border}`,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
                             }}
                           >
-                            {formatMoney(capitalEquity)}
+                            {formatMoney(
+                              capitalEquity
+                            )}
                           </TableCell>
                         </TableRow>
 
                         <TableRow>
                           <TableCell
                             sx={{
-                              color: COLORS.text,
+                              color:
+                                COLORS.text,
                               py: 2,
-                              borderBottom: `1px solid ${COLORS.border}`,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
                             }}
                           >
                             Creditors
@@ -865,12 +1150,16 @@ export const ReportsPage = ({
                           <TableCell
                             align="right"
                             sx={{
-                              color: COLORS.text,
+                              color:
+                                COLORS.text,
                               py: 2,
-                              borderBottom: `1px solid ${COLORS.border}`,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
                             }}
                           >
-                            {formatMoney(creditorLiability)}
+                            {formatMoney(
+                              creditorLiability
+                            )}
                           </TableCell>
                         </TableRow>
 
@@ -878,9 +1167,11 @@ export const ReportsPage = ({
                           <TableRow>
                             <TableCell
                               sx={{
-                                color: COLORS.muted,
+                                color:
+                                  COLORS.muted,
                                 py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
+                                borderBottom:
+                                  `1px solid ${COLORS.border}`,
                               }}
                             >
                               Other Liabilities
@@ -889,31 +1180,41 @@ export const ReportsPage = ({
                             <TableCell
                               align="right"
                               sx={{
-                                color: COLORS.text,
+                                color:
+                                  COLORS.text,
                                 py: 2,
-                                borderBottom: `1px solid ${COLORS.border}`,
+                                borderBottom:
+                                  `1px solid ${COLORS.border}`,
                               }}
                             >
-                              {formatMoney(otherLiabilities)}
+                              {formatMoney(
+                                otherLiabilities
+                              )}
                             </TableCell>
                           </TableRow>
                         )}
+
                       </TableBody>
                     </Table>
 
                     <Box
                       sx={{
                         p: 2.2,
-                        borderTop: `2px solid ${COLORS.borderStrong}`,
-                        bgcolor: "rgba(255,255,255,0.035)",
-                        display: "flex",
-                        justifyContent: "space-between",
+                        borderTop:
+                          `2px solid ${COLORS.borderStrong}`,
+                        bgcolor:
+                          COLORS.navySoft,
+                        display:
+                          "flex",
+                        justifyContent:
+                          "space-between",
                         gap: 2,
                       }}
                     >
                       <Typography
                         sx={{
-                          color: COLORS.text,
+                          color:
+                            COLORS.text,
                           fontWeight: 800,
                         }}
                       >
@@ -922,35 +1223,44 @@ export const ReportsPage = ({
 
                       <Typography
                         sx={{
-                          color: COLORS.danger,
+                          color:
+                            COLORS.navy,
                           fontWeight: 800,
                         }}
                       >
                         {formatMoney(
-                          (bData?.totals.liabilities || 0) +
+                          (bData?.totals
+                            .liabilities ||
+                            0) +
                             capitalEquity
                         )}
                       </Typography>
                     </Box>
                   </Box>
+
                 </Box>
               </Box>
             )}
 
-            {/* Classification Note */}
+            {/* CLASSIFICATION NOTE */}
+
             <Paper
               sx={{
                 p: 2.5,
-                bgcolor: "rgba(255,255,255,0.02)",
-                border: `1px dashed ${COLORS.borderStrong}`,
+                bgcolor:
+                  COLORS.page,
+                border:
+                  `1px dashed ${COLORS.borderStrong}`,
                 borderRadius: 2.5,
                 boxShadow: "none",
               }}
             >
               <Typography
                 sx={{
-                  color: COLORS.text,
-                  fontSize: "0.82rem",
+                  color:
+                    COLORS.text,
+                  fontSize:
+                    "0.82rem",
                   fontWeight: 700,
                   mb: 1.2,
                 }}
@@ -961,52 +1271,74 @@ export const ReportsPage = ({
               <Stack spacing={0.8}>
                 <Typography
                   sx={{
-                    color: COLORS.muted,
-                    fontSize: "0.78rem",
+                    color:
+                      COLORS.muted,
+                    fontSize:
+                      "0.78rem",
                   }}
                 >
-                  • <b>Bank / Cash:</b> Asset accounts ·{" "}
-                  <b>Debtors:</b> Asset accounts
+                  • <b>Bank / Cash:</b>{" "}
+                  Asset accounts ·{" "}
+                  <b>Debtors:</b>{" "}
+                  Asset accounts
                 </Typography>
 
                 <Typography
                   sx={{
-                    color: COLORS.muted,
-                    fontSize: "0.78rem",
+                    color:
+                      COLORS.muted,
+                    fontSize:
+                      "0.78rem",
                   }}
                 >
-                  • <b>Creditors:</b> Liability accounts ·{" "}
-                  <b>Capital:</b> Capital accounts
+                  • <b>Creditors:</b>{" "}
+                  Liability accounts ·{" "}
+                  <b>Capital:</b>{" "}
+                  Capital accounts
                 </Typography>
               </Stack>
             </Paper>
           </Stack>
         )}
 
-        {/* ================= BUDGET REPORT ================= */}
+        {/* =========================================================
+            BUDGET REPORT
+        ========================================================= */}
+
         {tab === 2 && (
           <Stack spacing={4}>
+
             {budgetReport.isLoading ? (
-              <LoadingState label="Computing budget report..." />
+              <LoadingState
+                label="Computing budget report..."
+              />
             ) : budgetReport.isError ? (
               <ErrorState
                 message="Could not load budget report."
-                onRetry={() => void budgetReport.refetch()}
+                onRetry={() =>
+                  void budgetReport.refetch()
+                }
               />
             ) : (
               <TableContainer
                 sx={{
-                  border: `1px solid ${COLORS.border}`,
+                  border:
+                    `1px solid ${COLORS.border}`,
                   borderRadius: 2.5,
                   overflowX: "auto",
-                  bgcolor: COLORS.page,
+                  bgcolor:
+                    COLORS.card,
+                  boxShadow:
+                    "0 1px 3px rgba(15, 23, 42, 0.04)",
                 }}
               >
                 <Table size="small">
+
                   <TableHead>
                     <TableRow
                       sx={{
-                        bgcolor: COLORS.cardHover,
+                        bgcolor:
+                          COLORS.page,
                       }}
                     >
                       {[
@@ -1016,121 +1348,156 @@ export const ReportsPage = ({
                         "Planned",
                         "Achieved",
                         "Remaining",
-                      ].map((label, index) => (
-                        <TableCell
-                          key={label}
-                          align={
-                            index >= 3
-                              ? "right"
-                              : "left"
-                          }
-                          sx={{
-                            color: COLORS.muted,
-                            fontWeight: 700,
-                            py: 2,
-                            whiteSpace: "nowrap",
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          {label}
-                        </TableCell>
-                      ))}
+                      ].map(
+                        (
+                          label,
+                          index
+                        ) => (
+                          <TableCell
+                            key={label}
+                            align={
+                              index >= 3
+                                ? "right"
+                                : "left"
+                            }
+                            sx={{
+                              color:
+                                COLORS.muted,
+                              fontWeight: 700,
+                              py: 2,
+                              whiteSpace:
+                                "nowrap",
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {label}
+                          </TableCell>
+                        )
+                      )}
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {budgetReport.data?.data.map((b) => (
-                      <TableRow
-                        key={b.id}
-                        sx={{
-                          "&:hover": {
-                            bgcolor: COLORS.cardHover,
-                          },
-                        }}
-                      >
-                        <TableCell
+                    {budgetReport.data?.data.map(
+                      (b) => (
+                        <TableRow
+                          key={b.id}
                           sx={{
-                            color: COLORS.text,
-                            fontWeight: 600,
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
+                            "&:hover": {
+                              bgcolor:
+                                COLORS.cardHover,
+                            },
                           }}
                         >
-                          {b.name}
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            color: COLORS.muted,
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          {b.period}
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          <Chip
-                            size="small"
-                            label={b.analyticAccount}
+                          <TableCell
                             sx={{
-                              bgcolor: COLORS.accentSoft,
-                              color: COLORS.accent,
-                              border: `1px solid ${COLORS.border}`,
+                              color:
+                                COLORS.text,
                               fontWeight: 600,
-                              borderRadius: 1.5,
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
                             }}
-                          />
-                        </TableCell>
+                          >
+                            {b.name}
+                          </TableCell>
 
-                        <TableCell
-                          align="right"
-                          sx={{
-                            color: COLORS.info,
-                            fontWeight: 600,
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          {formatMoney(b.plannedAmount)}
-                        </TableCell>
+                          <TableCell
+                            sx={{
+                              color:
+                                COLORS.muted,
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {b.period}
+                          </TableCell>
 
-                        <TableCell
-                          align="right"
-                          sx={{
-                            color: COLORS.success,
-                            fontWeight: 600,
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          {formatMoney(b.achievedAmount)}
-                        </TableCell>
+                          <TableCell
+                            sx={{
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            <Chip
+                              size="small"
+                              label={
+                                b.analyticAccount
+                              }
+                              sx={{
+                                bgcolor:
+                                  COLORS.accentSoft,
+                                color:
+                                  COLORS.accent,
+                                border:
+                                  `1px solid ${COLORS.accent}40`,
+                                fontWeight: 600,
+                                borderRadius: 1.5,
+                              }}
+                            />
+                          </TableCell>
 
-                        <TableCell
-                          align="right"
-                          sx={{
-                            color: COLORS.text,
-                            fontWeight: 500,
-                            py: 2,
-                            borderBottom: `1px solid ${COLORS.border}`,
-                          }}
-                        >
-                          {formatMoney(b.remainingAmount)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color:
+                                COLORS.info,
+                              fontWeight: 600,
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {formatMoney(
+                              b.plannedAmount
+                            )}
+                          </TableCell>
+
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color:
+                                COLORS.success,
+                              fontWeight: 600,
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {formatMoney(
+                              b.achievedAmount
+                            )}
+                          </TableCell>
+
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color:
+                                COLORS.warning,
+                              fontWeight: 600,
+                              py: 2,
+                              borderBottom:
+                                `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {formatMoney(
+                              b.remainingAmount
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    )}
                   </TableBody>
+
                 </Table>
               </TableContainer>
             )}
           </Stack>
         )}
+
       </Stack>
     </DarkContainer>
   );
